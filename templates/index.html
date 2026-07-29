@@ -1,42 +1,322 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<title>AI SOC Analyst Dashboard</title>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+
+<style>
+
+body{
+
+font-family:Arial;
+background:#111;
+color:white;
+padding:30px;
+
+}
+
+
+.card{
+
+background:#222;
+padding:20px;
+margin:15px;
+border-radius:12px;
+
+}
+
+
+button{
+
+padding:12px;
+background:#00ff99;
+border:none;
+border-radius:8px;
+font-size:16px;
+cursor:pointer;
+
+}
+
+
+.high{
+
+color:red;
+
+}
+
+
+.medium{
+
+color:orange;
+
+}
+
+
+.low{
+
+color:lime;
+
+}
+
+
+a{
+
+text-decoration:none;
+
+}
+
+
+</style>
+
+</head>
+
+
+
+<body>
+
+
+<h1>🛡️ AI SOC Analyst Dashboard</h1>
+
+
+
 <div class="card">
 
-<h2>
-💬 SOC Chat Assistant
-</h2>
+<h2>Total Incidents</h2>
 
+<h1>
+{{total}}
+</h1>
 
-<form method="POST" action="/chat">
-
-<input 
-type="text"
-name="question"
-placeholder="Ask SOC Assistant..."
-style="width:80%;padding:10px;"
->
-
-
-<button type="submit">
-Ask
-</button>
-
-
-</form>
+</div>
 
 
 
-{% if chat_answer %}
 
-<h3>
-AI Response:
-</h3>
+<div class="card">
+
+<h2>⚠️ Risk Summary</h2>
 
 
-<pre>
-{{chat_answer}}
-</pre>
+<p class="high">
+
+🔴 HIGH:
+{{summary.get('HIGH',0)}}
+
+</p>
+
+
+
+<p class="medium">
+
+🟡 MEDIUM:
+{{summary.get('MEDIUM',0)}}
+
+</p>
+
+
+
+<p class="low">
+
+🟢 LOW:
+{{summary.get('LOW',0)}}
+
+</p>
+
+
+</div>
+
+
+
+
+
+<div class="card">
+
+<h2>📩 Latest Incident</h2>
+
+
+{% if latest %}
+
+
+<p>
+Sender:
+{{latest.sender}}
+</p>
+
+
+<p>
+Subject:
+{{latest.subject}}
+</p>
+
+
+<p>
+Risk:
+{{latest.risk}}
+</p>
+
+
+<p>
+Score:
+{{latest.score}}
+</p>
+
+
+{% else %}
+
+<p>No incidents found</p>
 
 
 {% endif %}
 
 
 </div>
+
+
+
+
+
+
+<div class="card">
+
+
+<h2>🌐 Threat Intelligence</h2>
+
+
+{% if reputation %}
+
+
+<p>
+Malicious:
+{{reputation.malicious}}
+</p>
+
+
+<p>
+Suspicious:
+{{reputation.suspicious}}
+</p>
+
+
+<p>
+Harmless:
+{{reputation.harmless}}
+</p>
+
+
+{% else %}
+
+<p>No IOC checked</p>
+
+{% endif %}
+
+
+
+</div>
+
+
+
+
+
+
+<div class="card">
+
+
+<h2>🤖 AI Investigation</h2>
+
+
+<a href="/investigate">
+
+<button>
+
+🔍 Investigate Latest Incident
+
+</button>
+
+</a>
+
+
+</div>
+
+
+
+
+
+
+<div class="card">
+
+
+<h2>📊 Threat Analytics</h2>
+
+
+<canvas id="chart"></canvas>
+
+
+</div>
+
+
+
+
+
+
+<script>
+
+
+new Chart(
+
+document.getElementById("chart"),
+
+
+{
+
+
+type:"pie",
+
+
+data:{
+
+
+labels:
+
+
+{{chart_labels | safe}},
+
+
+
+datasets:[{
+
+
+data:
+
+
+{{chart_values | safe}}
+
+
+
+}]
+
+
+}
+
+
+
+}
+
+
+);
+
+
+
+</script>
+
+
+
+
+
+</body>
+
+</html>
