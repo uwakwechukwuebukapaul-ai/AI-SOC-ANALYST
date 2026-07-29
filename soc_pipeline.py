@@ -4,6 +4,8 @@ from database import create_database, save_incident
 
 from threat_intel import analyze_indicator
 
+from response_engine import generate_response
+
 
 
 def run_soc_pipeline():
@@ -24,7 +26,7 @@ def run_soc_pipeline():
     for alert in alerts:
 
 
-        # Default SOC scoring
+        # Default SOC values
 
         alert["score"] = 50
 
@@ -34,16 +36,21 @@ def run_soc_pipeline():
 
         alert["threat_intel"] = {}
 
+        alert["response"] = {}
+
 
 
         severity = alert.get("severity", "")
 
 
 
+        # Detection scoring
+
         if severity == "HIGH":
 
 
             alert["score"] = 85
+
 
 
             if "phishing" in alert["type"].lower():
@@ -64,10 +71,11 @@ def run_soc_pipeline():
 
 
 
+
+
         # Threat Intelligence Enrichment
 
         details = alert.get("details", {})
-
 
 
         indicators = ""
@@ -96,8 +104,6 @@ def run_soc_pipeline():
 
 
 
-            # Increase risk if suspicious domain detected
-
             if intel_result.get("status") == "MALICIOUS":
 
 
@@ -112,7 +118,7 @@ def run_soc_pipeline():
 
 
 
-            elif intel_result.get("suspicious", 0) > 0:
+            elif intel_result.get("status") == "SUSPICIOUS":
 
 
                 alert["score"] += 5
@@ -123,6 +129,17 @@ def run_soc_pipeline():
                     "Investigate suspicious domain"
 
                 )
+
+
+
+
+
+        # Automated Response Engine
+
+        response = generate_response(alert)
+
+
+        alert["response"] = response
 
 
 
@@ -159,6 +176,7 @@ if __name__ == "__main__":
 
         print("\n--------------------")
 
+
         print("Threat:", alert["type"])
 
         print("Severity:", alert["severity"])
@@ -167,10 +185,25 @@ if __name__ == "__main__":
 
         print("MITRE:", alert["mitre"])
 
-        print("Threat Intel:", alert["threat_intel"])
 
-        print("Recommendations:")
+        print("\nThreat Intel:")
+
+        print(alert["threat_intel"])
+
+
+
+        print("\nRecommendations:")
 
         for item in alert["recommendation"]:
 
             print("-", item)
+
+
+
+        print("\n⚡ Automated Response:")
+
+        print(
+
+            alert["response"]
+
+        )
