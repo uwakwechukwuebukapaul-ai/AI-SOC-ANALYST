@@ -1,19 +1,21 @@
 <!DOCTYPE html>
+
 <html>
 
 <head>
 
-<title>AI SOC Analyst Dashboard</title>
+<title>AI SOC Dashboard</title>
+
 
 <style>
 
 body {
 
-font-family: Arial;
-
 background:#0f172a;
 
 color:white;
+
+font-family:Arial;
 
 padding:20px;
 
@@ -33,28 +35,17 @@ border-radius:10px;
 }
 
 
-.grid {
+button {
 
-display:flex;
+background:#2563eb;
 
-gap:15px;
+color:white;
 
-flex-wrap:wrap;
+padding:10px;
 
-}
+border:none;
 
-
-.box {
-
-background:#334155;
-
-padding:20px;
-
-border-radius:10px;
-
-width:180px;
-
-text-align:center;
+border-radius:5px;
 
 }
 
@@ -68,6 +59,7 @@ color:red;
 
 </style>
 
+
 </head>
 
 
@@ -77,35 +69,16 @@ color:red;
 <h1>🛡️ AI SOC Analyst Dashboard</h1>
 
 
-<div class="grid">
+<h2>Statistics</h2>
 
 
-<div class="box">
+<div class="card">
 
-<h2>{{dashboard.total}}</h2>
+<p>Total Incidents: {{dashboard.total}}</p>
 
-<p>Total Incidents</p>
+<p>High Severity: {{dashboard.high}}</p>
 
-</div>
-
-
-<div class="box">
-
-<h2>{{dashboard.high}}</h2>
-
-<p>High Severity</p>
-
-</div>
-
-
-<div class="box">
-
-<h2>{{dashboard.open}}</h2>
-
-<p>Open Cases</p>
-
-</div>
-
+<p>Open Cases: {{dashboard.open}}</p>
 
 </div>
 
@@ -124,30 +97,20 @@ color:red;
 
 
 <p>
-
 Severity:
 <span class="high">
-
 {{alert.severity}}
-
 </span>
-
 </p>
 
 
 <p>
-
-Risk Score:
-{{alert.score}}
-
+Risk Score: {{alert.score}}
 </p>
 
 
 <p>
-
-MITRE:
-{{alert.mitre}}
-
+MITRE: {{alert.mitre}}
 </p>
 
 
@@ -180,6 +143,18 @@ MITRE:
 <p>Status: {{incident[6]}}</p>
 
 
+
+<a href="/investigate/{{incident[0]}}">
+
+<button>
+
+🤖 Investigate
+
+</button>
+
+</a>
+
+
 </div>
 
 
@@ -187,7 +162,15 @@ MITRE:
 
 
 
-<a href="/logout">Logout</a>
+<a href="/logout">
+
+<button>
+
+Logout
+
+</button>
+
+</a>
 
 
 </body>

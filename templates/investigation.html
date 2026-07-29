@@ -1,45 +1,10 @@
 <!DOCTYPE html>
+
 <html>
 
 <head>
 
-<title>AI SOC Investigation</title>
-
-<style>
-
-body{
-    background:#111;
-    color:white;
-    font-family:Arial;
-    padding:30px;
-}
-
-.card{
-
-    background:#222;
-    padding:20px;
-    margin:20px;
-    border-radius:10px;
-
-}
-
-
-h1{
-    color:#00ff99;
-}
-
-
-li{
-    margin:10px;
-}
-
-
-.high{
-    color:red;
-}
-
-
-</style>
+<title>AI Investigation Report</title>
 
 </head>
 
@@ -47,97 +12,70 @@ li{
 <body>
 
 
-<h1>🛡️ AI SOC Investigation Report</h1>
+<h1>🤖 AI SOC Investigation Report</h1>
 
 
-<div class="card">
+<h3>Threat</h3>
 
-<h2>Incident</h2>
-
-<p>
-Sender:
-{{report.incident.sender}}
-</p>
+<p>{{report.threat}}</p>
 
 
-<p>
-Subject:
-{{report.incident.subject}}
-</p>
+<h3>Severity</h3>
+
+<p>{{report.severity}}</p>
 
 
-<p>
-Risk:
-<span class="high">
-{{report.incident.risk}}
-</span>
-</p>
+<h3>Risk Score</h3>
+
+<p>{{report.risk_score}}</p>
 
 
-</div>
+<h3>MITRE ATT&CK</h3>
+
+<p>{{report.mitre}}</p>
+
+
+<h3>Analysis</h3>
+
+<p>{{report.analysis}}</p>
 
 
 
-<div class="card">
+<h3>Investigation Steps</h3>
 
-<h2>🔍 AI Analysis</h2>
 
 <ul>
 
-{% for item in report.analysis %}
+{% for step in report.investigation_steps %}
 
-<li>
-{{item}}
-</li>
+<li>{{step}}</li>
 
 {% endfor %}
 
 </ul>
 
-</div>
 
 
+<h3>Response Actions</h3>
 
-
-<div class="card">
-
-<h2>⚔️ MITRE ATT&CK</h2>
-
-<p>
-
-{{report.mitre}}
-
-</p>
-
-</div>
-
-
-
-
-<div class="card">
-
-<h2>🚨 Recommendations</h2>
 
 <ul>
 
-{% for item in report.recommendation %}
+{% for action in report.response_actions %}
 
-<li>
-{{item}}
-</li>
+<li>{{action}}</li>
 
 {% endfor %}
 
 </ul>
 
-</div>
 
 
+<a href="/">
 
-<a href="/" style="color:#00ff99;">
 ⬅ Back to Dashboard
-</a>
 
+</a>
 
 
 </body>
