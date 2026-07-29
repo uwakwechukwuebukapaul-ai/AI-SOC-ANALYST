@@ -50,9 +50,9 @@ border-radius:5px;
 }
 
 
-.high {
+.warning {
 
-color:red;
+color:orange;
 
 }
 
@@ -69,10 +69,10 @@ color:red;
 <h1>🛡️ AI SOC Analyst Dashboard</h1>
 
 
-<h2>Statistics</h2>
-
 
 <div class="card">
+
+<h2>Dashboard Statistics</h2>
 
 <p>Total Incidents: {{dashboard.total}}</p>
 
@@ -84,7 +84,9 @@ color:red;
 
 
 
-<h2>🚨 Live Alerts</h2>
+
+<h2>🚨 Security Alerts</h2>
+
 
 
 {% for alert in alerts %}
@@ -98,30 +100,94 @@ color:red;
 
 <p>
 Severity:
-<span class="high">
 {{alert.severity}}
-</span>
 </p>
 
 
 <p>
-Risk Score: {{alert.score}}
+Risk Score:
+{{alert.score}}
 </p>
 
 
 <p>
-MITRE: {{alert.mitre}}
+MITRE:
+{{alert.mitre}}
 </p>
+
+
+
+<h3>🌐 Threat Intelligence</h3>
+
+
+{% if alert.threat_intel %}
+
+
+<p>
+Domain:
+{{alert.threat_intel.domain}}
+</p>
+
+
+<p class="warning">
+
+Status:
+{{alert.threat_intel.status}}
+
+</p>
+
+
+<p>
+
+Malicious:
+{{alert.threat_intel.malicious}}
+
+</p>
+
+
+<p>
+
+Suspicious:
+{{alert.threat_intel.suspicious}}
+
+</p>
+
+
+{% else %}
+
+
+<p>No threat intelligence available</p>
+
+
+{% endif %}
+
+
+
+<h3>Recommendations</h3>
+
+
+<ul>
+
+{% for item in alert.recommendation %}
+
+<li>{{item}}</li>
+
+{% endfor %}
+
+</ul>
 
 
 </div>
+
 
 
 {% endfor %}
 
 
 
+
 <h2>📁 Incident History</h2>
+
 
 
 {% for incident in incidents %}
@@ -136,10 +202,6 @@ MITRE: {{alert.mitre}}
 
 <p>Severity: {{incident[3]}}</p>
 
-<p>Score: {{incident[4]}}</p>
-
-<p>MITRE: {{incident[5]}}</p>
-
 <p>Status: {{incident[6]}}</p>
 
 
@@ -147,15 +209,14 @@ MITRE: {{alert.mitre}}
 <a href="/investigate/{{incident[0]}}">
 
 <button>
-
 🤖 Investigate
-
 </button>
 
 </a>
 
 
 </div>
+
 
 
 {% endfor %}
@@ -165,12 +226,11 @@ MITRE: {{alert.mitre}}
 <a href="/logout">
 
 <button>
-
 Logout
-
 </button>
 
 </a>
+
 
 
 </body>

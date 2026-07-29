@@ -37,6 +37,7 @@ def login_page():
 
 
 
+
 @app.route("/")
 def home():
 
@@ -45,9 +46,11 @@ def home():
         return redirect("/login")
 
 
+
     alerts = run_soc_pipeline()
 
     incidents = get_incidents()
+
 
 
     dashboard = {
@@ -65,6 +68,7 @@ def home():
     }
 
 
+
     return render_template(
 
         "index.html",
@@ -80,12 +84,14 @@ def home():
 
 
 
+
 @app.route("/investigate/<int:id>")
 def investigate(id):
 
     if "analyst" not in session:
 
         return redirect("/login")
+
 
 
     report = get_investigation_report(id)
@@ -102,12 +108,14 @@ def investigate(id):
 
 
 
+
 @app.route("/logout")
 def logout():
 
     session.clear()
 
     return redirect("/login")
+
 
 
 
