@@ -1,89 +1,253 @@
 <!DOCTYPE html>
+
 <html>
+
 <head>
-    <title>AI SOC Dashboard</title>
 
-    <style>
-        body {
-            font-family: Arial;
-            background: #111;
-            color: white;
-            padding: 30px;
-        }
+<title>
+AI SOC Dashboard
+</title>
 
-        .card {
-            background: #222;
-            padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-        }
 
-        .high {
-            color: red;
-        }
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-        .medium {
-            color: orange;
-        }
 
-        .low {
-            color: green;
-        }
-    </style>
+<style>
+
+body{
+
+font-family: Arial;
+background:#111;
+color:white;
+padding:30px;
+
+}
+
+
+.card{
+
+background:#222;
+padding:20px;
+margin:15px;
+border-radius:10px;
+
+}
+
+
+.high{
+
+color:red;
+
+}
+
+
+.medium{
+
+color:orange;
+
+}
+
+
+.low{
+
+color:lime;
+
+}
+
+
+</style>
 
 </head>
 
+
 <body>
 
-<h1>🛡️ AI SOC ANALYST DASHBOARD</h1>
 
-<div class="card">
-<h2>Total Incidents</h2>
-<h1>{{ total }}</h1>
-</div>
+<h1>
+🛡️ AI SOC Analyst Dashboard
+</h1>
 
 
 <div class="card">
 
-<h2>Risk Summary</h2>
+<h2>
+Incident Overview
+</h2>
+
+
+<p>
+Total Incidents:
+{{total}}
+</p>
+
 
 <p class="high">
-🔴 HIGH: {{ high }}
+🔴 HIGH:
+{{high}}
 </p>
+
 
 <p class="medium">
-🟡 MEDIUM: {{ medium }}
+🟡 MEDIUM:
+{{medium}}
 </p>
+
 
 <p class="low">
-🟢 LOW: {{ low }}
+🟢 LOW:
+{{low}}
 </p>
 
+
 </div>
+
 
 
 <div class="card">
 
-<h2>Latest Incident</h2>
+<h2>
+Latest Incident
+</h2>
+
+
+{% if latest %}
 
 <p>
-Sender: {{ latest.sender }}
+Sender:
+{{latest.sender}}
 </p>
 
-<p>
-Subject: {{ latest.subject }}
-</p>
 
 <p>
-Risk: {{ latest.risk }}
+Subject:
+{{latest.subject}}
 </p>
 
+
 <p>
-Score: {{ latest.score }}
+Risk:
+{{latest.risk}}
 </p>
+
+
+{% else %}
+
+<p>
+No incidents found
+</p>
+
+
+{% endif %}
+
 
 </div>
+
+
+
+<div class="card">
+
+<h2>
+Threat Intelligence
+</h2>
+
+
+<p>
+Domain:
+micr0soft-login.xyz
+</p>
+
+
+<p>
+Malicious:
+{{threat.malicious}}
+</p>
+
+
+<p>
+Suspicious:
+{{threat.suspicious}}
+</p>
+
+
+<p>
+Harmless:
+{{threat.harmless}}
+</p>
+
+
+</div>
+
+
+
+<div class="card">
+
+<h2>
+Risk Chart
+</h2>
+
+
+<canvas id="chart"></canvas>
+
+
+</div>
+
+
+
+<script>
+
+
+new Chart(
+
+document.getElementById("chart"),
+
+{
+
+type:"pie",
+
+data:{
+
+
+labels:[
+
+"HIGH",
+
+"MEDIUM",
+
+"LOW"
+
+],
+
+
+datasets:[{
+
+data:[
+
+{{high}},
+
+{{medium}},
+
+{{low}}
+
+]
+
+
+}]
+
+
+}
+
+
+}
+
+
+);
+
+
+</script>
+
 
 
 </body>
+
+
 </html>
