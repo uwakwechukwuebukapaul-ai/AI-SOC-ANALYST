@@ -1,68 +1,67 @@
 from log_ingestion import load_logs, analyze_logs
-from detection_engine import detect_threats
-from severity_engine import calculate_severity
+from database import create_database, save_incident
 
 
 def run_soc_pipeline():
 
-    alerts = []
+    create_database()
 
-    # Load logs
+
     logs = load_logs("incident_logs.csv")
 
-    # Basic log analysis
-    log_alerts = analyze_logs(logs)
 
-    for alert in log_alerts:
-
-        severity = calculate_severity(
-            alert["type"]
-        )
-
-        alert.update(severity)
-
-        alerts.append(alert)
+    alerts = analyze_logs(logs)
 
 
-    # Detection engine
-    threats = detect_threats(
-        "incident_logs.csv"
-    )
+    processed_alerts = []
 
 
-    for threat in threats:
-
-        severity = calculate_severity(
-            threat
-        )
+    for alert in alerts:
 
 
-        alerts.append({
+        # Add SOC scoring
 
-            "time": "Now",
-            "type": threat,
-            "severity": severity["severity"],
-            "score": severity["score"],
-            "mitre": severity["mitre"],
-            "recommendation": severity["recommendation"],
-            "details": threat
+        if alert["severity"] == "HIGH":
 
-        })
+            alert["score"] = 85
+
+            alert["mitre"] = "T1566 - Phishing"
+
+            alert["recommendation"] = [
+
+                "Block sender",
+
+                "Reset affected credentials",
+
+                "Enable MFA"
+
+            ]
 
 
-    return alerts
+        processed_alerts.append(alert)
+
+
+        # Save to database
+
+        save_incident(alert)
+
+
+
+    return processed_alerts
 
 
 
 if __name__ == "__main__":
 
-    results = run_soc_pipeline()
+
+    alerts = run_soc_pipeline()
 
 
     print("🛡️ AI SOC PIPELINE")
+
     print("=" * 40)
 
 
-    for alert in results:
+    for alert in alerts:
 
         print(alert)
