@@ -2,25 +2,34 @@ from flask import Flask, render_template, request, redirect, session
 
 import json
 
+
 from soc_pipeline import run_soc_pipeline
 
-from database import get_incidents
+
+from database import (
+    get_incidents,
+    update_incident_status,
+    assign_analyst,
+    add_investigation_notes
+)
+
 
 from auth import login
+
 
 from investigation_route import get_investigation_report
 
 
 
+
 app = Flask(__name__)
+
 
 app.secret_key = "AI_SOC_SECRET_KEY"
 
 
 
 
-
-# JSON filter for dashboard templates
 
 @app.template_filter("from_json")
 def from_json(value):
@@ -39,7 +48,7 @@ def from_json(value):
 
 
 
-@app.route("/login", methods=["GET", "POST"])
+@app.route("/login", methods=["GET","POST"])
 def login_page():
 
 
@@ -52,7 +61,7 @@ def login_page():
 
 
 
-        if login(username, password):
+        if login(username,password):
 
             session["analyst"] = username
 
@@ -61,6 +70,7 @@ def login_page():
 
 
     return render_template("login.html")
+
 
 
 
@@ -79,17 +89,11 @@ def home():
 
 
 
-    # Run SOC detection pipeline
-
     alerts = run_soc_pipeline()
 
 
 
-    # Load stored incidents
-
     incidents = get_incidents()
-
-
 
 
 
@@ -97,7 +101,6 @@ def home():
 
 
         "total": len(incidents),
-
 
 
         "high": len(
@@ -127,9 +130,7 @@ def home():
         )
 
 
-
     }
-
 
 
 
@@ -145,6 +146,118 @@ def home():
         dashboard=dashboard
 
     )
+
+
+
+
+
+
+
+
+
+@app.route("/update_status/<int:id>/<status>")
+def update_status(id,status):
+
+
+    if "analyst" not in session:
+
+        return redirect("/login")
+
+
+
+    allowed = [
+
+        "OPEN",
+
+        "INVESTIGATING",
+
+        "RESOLVED"
+
+    ]
+
+
+
+    if status in allowed:
+
+
+        update_incident_status(
+
+            id,
+
+            status
+
+        )
+
+
+
+    return redirect("/")
+
+
+
+
+
+
+
+
+
+@app.route("/assign/<int:id>", methods=["POST"])
+def assign(id):
+
+
+    if "analyst" not in session:
+
+        return redirect("/login")
+
+
+
+    analyst = request.form["analyst"]
+
+
+
+    assign_analyst(
+
+        id,
+
+        analyst
+
+    )
+
+
+
+    return redirect("/")
+
+
+
+
+
+
+
+
+
+@app.route("/notes/<int:id>", methods=["POST"])
+def notes(id):
+
+
+    if "analyst" not in session:
+
+        return redirect("/login")
+
+
+
+    note = request.form["notes"]
+
+
+
+    add_investigation_notes(
+
+        id,
+
+        note
+
+    )
+
+
+    return redirect("/")
 
 
 

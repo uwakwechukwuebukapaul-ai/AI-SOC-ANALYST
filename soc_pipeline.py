@@ -1,10 +1,15 @@
 from log_ingestion import load_logs, analyze_logs
 
-from database import create_database, save_incident
+from database import (
+    create_database,
+    save_incident
+)
 
 from threat_intel import analyze_indicator
 
 from response_engine import generate_response
+
+
 
 
 
@@ -13,7 +18,9 @@ def run_soc_pipeline():
     create_database()
 
 
-    logs = load_logs("incident_logs.csv")
+    logs = load_logs(
+        "incident_logs.csv"
+    )
 
 
     alerts = analyze_logs(logs)
@@ -26,6 +33,7 @@ def run_soc_pipeline():
     for alert in alerts:
 
 
+
         # Default SOC values
 
         alert["score"] = 50
@@ -36,15 +44,17 @@ def run_soc_pipeline():
 
         alert["threat_intel"] = {}
 
-        alert["response"] = {}
 
 
 
-        severity = alert.get("severity", "")
+        severity = alert.get(
+            "severity",
+            ""
+        )
 
 
 
-        # Detection scoring
+        # Threat classification
 
         if severity == "HIGH":
 
@@ -56,7 +66,9 @@ def run_soc_pipeline():
             if "phishing" in alert["type"].lower():
 
 
-                alert["mitre"] = "T1566 - Phishing"
+                alert["mitre"] = (
+                    "T1566 - Phishing"
+                )
 
 
                 alert["recommendation"] = [
@@ -73,9 +85,12 @@ def run_soc_pipeline():
 
 
 
-        # Threat Intelligence Enrichment
+        # Threat intelligence lookup
 
-        details = alert.get("details", {})
+        details = alert.get(
+            "details",
+            {}
+        )
 
 
         indicators = ""
@@ -85,11 +100,8 @@ def run_soc_pipeline():
         if isinstance(details, dict):
 
             indicators = details.get(
-
                 "Indicators",
-
                 ""
-
             )
 
 
@@ -97,14 +109,19 @@ def run_soc_pipeline():
         if indicators:
 
 
-            intel_result = analyze_indicator(indicators)
+            intel_result = analyze_indicator(
+                indicators
+            )
 
 
             alert["threat_intel"] = intel_result
 
 
 
-            if intel_result.get("status") == "MALICIOUS":
+
+            if intel_result.get(
+                "status"
+            ) == "MALICIOUS":
 
 
                 alert["score"] += 15
@@ -118,7 +135,10 @@ def run_soc_pipeline():
 
 
 
-            elif intel_result.get("status") == "SUSPICIOUS":
+            elif intel_result.get(
+                "suspicious",
+                0
+            ) > 0:
 
 
                 alert["score"] += 5
@@ -134,22 +154,46 @@ def run_soc_pipeline():
 
 
 
-        # Automated Response Engine
 
-        response = generate_response(alert)
+        # Generate automated response
+
+        response = generate_response(
+            alert
+        )
 
 
         alert["response"] = response
 
 
 
-        processed_alerts.append(alert)
 
 
 
-        # Save incident
+        # Save only new incidents
 
-        save_incident(alert)
+        saved = save_incident(
+            alert
+        )
+
+
+        if saved:
+
+            print(
+                "✅ New incident saved"
+            )
+
+        else:
+
+            print(
+                "⚠️ Duplicate incident ignored"
+            )
+
+
+
+
+        processed_alerts.append(
+            alert
+        )
 
 
 
@@ -159,51 +203,89 @@ def run_soc_pipeline():
 
 
 
+
+
 if __name__ == "__main__":
+
 
 
     alerts = run_soc_pipeline()
 
 
-    print("🛡️ AI SOC PIPELINE")
 
-    print("=" * 40)
+    print(
+        "🛡️ AI SOC PIPELINE"
+    )
+
+
+    print(
+        "=" * 40
+    )
 
 
 
     for alert in alerts:
 
 
-        print("\n--------------------")
+        print(
+            "\n--------------------"
+        )
 
 
-        print("Threat:", alert["type"])
-
-        print("Severity:", alert["severity"])
-
-        print("Risk Score:", alert["score"])
-
-        print("MITRE:", alert["mitre"])
+        print(
+            "Threat:",
+            alert["type"]
+        )
 
 
-        print("\nThreat Intel:")
+        print(
+            "Severity:",
+            alert["severity"]
+        )
 
-        print(alert["threat_intel"])
+
+        print(
+            "Risk Score:",
+            alert["score"]
+        )
+
+
+        print(
+            "MITRE:",
+            alert["mitre"]
+        )
+
+
+        print(
+            "\nThreat Intel:"
+        )
+
+
+        print(
+            alert["threat_intel"]
+        )
 
 
 
-        print("\nRecommendations:")
+        print(
+            "\n⚡ Automated Response:"
+        )
+
+
+        print(
+            alert["response"]
+        )
+
+
+
+        print(
+            "\nRecommendations:"
+        )
+
 
         for item in alert["recommendation"]:
 
-            print("-", item)
-
-
-
-        print("\n⚡ Automated Response:")
-
-        print(
-
-            alert["response"]
-
-        )
+            print(
+                "-",
+                item
+            )
