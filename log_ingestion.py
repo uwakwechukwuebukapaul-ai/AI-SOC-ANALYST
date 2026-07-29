@@ -1,60 +1,79 @@
 import csv
-import os
-from datetime import datetime
 
 
-def load_logs(file_path):
+def load_logs(filename):
 
     logs = []
 
     try:
-        with open(file_path, "r", encoding="utf-8") as file:
+
+        with open(
+            filename,
+            "r",
+            encoding="utf-8-sig",
+            errors="ignore"
+        ) as file:
 
             reader = csv.DictReader(file)
 
             for row in reader:
+
                 logs.append(row)
 
-        return logs
 
-    except FileNotFoundError:
+    except Exception as e:
 
-        print("❌ Log file not found")
-        return []
+        print("ERROR loading logs:", e)
+
+
+    return logs
+
 
 
 def analyze_logs(logs):
 
     alerts = []
 
+
     for log in logs:
 
+
+        # Convert the whole row to text
         data = str(log).lower()
 
-        if "failed" in data:
+
+        if (
+
+            "suspicious" in data
+
+            or "urgent" in data
+
+            or "verify" in data
+
+            or "password" in data
+
+            or "login" in data
+
+            or "click here" in data
+
+            or "phishing" in data
+
+            or "high" in data
+
+        ):
+
+
             alerts.append({
-                "time": datetime.now(),
-                "type": "Brute Force Attempt",
-                "severity": "HIGH",
-                "details": log
-            })
 
+                "type":
+                "Possible phishing attempt detected",
 
-        if "powershell" in data:
-            alerts.append({
-                "time": datetime.now(),
-                "type": "Suspicious PowerShell Activity",
-                "severity": "MEDIUM",
-                "details": log
-            })
+                "severity":
+                "HIGH",
 
+                "details":
+                log
 
-        if "malware" in data:
-            alerts.append({
-                "time": datetime.now(),
-                "type": "Malware Indicator",
-                "severity": "CRITICAL",
-                "details": log
             })
 
 
@@ -64,17 +83,32 @@ def analyze_logs(logs):
 
 if __name__ == "__main__":
 
-    print("🛡️ AI SOC LOG INGESTION MODULE")
+
+    print("AI SOC LOG INGESTION MODULE")
+
     print("=" * 40)
 
 
-    logs = load_logs(
-        "incident_logs.csv"
-    )
+    logs = load_logs("incident_logs.csv")
+
+
+    print("Logs loaded:", len(logs))
 
 
     alerts = analyze_logs(logs)
 
 
+    print("Detected alerts:", len(alerts))
+
+
     for alert in alerts:
-        print(alert)
+
+        print("\n--------------------")
+
+        print("Threat:", alert["type"])
+
+        print("Severity:", alert["severity"])
+
+        print("Details:")
+
+        print(alert["details"])
