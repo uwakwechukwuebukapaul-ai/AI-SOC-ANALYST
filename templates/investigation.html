@@ -4,7 +4,55 @@
 
 <head>
 
-<title>AI Investigation Report</title>
+<title>
+AI SOC Investigation Report
+</title>
+
+
+<style>
+
+body{
+
+background:#0f172a;
+
+color:white;
+
+font-family:Arial;
+
+padding:30px;
+
+}
+
+
+.card{
+
+background:#1e293b;
+
+padding:20px;
+
+margin:20px 0;
+
+border-radius:10px;
+
+}
+
+
+.green{
+
+color:#22c55e;
+
+}
+
+
+.red{
+
+color:#ef4444;
+
+}
+
+
+</style>
+
 
 </head>
 
@@ -12,70 +60,214 @@
 <body>
 
 
-<h1>🤖 AI SOC Investigation Report</h1>
 
-
-<h3>Threat</h3>
-
-<p>{{report.threat}}</p>
-
-
-<h3>Severity</h3>
-
-<p>{{report.severity}}</p>
-
-
-<h3>Risk Score</h3>
-
-<p>{{report.risk_score}}</p>
-
-
-<h3>MITRE ATT&CK</h3>
-
-<p>{{report.mitre}}</p>
-
-
-<h3>Analysis</h3>
-
-<p>{{report.analysis}}</p>
+<h1>
+🤖 AI SOC Investigation Report
+</h1>
 
 
 
-<h3>Investigation Steps</h3>
+<div class="card">
+
+
+<h2>
+Incident #{{report.id}}
+</h2>
+
+
+<p>
+<b>Threat:</b>
+{{report.threat}}
+</p>
+
+
+<p>
+<b>Severity:</b>
+{{report.severity}}
+</p>
+
+
+<p>
+<b>Risk Score:</b>
+{{report.risk_score}}
+</p>
+
+
+<p>
+<b>MITRE ATT&CK:</b>
+{{report.mitre}}
+</p>
+
+
+</div>
+
+
+
+
+
+<div class="card">
+
+
+<h2>
+🕒 Incident Timeline
+</h2>
+
+
+<pre>
+{{report.timeline}}
+</pre>
+
+
+</div>
+
+
+
+
+
+
+<div class="card">
+
+
+<h2>
+🔎 Evidence Collected
+</h2>
+
+
+<pre>
+{{report.evidence}}
+</pre>
+
+
+</div>
+
+
+
+
+
+
+<div class="card">
+
+
+<h2>
+🤖 AI Analysis
+</h2>
+
+
+<p>
+{{report.analysis}}
+</p>
+
+
+</div>
+
+
+
+
+
+
+
+<div class="card">
+
+
+<h2>
+🔍 Investigation Steps
+</h2>
 
 
 <ul>
 
-{% for step in report.investigation_steps %}
+{% for step in report.steps %}
 
-<li>{{step}}</li>
+<li>
+{{step}}
+</li>
 
 {% endfor %}
 
 </ul>
 
 
+</div>
 
-<h3>Response Actions</h3>
 
 
-<ul>
 
-{% for action in report.response_actions %}
 
-<li>{{action}}</li>
 
-{% endfor %}
 
-</ul>
+
+<div class="card">
+
+
+<h2>
+👤 Analyst Review
+</h2>
+
+
+<p>
+Assigned Analyst:
+{{report.analyst}}
+</p>
+
+
+<p>
+Status:
+{{report.status}}
+</p>
+
+
+<p>
+Notes:
+{{report.notes}}
+</p>
+
+
+</div>
+
+
+
+
+
+
+
+
+<div class="card">
+
+
+<h2>
+⚡ Response Actions
+</h2>
+
+
+<p>
+{{report.response_status}}
+</p>
+
+
+<pre>
+{{report.actions}}
+</pre>
+
+
+</div>
+
+
+
+
 
 
 
 <a href="/">
 
+<button>
+
 ⬅ Back to Dashboard
 
+</button>
+
 </a>
+
+
 
 
 </body>

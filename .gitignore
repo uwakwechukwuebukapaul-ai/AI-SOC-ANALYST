@@ -1,3 +1,8 @@
 __pycache__/
 *.pyc
+soc.db
 .env
+venv/
+.venv/
+.vscode/
+.idea/

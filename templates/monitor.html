@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<title>
+AI SOC Real-Time Monitor
+</title>
+
+
+<meta http-equiv="refresh" content="10">
+
+
+<style>
+
+body {
+
+background:#0f172a;
+
+color:white;
+
+font-family:Arial;
+
+padding:20px;
+
+}
+
+
+.card {
+
+background:#1e293b;
+
+padding:25px;
+
+margin:20px 0;
+
+border-radius:12px;
+
+box-shadow:0 0 10px black;
+
+}
+
+
+h1,h2 {
+
+color:#38bdf8;
+
+}
+
+
+.active {
+
+color:#22c55e;
+
+font-weight:bold;
+
+}
+
+
+.warning {
+
+color:#f59e0b;
+
+}
+
+
+.danger {
+
+color:#ef4444;
+
+}
+
+
+button {
+
+background:#2563eb;
+
+color:white;
+
+border:none;
+
+padding:12px;
+
+border-radius:6px;
+
+cursor:pointer;
+
+}
+
+
+button:hover {
+
+background:#1d4ed8;
+
+}
+
+
+</style>
+
+
+</head>
+
+
+
+<body>
+
+
+<h1>
+⚡ REAL-TIME SOC MONITOR
+</h1>
+
+
+
+<div class="card">
+
+
+<h2>
+🟢 {{monitor.status}}
+</h2>
+
+
+<p>
+
+🕒 Last Check:
+
+{{monitor.time}}
+
+</p>
+
+
+<p>
+
+🔄 Auto Refresh:
+
+Every 10 seconds
+
+</p>
+
+
+
+<p>
+
+📊 Total Incidents Detected:
+
+<b>
+
+{{monitor.total_incidents}}
+
+</b>
+
+</p>
+
+
+</div>
+
+
+
+
+
+
+
+{% if monitor.latest %}
+
+
+
+<div class="card">
+
+
+<h2>
+🚨 Latest Security Alert
+</h2>
+
+
+
+<p>
+
+<b>
+Incident ID:
+</b>
+
+{{monitor.latest[0]}}
+
+</p>
+
+
+
+<p>
+
+<b>
+Time:
+</b>
+
+{{monitor.latest[1]}}
+
+</p>
+
+
+
+
+<p>
+
+<b>
+Threat:
+</b>
+
+{{monitor.latest[2]}}
+
+</p>
+
+
+
+
+<p>
+
+<b>
+Severity:
+</b>
+
+
+<span class="danger">
+
+{{monitor.latest[3]}}
+
+</span>
+
+
+</p>
+
+
+
+
+
+<p>
+
+<b>
+Risk Score:
+</b>
+
+{{monitor.latest[4]}}
+
+</p>
+
+
+
+
+
+<p>
+
+<b>
+MITRE ATT&CK:
+</b>
+
+{{monitor.latest[5]}}
+
+</p>
+
+
+
+
+
+<h3>
+📌 Incident Status
+</h3>
+
+
+{% if monitor.latest[6] == "OPEN" %}
+
+
+<p class="danger">
+
+🔴 OPEN
+
+</p>
+
+
+{% elif monitor.latest[6] == "INVESTIGATING" %}
+
+
+<p class="warning">
+
+🟡 INVESTIGATING
+
+</p>
+
+
+{% else %}
+
+
+<p class="active">
+
+🟢 {{monitor.latest[6]}}
+
+</p>
+
+
+{% endif %}
+
+
+
+
+
+<h3>
+⚡ SOC Action
+</h3>
+
+
+{% if monitor.latest[7] %}
+
+
+<p>
+
+{{monitor.latest[7]}}
+
+</p>
+
+
+{% else %}
+
+
+<p>
+
+Monitoring incident activity...
+
+</p>
+
+
+{% endif %}
+
+
+
+
+</div>
+
+
+
+
+
+{% else %}
+
+
+
+<div class="card">
+
+
+<h2 class="active">
+
+✅ No Active Security Alerts
+
+</h2>
+
+
+<p>
+
+SOC is monitoring network activity.
+
+</p>
+
+
+</div>
+
+
+
+{% endif %}
+
+
+
+
+
+
+
+<a href="/">
+
+<button>
+
+⬅ Back Dashboard
+
+</button>
+
+</a>
+
+
+
+
+
+</body>
+
+</html>

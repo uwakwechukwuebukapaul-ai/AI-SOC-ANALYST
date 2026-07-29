@@ -1,91 +1,123 @@
 <!DOCTYPE html>
-
 <html>
 
 <head>
 
-<title>
-AI SOC Analyst Dashboard
-</title>
+<title>🛡️ AI SOC Analyst Dashboard</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
 
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-
-<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+<!-- FAVICON -->
+<link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}">
 
 
 
 <style>
 
-body {
+body{
 
-background:#0f172a;
+    background:#0f172a;
+    color:white;
+    font-family:Arial, sans-serif;
+    padding:20px;
 
-color:white;
+}
 
-font-family:Arial;
 
-padding:20px;
+.card{
+
+    background:#1e293b;
+    padding:20px;
+    margin:15px 0;
+    border-radius:12px;
 
 }
 
 
 
-.card {
+.grid{
 
-background:#1e293b;
-
-padding:20px;
-
-margin:15px;
-
-border-radius:10px;
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+    gap:20px;
 
 }
 
 
 
-button {
+button{
 
-background:#2563eb;
+    background:#2563eb;
+    color:white;
+    padding:10px 15px;
+    border:none;
+    border-radius:6px;
+    cursor:pointer;
 
-color:white;
+}
 
-padding:10px;
 
-border:none;
+button:hover{
 
-border-radius:5px;
+    background:#1d4ed8;
 
 }
 
 
 
-.danger {
+input,textarea{
 
-color:red;
-
-}
-
-
-.warning {
-
-color:orange;
+    width:90%;
+    padding:10px;
+    margin:5px;
+    border-radius:5px;
 
 }
 
 
-.success {
 
-color:lime;
+.danger{
+
+    color:#ef4444;
 
 }
 
 
-.active {
+.warning{
 
-color:#22c55e;
+    color:#f59e0b;
+
+}
+
+
+.success{
+
+    color:#22c55e;
+
+}
+
+
+
+
+.chart-container{
+
+
+    background:white;
+    padding:20px;
+    border-radius:10px;
+    height:350px;
+
+}
+
+
+
+
+.chart-container canvas{
+
+
+    width:100% !important;
+    height:280px !important;
 
 }
 
@@ -98,50 +130,38 @@ color:#22c55e;
 
 
 
+
 <body>
 
 
 
+
 <h1>
+
 🛡️ AI SOC Analyst Dashboard
+
 </h1>
 
 
 
 
-
 <div class="card">
 
 
-<h2>
-⚡ LIVE SOC MONITOR
-</h2>
+<a href="/monitor">
 
 
-<p>
-Status:
-<span class="active">
-ACTIVE
-</span>
-</p>
+<button>
+
+⚡ Real-Time SOC Monitor
+
+</button>
 
 
-<p>
-Real-Time Alert Stream:
-Connected ✅
-</p>
-
-
-<div id="live-alert">
-
-Waiting for alerts...
-
-</div>
+</a>
 
 
 </div>
-
-
 
 
 
@@ -153,25 +173,92 @@ Waiting for alerts...
 
 
 <h2>
+
 📊 Dashboard Statistics
+
 </h2>
 
 
-<p>
-Total Incidents:
+
+
+<div class="grid">
+
+
+<div>
+
+<h3>Total Incidents</h3>
+
+<h1 id="total_incidents">
+
 {{dashboard.total}}
-</p>
+
+</h1>
+
+</div>
 
 
-<p>
-High Severity:
+
+
+<div>
+
+<h3>High Severity</h3>
+
+<h1 id="high_incidents">
+
 {{dashboard.high}}
-</p>
+
+</h1>
+
+</div>
+
+
+
+
+<div>
+
+<h3>Open Cases</h3>
+
+<h1 id="open_incidents">
+
+{{dashboard.open}}
+
+</h1>
+
+</div>
+
+
+
+
+<div>
+
+<h3>Average Risk</h3>
+
+<h1 id="average_risk">
+
+{{analytics.average_risk}}
+
+</h1>
+
+</div>
+
+
+
+</div>
+
+
 
 
 <p>
-Open Cases:
-{{dashboard.open}}
+
+Last Update:
+
+<span id="last_update">
+
+--
+
+</span>
+
+
 </p>
 
 
@@ -189,32 +276,53 @@ Open Cases:
 
 
 <h2>
+
 📈 SOC Analytics
+
 </h2>
 
 
-<p>
-Average Risk Score:
-{{analytics.average_risk}}
-</p>
+
+<div class="grid">
 
 
-<p>
-Maximum Risk Score:
-{{analytics.maximum_risk}}
-</p>
+<div class="chart-container">
 
 
-<p>
-Investigating:
-{{analytics.investigating}}
-</p>
+<h3>
+
+Severity Distribution
+
+</h3>
 
 
-<p>
-Resolved:
-{{analytics.resolved}}
-</p>
+<canvas id="severityChart"></canvas>
+
+
+</div>
+
+
+
+
+
+<div class="chart-container">
+
+
+<h3>
+
+Attack Types
+
+</h3>
+
+
+<canvas id="attackChart"></canvas>
+
+
+</div>
+
+
+
+</div>
 
 
 </div>
@@ -227,10 +335,18 @@ Resolved:
 
 
 
+<div class="card">
+
+
 <h2>
+
 🚨 Security Alerts
+
 </h2>
 
+
+
+{% if alerts %}
 
 
 
@@ -241,67 +357,61 @@ Resolved:
 
 
 <h3>
+
 {{alert.type}}
+
 </h3>
 
 
 <p>
+
 Severity:
+
 {{alert.severity}}
+
 </p>
 
 
 <p>
+
 Risk Score:
+
 {{alert.score}}
+
 </p>
 
 
 <p>
+
 MITRE:
+
 {{alert.mitre}}
+
 </p>
-
-
-<h3>
-🌐 Threat Intelligence
-</h3>
-
-
-<p>
-Domain:
-{{alert.threat_intel.domain}}
-</p>
-
-
-<p>
-Status:
-{{alert.threat_intel.status}}
-</p>
-
-
-<h3>
-Recommendations
-</h3>
-
-
-<ul>
-
-{% for item in alert.recommendation %}
-
-<li>
-{{item}}
-</li>
-
-{% endfor %}
-
-</ul>
 
 
 </div>
 
 
 {% endfor %}
+
+
+
+{% else %}
+
+
+<p class="success">
+
+✅ No active alerts
+
+</p>
+
+
+
+{% endif %}
+
+
+</div>
 
 
 
@@ -312,8 +422,12 @@ Recommendations
 
 
 <h2>
+
 📁 Incident History
+
 </h2>
+
+
 
 
 
@@ -321,83 +435,239 @@ Recommendations
 {% for incident in incidents %}
 
 
+
 <div class="card">
 
 
 <h3>
+
 🚨 Incident #{{incident[0]}}
+
 </h3>
 
 
+
 <p>
-Time:
+
+<b>Time:</b>
+
 {{incident[1]}}
+
 </p>
 
 
+
 <p>
-Threat:
+
+<b>Threat:</b>
+
 {{incident[2]}}
+
 </p>
 
 
+
 <p>
-Severity:
+
+<b>Severity:</b>
+
 {{incident[3]}}
+
 </p>
 
 
+
 <p>
-Risk Score:
+
+<b>Risk Score:</b>
+
 {{incident[4]}}
+
 </p>
+
 
 
 <p>
-MITRE:
+
+<b>MITRE:</b>
+
 {{incident[5]}}
+
 </p>
 
 
 
 
-{% if incident[6]=="OPEN" %}
+<h3>
 
-<p class="danger">
-🔴 {{incident[6]}}
+📌 Status
+
+</h3>
+
+
+
+<p>
+
+{{incident[6]}}
+
 </p>
 
 
-{% elif incident[6]=="INVESTIGATING" %}
-
-<p class="warning">
-🟡 {{incident[6]}}
-</p>
-
-
-{% else %}
-
-<p class="success">
-🟢 {{incident[6]}}
-</p>
-
-
-{% endif %}
 
 
 
 
-<a href="/investigate/{{incident[0]}}">
+<a href="/update_status/{{incident[0]}}/OPEN">
 
 <button>
-🤖 AI Investigation Report
+
+🔴 Open
+
 </button>
 
 </a>
 
 
 
+
+<a href="/update_status/{{incident[0]}}/INVESTIGATING">
+
+<button>
+
+🟡 Investigating
+
+</button>
+
+</a>
+
+
+
+
+
+<a href="/update_status/{{incident[0]}}/RESOLVED">
+
+<button>
+
+🟢 Resolved
+
+</button>
+
+</a>
+
+
+
+
+
+
+
+<h3>
+
+👤 Assign Analyst
+
+</h3>
+
+
+
+
+<form method="POST" action="/assign/{{incident[0]}}">
+
+
+<input
+
+name="analyst"
+
+placeholder="Analyst name"
+
+>
+
+
+<button>
+
+Assign
+
+</button>
+
+
+</form>
+
+
+
+
+
+
+
+
+<h3>
+
+📝 Investigation Notes
+
+</h3>
+
+
+
+
+<form method="POST" action="/notes/{{incident[0]}}">
+
+
+<textarea
+
+name="notes"
+
+placeholder="Write investigation notes"
+
+></textarea>
+
+
+
+<button>
+
+Save Notes
+
+</button>
+
+
+</form>
+
+
+
+
+
+
+
+
+<a href="/investigate/{{incident[0]}}">
+
+
+<button>
+
+🤖 AI Investigation Report
+
+</button>
+
+
+</a>
+
+
+
+
+
+
+<a href="/download_report/{{incident[0]}}">
+
+
+<button>
+
+📄 Download PDF
+
+</button>
+
+
+</a>
+
+
+
 </div>
+
 
 
 {% endfor %}
@@ -410,9 +680,13 @@ MITRE:
 
 <a href="/logout">
 
+
 <button>
+
 Logout
+
 </button>
+
 
 </a>
 
@@ -423,51 +697,20 @@ Logout
 
 
 
-<script>
 
+<!-- CHART.JS -->
 
-const socket = io();
-
-
-
-socket.on(
-
-"new_alert",
-
-function(alert){
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 
 
-document.getElementById(
-"live-alert"
-).innerHTML =
+<!-- SOC DASHBOARD SCRIPT -->
 
-
-"<h3>🚨 NEW ALERT</h3>" +
-
-"<p>Threat: " + alert.threat + "</p>" +
-
-"<p>Severity: " + alert.severity + "</p>" +
-
-"<p>Risk Score: " + alert.score + "</p>" +
-
-"<p>Status: " + alert.status + "</p>";
-
-
-
-}
-
-);
-
-
-
-</script>
-
-
-
+<script src="{{ url_for('static', filename='dashboard.js') }}"></script>
 
 
 
 </body>
+
 
 </html>

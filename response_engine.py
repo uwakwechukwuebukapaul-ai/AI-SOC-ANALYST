@@ -1,20 +1,24 @@
 from datetime import datetime
 
 
-def generate_response(alert):
+
+def automated_response(alert):
+
 
     actions = []
 
-    severity = alert.get("severity", "")
-    threat = alert.get("type", "").lower()
-    intel = alert.get("threat_intel", {})
+
+    threat = alert.get(
+        "type",
+        ""
+    ).lower()
 
 
-    # Phishing response
 
     if "phishing" in threat:
 
-        actions.extend([
+
+        actions = [
 
             "Block malicious sender",
 
@@ -22,102 +26,66 @@ def generate_response(alert):
 
             "Reset affected credentials",
 
-            "Enable MFA"
+            "Enable MFA",
 
-        ])
-
-
-
-    # Threat intelligence response
-
-    if intel:
-
-        status = intel.get("status")
-
-
-        if status == "MALICIOUS":
-
-            actions.append(
-
-                "Block malicious domain"
-
-            )
-
-
-        elif status == "SUSPICIOUS":
-
-            actions.append(
-
-                "Investigate suspicious domain"
-
-            )
-
-
-
-    # High severity response
-
-    if severity == "HIGH":
-
-        actions.append(
+            "Investigate suspicious domain",
 
             "Escalate incident to SOC analyst"
 
-        )
+        ]
+
+
+    else:
+
+
+        actions = [
+
+            "Investigate alert",
+
+            "Collect evidence",
+
+            "Escalate to SOC analyst"
+
+        ]
+
 
 
 
     return {
 
 
-        "incident": alert.get("type"),
+        "incident":
 
-        "time": str(datetime.now()),
-
-        "severity": severity,
-
-        "automated_actions": actions,
-
-        "status": "CONTAINMENT INITIATED"
-
-    }
+        alert.get("type"),
 
 
+        "time":
+
+        str(datetime.now()),
 
 
+        "severity":
 
-if __name__ == "__main__":
-
-
-    test_alert = {
+        alert.get("severity"),
 
 
-        "type": "Possible phishing attempt detected",
+        "automated_actions":
 
-        "severity": "HIGH",
-
-        "threat_intel": {
+        actions,
 
 
-            "domain": "micr0soft-login.xyz",
+        "status":
 
-            "status": "SUSPICIOUS"
-
-        }
+        "CONTAINMENT INITIATED"
 
     }
 
 
 
-    result = generate_response(test_alert)
 
 
+# Compatibility with older files
 
-    print("⚡ AUTOMATED RESPONSE ENGINE")
+def generate_response(alert):
 
-    print("=" * 40)
-
-
-
-    for key, value in result.items():
-
-        print(key, ":", value)
+    return automated_response(alert)

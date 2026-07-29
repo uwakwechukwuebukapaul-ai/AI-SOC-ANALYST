@@ -1,22 +1,32 @@
 import sqlite3
 import json
-
 from datetime import datetime
 
 
-DB_NAME = "soc_incidents.db"
+DB_NAME = "soc.db"
+
+
+# ===============================
+# DATABASE CONNECTION
+# ===============================
+
+def get_connection():
+
+    conn = sqlite3.connect(DB_NAME)
+    conn.row_factory = sqlite3.Row
+
+    return conn
 
 
 
-
+# ===============================
+# CREATE TABLE
+# ===============================
 
 def create_database():
 
-    conn = sqlite3.connect(DB_NAME)
-
+    conn = get_connection()
     cursor = conn.cursor()
-
-
 
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS incidents (
@@ -29,152 +39,131 @@ def create_database():
 
         severity TEXT,
 
-        score INTEGER,
+        risk_score INTEGER,
 
         mitre TEXT,
 
-        status TEXT,
-
         response_status TEXT,
 
-        response_actions TEXT,
+        status TEXT DEFAULT 'OPEN',
 
-        response_time TEXT,
+        evidence TEXT DEFAULT '',
 
-        assigned_to TEXT,
+        actions TEXT DEFAULT '[]',
 
-        investigation_notes TEXT
+        analyst TEXT DEFAULT '',
+
+        notes TEXT DEFAULT ''
 
     )
     """)
 
-
-
-    # Upgrade existing database
-
-    cursor.execute(
-        "PRAGMA table_info(incidents)"
-    )
-
-
-    columns = [
-
-        column[1]
-
-        for column in cursor.fetchall()
-
-    ]
-
-
-
-    upgrades = {
-
-        "assigned_to": "TEXT",
-
-        "investigation_notes": "TEXT"
-
-    }
-
-
-
-    for column, datatype in upgrades.items():
-
-        if column not in columns:
-
-            cursor.execute(
-
-                f"ALTER TABLE incidents ADD COLUMN {column} {datatype}"
-
-            )
-
-
-
     conn.commit()
-
     conn.close()
 
 
 
+# ===============================
+# SAVE INCIDENT FINAL FIX
+# ===============================
 
+def save_incident(*args, **kwargs):
 
-
-def incident_exists(alert):
-
-
-    conn = sqlite3.connect(DB_NAME)
-
+    conn = get_connection()
     cursor = conn.cursor()
 
 
+    # Dictionary input support
 
-    cursor.execute(
+    if len(args) == 1 and isinstance(args[0], dict):
 
-        """
+        incident = args[0]
 
-        SELECT id
-
-        FROM incidents
-
-        WHERE threat = ?
-
-        AND severity = ?
-
-        AND score = ?
-
-        """,
-
-        (
-
-            alert.get("type"),
-
-            alert.get("severity"),
-
-            alert.get("score")
-
+        time = incident.get(
+            "time",
+            datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         )
 
-    )
+        threat = incident.get(
+            "threat",
+            "Unknown"
+        )
+
+        severity = incident.get(
+            "severity",
+            "LOW"
+        )
+
+        risk_score = incident.get(
+            "risk_score",
+            0
+        )
+
+        mitre = incident.get(
+            "mitre",
+            "N/A"
+        )
+
+        response_status = incident.get(
+            "response_status",
+            "INVESTIGATION REQUIRED"
+        )
+
+        actions = incident.get(
+            "actions",
+            []
+        )
+
+
+    else:
+
+        # soc_pipeline.py format:
+        #
+        # time
+        # threat
+        # severity
+        # risk_score
+        # mitre
+        # response_status
+        # actions
+
+
+        time = args[0] if len(args) > 0 else datetime.now()
+
+        threat = args[1] if len(args) > 1 else "Unknown"
+
+        severity = args[2] if len(args) > 2 else "LOW"
+
+        risk_score = args[3] if len(args) > 3 else 0
+
+        mitre = args[4] if len(args) > 4 else "N/A"
+
+        response_status = args[5] if len(args) > 5 else "INVESTIGATION REQUIRED"
+
+        actions = args[6] if len(args) > 6 else []
 
 
 
-    result = cursor.fetchone()
+    # Fix risk score type
+
+    try:
+        risk_score = int(risk_score)
+
+    except:
+
+        risk_score = 0
 
 
 
-    conn.close()
+    # Fix actions storage
 
+    if isinstance(actions, list):
 
+        actions = json.dumps(actions)
 
-    return result is not None
+    else:
 
-
-
-
-
-
-
-def save_incident(alert):
-
-
-    if incident_exists(alert):
-
-        return False
-
-
-
-    conn = sqlite3.connect(DB_NAME)
-
-    cursor = conn.cursor()
-
-
-
-    response = alert.get(
-
-        "response",
-
-        {}
-
-    )
+        actions = str(actions)
 
 
 
@@ -190,74 +179,43 @@ def save_incident(alert):
 
         severity,
 
-        score,
+        risk_score,
 
         mitre,
 
-        status,
-
         response_status,
 
-        response_actions,
+        status,
 
-        response_time,
+        evidence,
 
-        assigned_to,
-
-        investigation_notes
+        actions
 
     )
 
-
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    VALUES (?,?,?,?,?,?,?,?,?)
 
     """,
 
     (
 
-        str(datetime.now()),
+        str(time),
 
-        alert.get("type"),
+        str(threat),
 
-        alert.get("severity"),
+        str(severity),
 
-        alert.get("score"),
+        risk_score,
 
-        alert.get("mitre"),
+        str(mitre),
+
+        str(response_status),
 
         "OPEN",
 
-        response.get(
+        "",
 
-            "status",
-
-            "NOT STARTED"
-
-        ),
-
-        json.dumps(
-
-            response.get(
-
-                "automated_actions",
-
-                []
-
-            )
-
-        ),
-
-        response.get(
-
-            "time",
-
-            str(datetime.now())
-
-        ),
-
-        "Unassigned",
-
-        "No investigation notes yet"
+        actions
 
     ))
 
@@ -267,76 +225,171 @@ def save_incident(alert):
 
     conn.close()
 
-
-
     return True
 
 
 
 
-
-
+# ===============================
+# GET INCIDENTS
+# ===============================
 
 def get_incidents():
 
-    conn = sqlite3.connect(DB_NAME)
+    conn = get_connection()
 
     cursor = conn.cursor()
 
+    cursor.execute("""
+    SELECT *
+    FROM incidents
+    ORDER BY id DESC
+    """)
 
-
-    cursor.execute(
-
-        "SELECT * FROM incidents ORDER BY id DESC"
-
-    )
-
-
-    data = cursor.fetchall()
-
+    rows = cursor.fetchall()
 
     conn.close()
 
 
-    return data
+    return [
+        dict(row)
+        for row in rows
+    ]
+
+
+
+# ===============================
+# GET SINGLE INCIDENT
+# ===============================
+
+def get_incident(id):
+
+    conn = get_connection()
+
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        SELECT *
+        FROM incidents
+        WHERE id=?
+        """,
+        (id,)
+    )
+
+    row = cursor.fetchone()
+
+    conn.close()
+
+
+    if row:
+
+        return dict(row)
+
+    return None
 
 
 
 
+# ===============================
+# DASHBOARD STATISTICS
+# ===============================
+
+def dashboard_stats():
+
+    incidents = get_incidents()
+
+
+    total = len(incidents)
+
+    high = 0
+
+    open_cases = 0
+
+    risk_total = 0
 
 
 
-def update_incident_status(incident_id, new_status):
+    for incident in incidents:
 
 
-    conn = sqlite3.connect(DB_NAME)
+        if str(
+            incident["severity"]
+        ).upper() == "HIGH":
+
+            high += 1
+
+
+
+        if incident["status"] != "RESOLVED":
+
+            open_cases += 1
+
+
+
+        try:
+
+            risk_total += int(
+                incident["risk_score"]
+            )
+
+        except:
+
+            pass
+
+
+
+    average = 0
+
+
+    if total > 0:
+
+        average = round(
+            risk_total / total,
+            2
+        )
+
+
+    return {
+
+        "total": total,
+
+        "high": high,
+
+        "open": open_cases,
+
+        "average_risk": average
+
+    }
+
+
+
+
+# ===============================
+# UPDATE STATUS
+# ===============================
+
+def update_status(id, status):
+
+    conn = get_connection()
 
     cursor = conn.cursor()
 
 
+    cursor.execute("""
 
-    cursor.execute(
+    UPDATE incidents
 
-        """
+    SET status=?
 
-        UPDATE incidents
+    WHERE id=?
 
-        SET status = ?
+    """,
 
-        WHERE id = ?
-
-        """,
-
-        (
-
-            new_status,
-
-            incident_id
-
-        )
-
-    )
-
+    (
+        status,
+        id
+    ))
 
 
     conn.commit()
@@ -346,41 +399,31 @@ def update_incident_status(incident_id, new_status):
 
 
 
+# ===============================
+# ASSIGN ANALYST
+# ===============================
 
+def assign_analyst(id, analyst):
 
-
-
-def assign_analyst(incident_id, analyst):
-
-
-    conn = sqlite3.connect(DB_NAME)
+    conn = get_connection()
 
     cursor = conn.cursor()
 
 
+    cursor.execute("""
 
-    cursor.execute(
+    UPDATE incidents
 
-        """
+    SET analyst=?
 
-        UPDATE incidents
+    WHERE id=?
 
-        SET assigned_to = ?
+    """,
 
-        WHERE id = ?
-
-        """,
-
-        (
-
-            analyst,
-
-            incident_id
-
-        )
-
-    )
-
+    (
+        analyst,
+        id
+    ))
 
 
     conn.commit()
@@ -390,40 +433,31 @@ def assign_analyst(incident_id, analyst):
 
 
 
+# ===============================
+# NOTES
+# ===============================
 
+def add_notes(id, notes):
 
-
-def add_investigation_notes(incident_id, notes):
-
-
-    conn = sqlite3.connect(DB_NAME)
+    conn = get_connection()
 
     cursor = conn.cursor()
 
 
+    cursor.execute("""
 
-    cursor.execute(
+    UPDATE incidents
 
-        """
+    SET notes=?
 
-        UPDATE incidents
+    WHERE id=?
 
-        SET investigation_notes = ?
+    """,
 
-        WHERE id = ?
-
-        """,
-
-        (
-
-            notes,
-
-            incident_id
-
-        )
-
-    )
-
+    (
+        notes,
+        id
+    ))
 
 
     conn.commit()
@@ -433,13 +467,18 @@ def add_investigation_notes(incident_id, notes):
 
 
 
+# compatibility
+
+def save_notes(id, notes):
+
+    add_notes(
+        id,
+        notes
+    )
 
 
 
-if __name__ == "__main__":
 
+# START DATABASE
 
-    create_database()
-
-
-    print("✅ SOC Database Ready")
+create_database()
