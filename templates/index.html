@@ -9,6 +9,9 @@ AI SOC Dashboard
 </title>
 
 
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+
 <style>
 
 body {
@@ -51,6 +54,8 @@ border:none;
 
 border-radius:5px;
 
+cursor:pointer;
+
 }
 
 
@@ -62,11 +67,13 @@ color:orange;
 }
 
 
+
 .danger {
 
 color:red;
 
 }
+
 
 
 .success {
@@ -76,10 +83,24 @@ color:lime;
 }
 
 
+
+canvas {
+
+background:#ffffff;
+
+border-radius:10px;
+
+padding:10px;
+
+}
+
+
+
 </style>
 
 
 </head>
+
 
 
 <body>
@@ -96,9 +117,11 @@ color:lime;
 
 <div class="card">
 
+
 <h2>
 📊 Dashboard Statistics
 </h2>
+
 
 
 <p>
@@ -107,10 +130,12 @@ Total Incidents:
 </p>
 
 
+
 <p>
 High Severity:
 {{dashboard.high}}
 </p>
+
 
 
 <p>
@@ -120,6 +145,7 @@ Open Cases:
 
 
 </div>
+
 
 
 
@@ -145,28 +171,42 @@ Total Incidents:
 
 
 <p>
-High Severity:
+HIGH:
 {{analytics.high}}
 </p>
 
 
 
 <p>
-Open Cases:
+MEDIUM:
+{{analytics.medium}}
+</p>
+
+
+
+<p>
+LOW:
+{{analytics.low}}
+</p>
+
+
+
+<p>
+OPEN:
 {{analytics.open}}
 </p>
 
 
 
 <p>
-Investigating:
+INVESTIGATING:
 {{analytics.investigating}}
 </p>
 
 
 
 <p>
-Resolved:
+RESOLVED:
 {{analytics.resolved}}
 </p>
 
@@ -198,30 +238,28 @@ Maximum Risk Score:
 
 
 <h2>
-🎯 Attack Types
+📊 Security Visualization
 </h2>
 
 
-<ul>
+
+<canvas id="severityChart"></canvas>
 
 
-{% for attack,count in analytics.attack_types.items() %}
+<br><br>
 
 
-<li>
-
-{{attack}} : {{count}}
-
-</li>
+<canvas id="statusChart"></canvas>
 
 
-{% endfor %}
+<br><br>
 
 
-</ul>
+<canvas id="attackChart"></canvas>
 
 
 </div>
+
 
 
 
@@ -237,44 +275,37 @@ Maximum Risk Score:
 
 
 
-
 {% for alert in alerts %}
+
 
 
 <div class="card">
 
 
+
 <h3>
-
 {{alert.type}}
-
 </h3>
 
 
 
 <p>
-
 Severity:
 {{alert.severity}}
-
 </p>
 
 
 
 <p>
-
 Risk Score:
 {{alert.score}}
-
 </p>
 
 
 
 <p>
-
 MITRE:
 {{alert.mitre}}
-
 </p>
 
 
@@ -288,37 +319,29 @@ MITRE:
 
 
 <p>
-
 Domain:
 {{alert.threat_intel.domain}}
-
 </p>
 
 
 
 <p>
-
 Status:
 {{alert.threat_intel.status}}
-
 </p>
 
 
 
 <p>
-
 Malicious:
 {{alert.threat_intel.malicious}}
-
 </p>
 
 
 
 <p>
-
 Suspicious:
 {{alert.threat_intel.suspicious}}
-
 </p>
 
 
@@ -352,7 +375,9 @@ Recommendations
 </div>
 
 
+
 {% endfor %}
+
 
 
 
@@ -368,8 +393,8 @@ Recommendations
 
 
 
-
 {% for incident in incidents %}
+
 
 
 
@@ -382,64 +407,60 @@ Recommendations
 
 
 
+
 <p>
 <b>Time:</b>
-
 {{incident[1]}}
-
 </p>
+
 
 
 
 <p>
 <b>Threat:</b>
-
 {{incident[2]}}
-
 </p>
+
 
 
 
 <p>
 <b>Severity:</b>
-
 {{incident[3]}}
-
 </p>
+
 
 
 
 <p>
 <b>Risk Score:</b>
-
 {{incident[4]}}
-
 </p>
+
 
 
 
 <p>
 <b>MITRE:</b>
-
 {{incident[5]}}
-
 </p>
 
 
 
 
+
 <h3>
-📌 Status
+📌 Incident Status
 </h3>
+
 
 
 
 {% if incident[6] == "OPEN" %}
 
+
 <p class="danger">
-
 🔴 {{incident[6]}}
-
 </p>
 
 
@@ -447,19 +468,15 @@ Recommendations
 
 
 <p class="warning">
-
 🟡 {{incident[6]}}
-
 </p>
 
 
-{% else %}
+{% elif incident[6] == "RESOLVED" %}
 
 
 <p class="success">
-
 🟢 {{incident[6]}}
-
 </p>
 
 
@@ -470,12 +487,53 @@ Recommendations
 
 
 
+
+<h3>
+🔄 Change Status
+</h3>
+
+
+<a href="/update_status/{{incident[0]}}/OPEN">
+
+<button>
+🔴 Open
+</button>
+
+</a>
+
+
+
+<a href="/update_status/{{incident[0]}}/INVESTIGATING">
+
+<button>
+🟡 Investigating
+</button>
+
+</a>
+
+
+
+<a href="/update_status/{{incident[0]}}/RESOLVED">
+
+<button>
+🟢 Resolved
+</button>
+
+</a>
+
+
+
+
+
+<br><br>
+
+
+
+
 <a href="/investigate/{{incident[0]}}">
 
 <button>
-
 🤖 AI Investigation Report
-
 </button>
 
 </a>
@@ -494,12 +552,11 @@ Recommendations
 
 
 
+
 <a href="/logout">
 
 <button>
-
 Logout
-
 </button>
 
 </a>
@@ -507,7 +564,167 @@ Logout
 
 
 
-</body>
 
+
+
+
+
+<script>
+
+
+new Chart(
+
+document.getElementById('severityChart'),
+
+{
+
+type:'bar',
+
+data:{
+
+labels:[
+
+'HIGH',
+
+'MEDIUM',
+
+'LOW'
+
+],
+
+
+datasets:[{
+
+label:'Severity Count',
+
+data:[
+
+{{analytics.high}},
+
+{{analytics.medium}},
+
+{{analytics.low}}
+
+]
+
+}]
+
+}
+
+}
+
+);
+
+
+
+
+
+
+
+
+new Chart(
+
+document.getElementById('statusChart'),
+
+{
+
+type:'doughnut',
+
+data:{
+
+labels:[
+
+'OPEN',
+
+'INVESTIGATING',
+
+'RESOLVED'
+
+],
+
+
+datasets:[{
+
+label:'Incident Status',
+
+data:[
+
+{{analytics.open}},
+
+{{analytics.investigating}},
+
+{{analytics.resolved}}
+
+]
+
+}]
+
+}
+
+}
+
+);
+
+
+
+
+
+
+
+
+
+new Chart(
+
+document.getElementById('attackChart'),
+
+{
+
+type:'pie',
+
+data:{
+
+labels:[
+
+{% for attack,count in analytics.attack_types.items() %}
+
+"{{attack}}",
+
+{% endfor %}
+
+],
+
+
+
+datasets:[{
+
+label:'Attack Types',
+
+data:[
+
+{% for attack,count in analytics.attack_types.items() %}
+
+{{count}},
+
+{% endfor %}
+
+]
+
+}]
+
+}
+
+}
+
+);
+
+
+
+</script>
+
+
+
+
+
+</body>
 
 </html>

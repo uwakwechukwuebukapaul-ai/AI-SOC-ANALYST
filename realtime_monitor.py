@@ -1,107 +1,122 @@
 import time
-import os
 from datetime import datetime
 
-from soc_pipeline import run_soc_pipeline
-
-
-LOG_FILE = "incident_logs.csv"
-
-
-def file_modified_time():
-
-    if os.path.exists(LOG_FILE):
-        return os.path.getmtime(LOG_FILE)
-
-    return 0
+from database import get_incidents
 
 
 
-def display_alert(alert):
+def get_live_alerts():
 
-    print("\n🚨 SECURITY ALERT")
-    print("=" * 40)
+    incidents = get_incidents()
 
-    print("Time:", datetime.now())
 
-    print("Threat:")
-    print(alert.get("type"))
+    alerts = []
 
-    print(
-        "Severity:",
-        alert.get("severity")
-    )
 
-    print(
-        "Risk Score:",
-        alert.get("score"),
-        "/100"
-    )
+    for incident in incidents:
 
-    print(
-        "MITRE ATT&CK:",
-        alert.get("mitre")
-    )
 
-    print("\nEvidence:")
-    print(alert.get("details"))
+        alerts.append({
 
-    print("\nRecommended Actions:")
+            "id": incident[0],
 
-    for action in alert.get("recommendation", []):
+            "time": incident[1],
 
-        print("-", action)
+            "threat": incident[2],
+
+            "severity": incident[3],
+
+            "score": incident[4],
+
+            "status": incident[6]
+
+        })
+
+
+    return alerts
+
+
 
 
 
 def monitor():
 
-    print("🛡️ AI SOC REAL-TIME MONITOR")
+    print("⚡ REAL-TIME SOC MONITOR")
+
     print("=" * 40)
 
-    print("Monitoring:", LOG_FILE)
 
-    last_change = file_modified_time()
+    previous_count = 0
+
 
 
     while True:
 
-        current_change = file_modified_time()
+
+        incidents = get_incidents()
 
 
-        if current_change != last_change:
-
-            print("\n⚠️ New log activity detected")
-
-            alerts = run_soc_pipeline()
+        current_count = len(incidents)
 
 
-            if alerts:
 
-                for alert in alerts:
-
-                    display_alert(alert)
+        if current_count > previous_count:
 
 
-            else:
-
-                print("✅ No threats detected")
+            print("\n🚨 NEW SECURITY ALERT")
 
 
-            last_change = current_change
+            latest = incidents[0]
 
 
-        time.sleep(5)
+            print(
+                "Threat:",
+                latest[2]
+            )
+
+
+            print(
+                "Severity:",
+                latest[3]
+            )
+
+
+            print(
+                "Risk Score:",
+                latest[4]
+            )
+
+
+            print(
+                "Status:",
+                latest[6]
+            )
+
+
+
+        previous_count = current_count
+
+
+
+        print(
+            "\n🟢 SOC Monitoring Active"
+        )
+
+
+        print(
+            "Last Check:",
+            datetime.now()
+        )
+
+
+
+        time.sleep(10)
+
+
+
 
 
 
 if __name__ == "__main__":
 
-    try:
-
-        monitor()
-
-
-    except KeyboardInterrupt:
-
-        print("\n\n🛑 SOC Monitor stopped")
+    monitor()
