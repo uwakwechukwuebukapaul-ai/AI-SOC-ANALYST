@@ -1,4 +1,6 @@
 import sqlite3
+import json
+
 from datetime import datetime
 
 
@@ -12,6 +14,8 @@ def create_database():
 
     cursor = conn.cursor()
 
+
+    # Create table if it does not exist
 
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS incidents (
@@ -28,10 +32,57 @@ def create_database():
 
         mitre TEXT,
 
-        status TEXT
+        status TEXT,
+
+        response_status TEXT,
+
+        response_actions TEXT,
+
+        response_time TEXT
 
     )
     """)
+
+
+
+    # Upgrade old databases automatically
+
+    cursor.execute(
+        "PRAGMA table_info(incidents)"
+    )
+
+    columns = [
+
+        column[1]
+
+        for column in cursor.fetchall()
+
+    ]
+
+
+
+    new_columns = {
+
+        "response_status": "TEXT",
+
+        "response_actions": "TEXT",
+
+        "response_time": "TEXT"
+
+    }
+
+
+
+    for column, datatype in new_columns.items():
+
+        if column not in columns:
+
+            cursor.execute(
+
+                f"ALTER TABLE incidents ADD COLUMN {column} {datatype}"
+
+            )
+
 
 
     conn.commit()
@@ -41,18 +92,63 @@ def create_database():
 
 
 
+
 def save_incident(alert):
+
 
     conn = sqlite3.connect(DB_NAME)
 
     cursor = conn.cursor()
 
 
-    cursor.execute("""
-    INSERT INTO incidents
-    (time, threat, severity, score, mitre, status)
 
-    VALUES (?, ?, ?, ?, ?, ?)
+    response = alert.get(
+
+        "response",
+
+        {}
+
+    )
+
+
+
+    actions = response.get(
+
+        "automated_actions",
+
+        []
+
+    )
+
+
+
+    cursor.execute("""
+
+    INSERT INTO incidents
+
+    (
+
+        time,
+
+        threat,
+
+        severity,
+
+        score,
+
+        mitre,
+
+        status,
+
+        response_status,
+
+        response_actions,
+
+        response_time
+
+    )
+
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
 
     """,
 
@@ -60,17 +156,44 @@ def save_incident(alert):
 
         str(datetime.now()),
 
+
         alert.get("type"),
+
 
         alert.get("severity"),
 
+
         alert.get("score"),
+
 
         alert.get("mitre"),
 
-        "OPEN"
+
+        "OPEN",
+
+
+        response.get(
+
+            "status",
+
+            "NOT STARTED"
+
+        ),
+
+
+        json.dumps(actions),
+
+
+        response.get(
+
+            "time",
+
+            str(datetime.now())
+
+        )
 
     ))
+
 
 
     conn.commit()
@@ -80,30 +203,42 @@ def save_incident(alert):
 
 
 
+
 def get_incidents():
+
 
     conn = sqlite3.connect(DB_NAME)
 
     cursor = conn.cursor()
 
 
+
     cursor.execute(
+
         "SELECT * FROM incidents ORDER BY id DESC"
+
     )
 
 
-    data = cursor.fetchall()
+
+    incidents = cursor.fetchall()
+
 
 
     conn.close()
 
 
-    return data
+
+    return incidents
+
+
 
 
 
 if __name__ == "__main__":
 
+
     create_database()
+
 
     print("✅ SOC Database Ready")
