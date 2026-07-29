@@ -4,58 +4,38 @@
 
 <head>
 
-<title>AI SOC Assistant</title>
-
+<title>
+AI SOC Analyst Dashboard
+</title>
 
 <style>
 
-body{
+body {
 
 background:#111;
 color:white;
 font-family:Arial;
-padding:30px;
 
 }
 
 
-.card{
+.card {
 
 background:#222;
-padding:25px;
+padding:20px;
+margin:20px;
 border-radius:10px;
 
 }
 
 
-input{
+.high {
 
-width:75%;
-padding:12px;
-
-}
-
-
-button{
-
-padding:12px;
-background:#00ff99;
-border:none;
-border-radius:8px;
-
-}
-
-
-pre{
-
-background:#333;
-padding:20px;
-white-space:pre-wrap;
+color:red;
 
 }
 
 </style>
-
 
 </head>
 
@@ -63,61 +43,56 @@ white-space:pre-wrap;
 <body>
 
 
-<h1>🤖 AI SOC Chat Assistant</h1>
+<h1>
+🛡️ AI SOC ANALYST DASHBOARD
+</h1>
 
 
 <div class="card">
 
-
-<form action="/chat" method="POST">
-
-
-<input
-
-type="text"
-
-name="question"
-
-placeholder="Ask your SOC assistant..."
-
-required
-
->
+<h2>
+🚨 Automated Threat Detection
+</h2>
 
 
-<button>
+{% for threat in threats %}
 
-Send
+<p class="high">
+{{ threat }}
+</p>
 
-</button>
+{% endfor %}
 
 
-</form>
+</div>
 
 
 
-{% if answer %}
+<div class="card">
 
-<h3>AI Response:</h3>
+<h2>
+Modules
+</h2>
 
-<pre>
+<p>
+✅ Threat Intelligence
+</p>
 
-{{answer}}
+<p>
+✅ Phishing Detection
+</p>
 
-</pre>
+<p>
+✅ MITRE ATT&CK Mapping
+</p>
 
+<p>
+✅ AI Investigation
+</p>
 
-{% endif %}
-
-
-
-<br>
-
-<a href="/" style="color:#00ff99">
-
-⬅ Back Dashboard
-
-</a>
+<p>
+✅ Automated Detection Engine
+</p>
 
 
 </div>

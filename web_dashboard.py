@@ -1,148 +1,47 @@
-from flask import Flask, render_template, request
-
-from soc_analytics import (
-    total_incidents,
-    risk_summary,
-    latest_incident
-)
-
-from threat_intel import check_ioc
-
+from flask import Flask, render_template
+from detection_engine import detect_threats
 from ai_investigator import investigate
-
-from soc_chat import ask_soc
 
 
 app = Flask(__name__)
 
 
-@app.route("/", methods=["GET"])
+@app.route("/")
 def home():
 
-    total = total_incidents()
-
-    summary = risk_summary()
-
-    latest = latest_incident()
-
-
-    reputation = {
-        "status": "No IOC checked"
-    }
-
-
-    investigation = None
-
-
-    if latest:
-
-        reputation = check_ioc(
-            latest["sender"]
-        )
-
-
-        investigation = investigate(
-            latest
-        )
-
-
-    return render_template(
-
-        "index.html",
-
-        total=total,
-
-        summary=summary,
-
-        latest=latest,
-
-        reputation=reputation,
-
-        investigation=investigation
-
+    threats = detect_threats(
+        "incident_logs.csv"
     )
 
+    return render_template(
+        "index.html",
+        threats=threats
+    )
 
 
 @app.route("/investigate")
-def investigate_page():
+def investigation():
 
-    latest = latest_incident()
-
-
-    if latest:
-
-        report = investigate(latest)
-
-    else:
-
-        report = {
-
-            "incident": {
-
-                "sender": "None",
-
-                "subject": "None",
-
-                "risk": "None"
-
-            },
-
-            "analysis": [
-
-                "No incident available"
-
-            ],
-
-            "recommendation": [
-
-                "Upload security logs"
-
-            ],
-
-            "mitre": "None"
-
-        }
+    alert = {
+        "sender": "security@micr0soft-login.xyz",
+        "subject": "URGENT: Verify your account",
+        "risk": "HIGH"
+    }
 
 
-    return render_template(
+    result = investigate(alert)
 
-        "investigation.html",
 
-        report=report
-
-    )
+    return str(result)
 
 
 
-@app.route("/chat", methods=["GET", "POST"])
+@app.route("/chat")
 def chat():
 
-    answer = None
-
-
-    if request.method == "POST":
-
-        question = request.form.get(
-            "question"
-        )
-
-
-        if question:
-
-            answer = ask_soc(
-                question
-            )
-
-
     return render_template(
-
-        "chat.html",
-
-        answer=answer
-
+        "chat.html"
     )
-
 
 
 if __name__ == "__main__":
