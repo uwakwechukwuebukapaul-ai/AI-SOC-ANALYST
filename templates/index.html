@@ -1,66 +1,51 @@
 <!DOCTYPE html>
-
 <html>
 
 <head>
 
-<title>
-AI SOC Analyst Dashboard
-</title>
-
+<title>AI SOC Analyst Dashboard</title>
 
 <style>
 
 body {
-
-background:#111;
-color:white;
-font-family:Arial;
-padding:20px;
-
+    font-family: Arial;
+    background: #111;
+    color: white;
+    padding: 30px;
 }
-
 
 .card {
 
-background:#222;
-padding:20px;
-margin-bottom:20px;
-border-radius:10px;
+    background: #222;
+    padding: 20px;
+    margin: 15px;
+    border-radius: 10px;
 
 }
 
 
 .high {
 
-color:red;
+    border-left: 8px solid red;
 
 }
 
 
 .medium {
 
-color:orange;
-
-}
-
-
-.critical {
-
-color:red;
-font-weight:bold;
+    border-left: 8px solid orange;
 
 }
 
 
 .low {
 
-color:green;
+    border-left: 8px solid green;
 
 }
 
-</style>
 
+</style>
 
 </head>
 
@@ -68,67 +53,28 @@ color:green;
 <body>
 
 
-<h1>
-🛡️ AI SOC ANALYST DASHBOARD
-</h1>
+<h1>🛡️ AI SOC Analyst Dashboard</h1>
 
 
-<div class="card">
+<h2>Detected Security Alerts</h2>
 
-<h2>
-🚨 Security Alerts
-</h2>
-
-
-{% if alerts %}
 
 
 {% for alert in alerts %}
 
 
-<hr>
+<div class="card {{ alert.severity.lower() }}">
 
 
 <h3>
-{{ alert.type }}
+🚨 {{ alert.type }}
 </h3>
 
 
 <p>
 <b>Severity:</b>
-
-{% if alert.severity == "CRITICAL" %}
-
-<span class="critical">
 {{ alert.severity }}
-</span>
-
-
-{% elif alert.severity == "HIGH" %}
-
-<span class="high">
-{{ alert.severity }}
-</span>
-
-
-{% elif alert.severity == "MEDIUM" %}
-
-<span class="medium">
-{{ alert.severity }}
-</span>
-
-
-{% else %}
-
-<span class="low">
-{{ alert.severity }}
-</span>
-
-
-{% endif %}
-
 </p>
-
 
 
 <p>
@@ -144,14 +90,7 @@ color:green;
 
 
 <p>
-<b>Evidence:</b>
-{{ alert.details }}
-</p>
-
-
-
-<p>
-<b>Recommended Response:</b>
+<b>Recommended Actions:</b>
 </p>
 
 
@@ -159,49 +98,17 @@ color:green;
 
 {% for action in alert.recommendation %}
 
-<li>
-{{ action }}
-</li>
+<li>{{ action }}</li>
 
 {% endfor %}
 
 </ul>
 
 
+</div>
+
 
 {% endfor %}
-
-
-{% else %}
-
-
-<p>
-✅ No threats detected
-</p>
-
-
-{% endif %}
-
-
-</div>
-
-
-
-<div class="card">
-
-<h2>
-🤖 AI SOC Modules
-</h2>
-
-<p>✅ Ollama Local AI</p>
-<p>✅ Threat Detection Engine</p>
-<p>✅ Log Ingestion</p>
-<p>✅ MITRE ATT&CK Mapping</p>
-<p>✅ Risk Scoring</p>
-<p>✅ Incident Response Recommendations</p>
-
-
-</div>
 
 
 </body>
