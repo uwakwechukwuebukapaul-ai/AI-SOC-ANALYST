@@ -22,11 +22,9 @@ def extract_domain(text):
         text
     )
 
-
     if urls:
 
         return urls[0]
-
 
     return None
 
@@ -66,14 +64,14 @@ def check_domain(domain):
     )
 
 
-    if response.status_code != 200:
 
+    if response.status_code != 200:
 
         return {
 
             "domain": domain,
 
-            "status": "Not Found"
+            "status": "NOT FOUND"
 
         }
 
@@ -87,22 +85,33 @@ def check_domain(domain):
 
 
 
-    malicious = stats.get(
+    malicious = stats.get("malicious", 0)
 
-        "malicious",
+    suspicious = stats.get("suspicious", 0)
 
-        0
-
-    )
+    harmless = stats.get("harmless", 0)
 
 
-    suspicious = stats.get(
 
-        "suspicious",
+    # Improved SOC verdict
 
-        0
+    if malicious > 0:
 
-    )
+        verdict = "MALICIOUS"
+
+
+
+    elif suspicious > 0:
+
+        verdict = "SUSPICIOUS"
+
+
+
+    else:
+
+        verdict = "CLEAN"
+
+
 
 
     return {
@@ -114,15 +123,9 @@ def check_domain(domain):
 
         "suspicious": suspicious,
 
-        "harmless": stats.get("harmless",0),
+        "harmless": harmless,
 
-        "status":
-
-            "MALICIOUS"
-
-            if malicious > 0
-
-            else "CLEAN"
+        "status": verdict
 
     }
 
@@ -134,6 +137,7 @@ def analyze_indicator(text):
 
 
     domain = extract_domain(text)
+
 
 
     if not domain:
@@ -169,10 +173,11 @@ if __name__ == "__main__":
 
     print("🌐 THREAT INTELLIGENCE RESULT")
 
-    print("="*40)
+    print("=" * 40)
 
 
-    for key,value in result.items():
+
+    for key, value in result.items():
 
         print(
 
