@@ -5,115 +5,65 @@
 
 <title>AI SOC Analyst Dashboard</title>
 
-<meta http-equiv="refresh" content="10">
-
 <style>
 
 body {
 
-    font-family: Arial, sans-serif;
+font-family: Arial;
 
-    background: #0f172a;
+background:#0f172a;
 
-    color: white;
+color:white;
 
-    padding: 25px;
-
-}
-
-
-h1 {
-
-    text-align: center;
+padding:20px;
 
 }
 
 
+.card {
 
-.container {
+background:#1e293b;
 
-    display: flex;
+padding:20px;
 
-    gap: 20px;
+margin:15px;
 
-    flex-wrap: wrap;
-
-    justify-content: center;
+border-radius:10px;
 
 }
 
+
+.grid {
+
+display:flex;
+
+gap:15px;
+
+flex-wrap:wrap;
+
+}
 
 
 .box {
 
-    background: #1e293b;
+background:#334155;
 
-    padding: 20px;
+padding:20px;
 
-    border-radius: 10px;
+border-radius:10px;
 
-    width: 220px;
+width:180px;
 
-    text-align: center;
-
-}
-
-
-
-.alert {
-
-    background: #1e293b;
-
-    margin: 20px;
-
-    padding: 20px;
-
-    border-radius: 10px;
-
-    border-left: 8px solid red;
+text-align:center;
 
 }
-
 
 
 .high {
 
-    color: #ff4444;
+color:red;
 
 }
-
-
-
-.medium {
-
-    color: orange;
-
-}
-
-
-
-.low {
-
-    color: lightgreen;
-
-}
-
-
-
-button {
-
-    padding: 10px 20px;
-
-    background: #2563eb;
-
-    color: white;
-
-    border: none;
-
-    border-radius: 5px;
-
-}
-
 
 
 </style>
@@ -127,32 +77,32 @@ button {
 <h1>🛡️ AI SOC Analyst Dashboard</h1>
 
 
-<div class="container">
+<div class="grid">
 
 
 <div class="box">
 
-<h2>{{ alerts|length }}</h2>
+<h2>{{dashboard.total}}</h2>
 
-<p>Total Alerts</p>
-
-</div>
-
-
-<div class="box">
-
-<h2>🚨</h2>
-
-<p>Live Monitoring</p>
+<p>Total Incidents</p>
 
 </div>
 
 
 <div class="box">
 
-<h2>AI</h2>
+<h2>{{dashboard.high}}</h2>
 
-<p>Threat Analysis</p>
+<p>High Severity</p>
+
+</div>
+
+
+<div class="box">
+
+<h2>{{dashboard.open}}</h2>
+
+<p>Open Cases</p>
 
 </div>
 
@@ -160,31 +110,25 @@ button {
 </div>
 
 
-<hr>
 
-
-<h2>Security Alerts</h2>
-
+<h2>🚨 Live Alerts</h2>
 
 
 {% for alert in alerts %}
 
 
-<div class="alert">
+<div class="card">
 
 
-<h2>
-🚨 {{ alert.type }}
-</h2>
+<h3>{{alert.type}}</h3>
 
 
 <p>
 
-<b>Severity:</b>
+Severity:
+<span class="high">
 
-<span class="{{ alert.severity.lower() }}">
-
-{{ alert.severity }}
+{{alert.severity}}
 
 </span>
 
@@ -193,56 +137,57 @@ button {
 
 <p>
 
-<b>Risk Score:</b>
-
-{{ alert.score }}/100
+Risk Score:
+{{alert.score}}
 
 </p>
 
 
 <p>
 
-<b>MITRE ATT&CK:</b>
-
-{{ alert.mitre }}
-
-</p>
-
-
-<p><b>Details:</b></p>
-
-<p>
-
-{{ alert.details }}
+MITRE:
+{{alert.mitre}}
 
 </p>
-
-
-<p><b>Response Actions:</b></p>
-
-
-<ul>
-
-{% for action in alert.recommendation %}
-
-<li>{{ action }}</li>
-
-{% endfor %}
-
-</ul>
 
 
 </div>
 
 
-{% else %}
+{% endfor %}
 
 
-<h3>✅ No threats detected</h3>
+
+<h2>📁 Incident History</h2>
+
+
+{% for incident in incidents %}
+
+
+<div class="card">
+
+
+<p>ID: {{incident[0]}}</p>
+
+<p>Threat: {{incident[2]}}</p>
+
+<p>Severity: {{incident[3]}}</p>
+
+<p>Score: {{incident[4]}}</p>
+
+<p>MITRE: {{incident[5]}}</p>
+
+<p>Status: {{incident[6]}}</p>
+
+
+</div>
 
 
 {% endfor %}
 
+
+
+<a href="/logout">Logout</a>
 
 
 </body>
