@@ -25,7 +25,7 @@ padding:20px;
 
 background:#222;
 padding:20px;
-margin:20px 0;
+margin-bottom:20px;
 border-radius:10px;
 
 }
@@ -45,14 +45,22 @@ color:orange;
 }
 
 
-.safe {
+.critical {
+
+color:red;
+font-weight:bold;
+
+}
+
+
+.low {
 
 color:green;
 
 }
 
-
 </style>
+
 
 </head>
 
@@ -72,27 +80,36 @@ color:green;
 </h2>
 
 
+{% if alerts %}
+
+
 {% for alert in alerts %}
 
 
-<p>
-<b>Time:</b> {{ alert.time }}
-</p>
+<hr>
 
 
-<p>
-<b>Attack Type:</b> {{ alert.type }}
-</p>
+<h3>
+{{ alert.type }}
+</h3>
 
 
 <p>
 <b>Severity:</b>
 
-{% if alert.severity == "HIGH" %}
+{% if alert.severity == "CRITICAL" %}
+
+<span class="critical">
+{{ alert.severity }}
+</span>
+
+
+{% elif alert.severity == "HIGH" %}
 
 <span class="high">
 {{ alert.severity }}
 </span>
+
 
 {% elif alert.severity == "MEDIUM" %}
 
@@ -100,26 +117,70 @@ color:green;
 {{ alert.severity }}
 </span>
 
+
 {% else %}
 
-<span class="safe">
+<span class="low">
 {{ alert.severity }}
 </span>
+
 
 {% endif %}
 
 </p>
 
 
+
 <p>
-<b>Evidence:</b> {{ alert.details }}
+<b>Risk Score:</b>
+{{ alert.score }}/100
 </p>
 
 
-<hr>
+<p>
+<b>MITRE ATT&CK:</b>
+{{ alert.mitre }}
+</p>
+
+
+<p>
+<b>Evidence:</b>
+{{ alert.details }}
+</p>
+
+
+
+<p>
+<b>Recommended Response:</b>
+</p>
+
+
+<ul>
+
+{% for action in alert.recommendation %}
+
+<li>
+{{ action }}
+</li>
+
+{% endfor %}
+
+</ul>
+
 
 
 {% endfor %}
+
+
+{% else %}
+
+
+<p>
+✅ No threats detected
+</p>
+
+
+{% endif %}
 
 
 </div>
@@ -132,11 +193,12 @@ color:green;
 🤖 AI SOC Modules
 </h2>
 
-<p>✅ Ollama AI Assistant</p>
+<p>✅ Ollama Local AI</p>
 <p>✅ Threat Detection Engine</p>
 <p>✅ Log Ingestion</p>
 <p>✅ MITRE ATT&CK Mapping</p>
-<p>✅ Incident Investigation</p>
+<p>✅ Risk Scoring</p>
+<p>✅ Incident Response Recommendations</p>
 
 
 </div>
