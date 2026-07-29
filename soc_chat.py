@@ -1,65 +1,79 @@
+import requests
+
+
+OLLAMA_URL = "http://localhost:11434/api/generate"
+
+MODEL = "llama3.1"
+
+
+
 def ask_soc(question):
 
-    question = question.lower()
+    prompt = f"""
+You are an AI SOC Analyst.
+
+Analyze the cybersecurity request below.
+
+Provide:
+
+1. Threat classification
+2. Risk level (LOW/MEDIUM/HIGH)
+3. Possible attack technique
+4. MITRE ATT&CK mapping if possible
+5. Investigation steps
+6. Recommended response actions
+
+Be professional and concise.
+
+Alert or Question:
+
+{question}
+"""
 
 
-    if "phishing" in question:
+    try:
 
-        return (
-            "⚠️ Phishing detected.\n\n"
-            "Indicators:\n"
-            "- Suspicious sender\n"
-            "- Social engineering language\n"
-            "- Possible credential theft attempt\n\n"
-            "MITRE ATT&CK:\n"
-            "T1566 - Phishing\n\n"
-            "Recommended Actions:\n"
-            "1. Block sender\n"
-            "2. Report email\n"
-            "3. Reset affected credentials"
+        response = requests.post(
+
+            OLLAMA_URL,
+
+            json={
+
+                "model": MODEL,
+
+                "prompt": prompt,
+
+                "stream": False
+
+            },
+
+            timeout=120
+
         )
 
 
-    elif "malware" in question:
+        if response.status_code == 200:
+
+            data = response.json()
+
+            return data.get(
+                "response",
+                "No response generated"
+            )
+
+
+        return f"Ollama Error: {response.text}"
+
+
+    except requests.exceptions.ConnectionError:
 
         return (
-            "🦠 Malware investigation started.\n\n"
-            "Recommended Actions:\n"
-            "- Isolate affected host\n"
-            "- Run endpoint scan\n"
-            "- Review persistence mechanisms"
+            "❌ Cannot connect to Ollama.\n\n"
+            "Make sure Ollama is running:\n"
+            "ollama.exe serve"
         )
 
 
-    elif "mitre" in question:
+    except Exception as e:
 
-        return (
-            "⚔️ MITRE ATT&CK is a knowledge base "
-            "of adversary tactics and techniques.\n\n"
-            "Example:\n"
-            "T1566 = Phishing"
-        )
-
-
-    elif "incident" in question:
-
-        return (
-            "📊 Incident response workflow:\n\n"
-            "1. Identify\n"
-            "2. Contain\n"
-            "3. Eradicate\n"
-            "4. Recover\n"
-            "5. Document"
-        )
-
-
-    else:
-
-        return (
-            "🤖 SOC Assistant ready.\n\n"
-            "Ask me about:\n"
-            "- phishing\n"
-            "- malware\n"
-            "- MITRE ATT&CK\n"
-            "- incident response"
-        )
+        return f"AI Error: {str(e)}"

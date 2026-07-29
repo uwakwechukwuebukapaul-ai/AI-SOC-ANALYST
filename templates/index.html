@@ -4,7 +4,7 @@
 
 <head>
 
-<title>SOC Assistant</title>
+<title>AI SOC Assistant</title>
 
 
 <style>
@@ -22,7 +22,7 @@ padding:30px;
 .card{
 
 background:#222;
-padding:20px;
+padding:25px;
 border-radius:10px;
 
 }
@@ -30,7 +30,7 @@ border-radius:10px;
 
 input{
 
-width:70%;
+width:75%;
 padding:12px;
 
 }
@@ -40,11 +40,19 @@ button{
 
 padding:12px;
 background:#00ff99;
-border:0;
+border:none;
 border-radius:8px;
 
 }
 
+
+pre{
+
+background:#333;
+padding:20px;
+white-space:pre-wrap;
+
+}
 
 </style>
 
@@ -55,23 +63,32 @@ border-radius:8px;
 <body>
 
 
-<h1>🤖 AI SOC Assistant</h1>
+<h1>🤖 AI SOC Chat Assistant</h1>
 
 
 <div class="card">
 
 
-<form method="POST">
+<form action="/chat" method="POST">
 
 
-<input 
+<input
+
+type="text"
+
 name="question"
-placeholder="Ask SOC Analyst..."
+
+placeholder="Ask your SOC assistant..."
+
+required
+
 >
 
 
 <button>
-Ask
+
+Send
+
 </button>
 
 
@@ -81,14 +98,26 @@ Ask
 
 {% if answer %}
 
-<h3>Response:</h3>
+<h3>AI Response:</h3>
 
 <pre>
+
 {{answer}}
+
 </pre>
+
 
 {% endif %}
 
+
+
+<br>
+
+<a href="/" style="color:#00ff99">
+
+⬅ Back Dashboard
+
+</a>
 
 
 </div>

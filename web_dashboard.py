@@ -13,13 +13,10 @@ from ai_investigator import investigate
 from soc_chat import ask_soc
 
 
-
 app = Flask(__name__)
 
 
-
-
-@app.route("/")
+@app.route("/", methods=["GET"])
 def home():
 
     total = total_incidents()
@@ -30,7 +27,7 @@ def home():
 
 
     reputation = {
-        "status":"No IOC"
+        "status": "No IOC checked"
     }
 
 
@@ -47,7 +44,6 @@ def home():
         investigation = investigate(
             latest
         )
-
 
 
     return render_template(
@@ -68,8 +64,6 @@ def home():
 
 
 
-
-
 @app.route("/investigate")
 def investigate_page():
 
@@ -84,25 +78,29 @@ def investigate_page():
 
         report = {
 
-            "incident":{
+            "incident": {
 
-                "sender":"None",
+                "sender": "None",
 
-                "subject":"None",
+                "subject": "None",
 
-                "risk":"None"
+                "risk": "None"
 
             },
 
-            "analysis":[
+            "analysis": [
+
                 "No incident available"
+
             ],
 
-            "recommendation":[
-                "Upload incident logs"
+            "recommendation": [
+
+                "Upload security logs"
+
             ],
 
-            "mitre":"None"
+            "mitre": "None"
 
         }
 
@@ -117,9 +115,7 @@ def investigate_page():
 
 
 
-
-
-@app.route("/chat", methods=["GET","POST"])
+@app.route("/chat", methods=["GET", "POST"])
 def chat():
 
     answer = None
@@ -131,9 +127,12 @@ def chat():
             "question"
         )
 
-        answer = ask_soc(
-            question
-        )
+
+        if question:
+
+            answer = ask_soc(
+                question
+            )
 
 
     return render_template(
@@ -143,9 +142,6 @@ def chat():
         answer=answer
 
     )
-
-
-
 
 
 
