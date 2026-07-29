@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<title>IOC Lookup - AI SOC Analyst</title>
+
+<style>
+
+body{
+    background:#0f172a;
+    color:white;
+    font-family:Arial;
+    padding:30px;
+}
+
+.card{
+    background:#1e293b;
+    padding:25px;
+    border-radius:12px;
+    max-width:600px;
+    margin:auto;
+}
+
+input{
+    width:80%;
+    padding:12px;
+    border-radius:8px;
+    border:none;
+}
+
+button{
+    padding:12px 20px;
+    background:#2563eb;
+    color:white;
+    border:none;
+    border-radius:8px;
+    cursor:pointer;
+}
+
+.result{
+    margin-top:20px;
+    background:#111827;
+    padding:20px;
+    border-radius:10px;
+}
+
+</style>
+
+</head>
+
+
+<body>
+
+<div class="card">
+
+<h1>🌍 IOC Threat Intelligence Lookup</h1>
+
+
+<form method="POST">
+
+<input 
+name="ioc"
+placeholder="Enter domain e.g. google.com"
+required
+>
+
+
+<button>
+Check
+</button>
+
+</form>
+
+
+{% if result %}
+
+<div class="result">
+
+<h2>Results</h2>
+
+<p>
+🔴 Malicious:
+{{result.malicious}}
+</p>
+
+
+<p>
+🟡 Suspicious:
+{{result.suspicious}}
+</p>
+
+
+<p>
+🟢 Harmless:
+{{result.harmless}}
+</p>
+
+
+</div>
+
+{% endif %}
+
+
+</div>
+
+
+</body>
+
+</html>
