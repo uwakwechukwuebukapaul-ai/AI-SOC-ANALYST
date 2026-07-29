@@ -1,24 +1,14 @@
 from flask import Flask, render_template, request, redirect, session
 
-import json
-
-
 from soc_pipeline import run_soc_pipeline
 
+from database import get_incidents
 
-from database import (
-    get_incidents,
-    update_incident_status,
-    assign_analyst,
-    add_investigation_notes
-)
-
+from analytics import get_analytics
 
 from auth import login
 
-
 from investigation_route import get_investigation_report
-
 
 
 
@@ -31,24 +21,7 @@ app.secret_key = "AI_SOC_SECRET_KEY"
 
 
 
-@app.template_filter("from_json")
-def from_json(value):
-
-    try:
-
-        return json.loads(value)
-
-    except:
-
-        return []
-
-
-
-
-
-
-
-@app.route("/login", methods=["GET","POST"])
+@app.route("/login", methods=["GET", "POST"])
 def login_page():
 
 
@@ -61,7 +34,7 @@ def login_page():
 
 
 
-        if login(username,password):
+        if login(username, password):
 
             session["analyst"] = username
 
@@ -70,8 +43,6 @@ def login_page():
 
 
     return render_template("login.html")
-
-
 
 
 
@@ -89,8 +60,8 @@ def home():
 
 
 
-    alerts = run_soc_pipeline()
 
+    alerts = run_soc_pipeline()
 
 
     incidents = get_incidents()
@@ -104,33 +75,28 @@ def home():
 
 
         "high": len(
-
             [
-
                 i for i in incidents
-
                 if i[3] == "HIGH"
-
             ]
-
         ),
 
 
-
         "open": len(
-
             [
-
                 i for i in incidents
-
                 if i[6] == "OPEN"
-
             ]
-
         )
 
-
     }
+
+
+
+
+    analytics = get_analytics()
+
+
 
 
 
@@ -143,121 +109,11 @@ def home():
 
         incidents=incidents,
 
-        dashboard=dashboard
+        dashboard=dashboard,
+
+        analytics=analytics
 
     )
-
-
-
-
-
-
-
-
-
-@app.route("/update_status/<int:id>/<status>")
-def update_status(id,status):
-
-
-    if "analyst" not in session:
-
-        return redirect("/login")
-
-
-
-    allowed = [
-
-        "OPEN",
-
-        "INVESTIGATING",
-
-        "RESOLVED"
-
-    ]
-
-
-
-    if status in allowed:
-
-
-        update_incident_status(
-
-            id,
-
-            status
-
-        )
-
-
-
-    return redirect("/")
-
-
-
-
-
-
-
-
-
-@app.route("/assign/<int:id>", methods=["POST"])
-def assign(id):
-
-
-    if "analyst" not in session:
-
-        return redirect("/login")
-
-
-
-    analyst = request.form["analyst"]
-
-
-
-    assign_analyst(
-
-        id,
-
-        analyst
-
-    )
-
-
-
-    return redirect("/")
-
-
-
-
-
-
-
-
-
-@app.route("/notes/<int:id>", methods=["POST"])
-def notes(id):
-
-
-    if "analyst" not in session:
-
-        return redirect("/login")
-
-
-
-    note = request.form["notes"]
-
-
-
-    add_investigation_notes(
-
-        id,
-
-        note
-
-    )
-
-
-    return redirect("/")
 
 
 
@@ -296,7 +152,6 @@ def investigate(id):
 
 
 
-
 @app.route("/logout")
 def logout():
 
@@ -305,8 +160,6 @@ def logout():
 
 
     return redirect("/login")
-
-
 
 
 

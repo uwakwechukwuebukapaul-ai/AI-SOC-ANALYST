@@ -4,7 +4,9 @@
 
 <head>
 
-<title>AI SOC Dashboard</title>
+<title>
+AI SOC Dashboard
+</title>
 
 
 <style>
@@ -20,6 +22,7 @@ font-family:Arial;
 padding:20px;
 
 }
+
 
 
 .card {
@@ -48,8 +51,6 @@ border:none;
 
 border-radius:5px;
 
-cursor:pointer;
-
 }
 
 
@@ -75,38 +76,10 @@ color:lime;
 }
 
 
-
-input, textarea {
-
-padding:10px;
-
-border-radius:5px;
-
-border:none;
-
-margin:5px;
-
-width:300px;
-
-}
-
-
-
-textarea {
-
-height:100px;
-
-}
-
-
-
 </style>
 
 
 </head>
-
-
-
 
 
 <body>
@@ -121,9 +94,7 @@ height:100px;
 
 
 
-
 <div class="card">
-
 
 <h2>
 📊 Dashboard Statistics
@@ -157,6 +128,108 @@ Open Cases:
 
 
 
+<div class="card">
+
+
+<h2>
+📈 SOC Analytics
+</h2>
+
+
+
+<p>
+Total Incidents:
+{{analytics.total}}
+</p>
+
+
+
+<p>
+High Severity:
+{{analytics.high}}
+</p>
+
+
+
+<p>
+Open Cases:
+{{analytics.open}}
+</p>
+
+
+
+<p>
+Investigating:
+{{analytics.investigating}}
+</p>
+
+
+
+<p>
+Resolved:
+{{analytics.resolved}}
+</p>
+
+
+
+<p>
+Average Risk Score:
+{{analytics.average_risk}}
+</p>
+
+
+
+<p>
+Maximum Risk Score:
+{{analytics.maximum_risk}}
+</p>
+
+
+</div>
+
+
+
+
+
+
+
+
+<div class="card">
+
+
+<h2>
+🎯 Attack Types
+</h2>
+
+
+<ul>
+
+
+{% for attack,count in analytics.attack_types.items() %}
+
+
+<li>
+
+{{attack}} : {{count}}
+
+</li>
+
+
+{% endfor %}
+
+
+</ul>
+
+
+</div>
+
+
+
+
+
+
+
+
 <h2>
 🚨 Security Alerts
 </h2>
@@ -164,23 +237,24 @@ Open Cases:
 
 
 
-{% for alert in alerts %}
 
+{% for alert in alerts %}
 
 
 <div class="card">
 
 
-
 <h3>
+
 {{alert.type}}
+
 </h3>
 
 
 
 <p>
-<b>Severity:</b>
 
+Severity:
 {{alert.severity}}
 
 </p>
@@ -188,8 +262,8 @@ Open Cases:
 
 
 <p>
-<b>Risk Score:</b>
 
+Risk Score:
 {{alert.score}}
 
 </p>
@@ -197,8 +271,8 @@ Open Cases:
 
 
 <p>
-<b>MITRE:</b>
 
+MITRE:
 {{alert.mitre}}
 
 </p>
@@ -213,15 +287,9 @@ Open Cases:
 
 
 
-
-{% if alert.threat_intel %}
-
-
-
 <p>
 
 Domain:
-
 {{alert.threat_intel.domain}}
 
 </p>
@@ -231,7 +299,6 @@ Domain:
 <p>
 
 Status:
-
 {{alert.threat_intel.status}}
 
 </p>
@@ -241,7 +308,6 @@ Status:
 <p>
 
 Malicious:
-
 {{alert.threat_intel.malicious}}
 
 </p>
@@ -251,24 +317,9 @@ Malicious:
 <p>
 
 Suspicious:
-
 {{alert.threat_intel.suspicious}}
 
 </p>
-
-
-
-
-{% else %}
-
-
-<p>
-No threat intelligence available
-</p>
-
-
-{% endif %}
-
 
 
 
@@ -301,10 +352,7 @@ Recommendations
 </div>
 
 
-
-
 {% endfor %}
-
 
 
 
@@ -325,21 +373,12 @@ Recommendations
 
 
 
-
-
-
 <div class="card">
-
-
-
-
 
 
 <h3>
 🚨 Incident #{{incident[0]}}
 </h3>
-
-
 
 
 
@@ -352,8 +391,6 @@ Recommendations
 
 
 
-
-
 <p>
 <b>Threat:</b>
 
@@ -363,20 +400,12 @@ Recommendations
 
 
 
-
-
 <p>
 <b>Severity:</b>
 
-<span class="warning">
-
 {{incident[3]}}
 
-</span>
-
 </p>
-
-
 
 
 
@@ -386,8 +415,6 @@ Recommendations
 {{incident[4]}}
 
 </p>
-
-
 
 
 
@@ -401,27 +428,19 @@ Recommendations
 
 
 
-
-
-
-
 <h3>
-📌 Incident Status
+📌 Status
 </h3>
 
 
 
-
-
 {% if incident[6] == "OPEN" %}
-
 
 <p class="danger">
 
 🔴 {{incident[6]}}
 
 </p>
-
 
 
 {% elif incident[6] == "INVESTIGATING" %}
@@ -434,10 +453,7 @@ Recommendations
 </p>
 
 
-
-
-{% elif incident[6] == "RESOLVED" %}
-
+{% else %}
 
 
 <p class="success">
@@ -447,256 +463,7 @@ Recommendations
 </p>
 
 
-
 {% endif %}
-
-
-
-
-
-
-
-
-
-<h3>
-🔄 Change Incident Status
-</h3>
-
-
-
-
-
-<a href="/update_status/{{incident[0]}}/OPEN">
-
-
-<button>
-
-🔴 Open
-
-</button>
-
-
-</a>
-
-
-
-
-
-<a href="/update_status/{{incident[0]}}/INVESTIGATING">
-
-
-<button>
-
-🟡 Investigating
-
-</button>
-
-
-</a>
-
-
-
-
-
-<a href="/update_status/{{incident[0]}}/RESOLVED">
-
-
-<button>
-
-🟢 Resolved
-
-</button>
-
-
-</a>
-
-
-
-
-
-
-
-
-
-<h3>
-👤 Assign Analyst
-</h3>
-
-
-
-
-
-<form action="/assign/{{incident[0]}}" method="POST">
-
-
-
-<input
-
-type="text"
-
-name="analyst"
-
-placeholder="Enter analyst name"
-
->
-
-
-
-<button>
-
-Assign
-
-</button>
-
-
-
-</form>
-
-
-
-
-
-
-
-
-<h3>
-Current Analyst
-</h3>
-
-
-
-<p>
-
-{{incident[10]}}
-
-</p>
-
-
-
-
-
-
-
-
-
-<h3>
-📝 Investigation Notes
-</h3>
-
-
-
-
-
-<p>
-
-{{incident[11]}}
-
-</p>
-
-
-
-
-
-
-
-<form action="/notes/{{incident[0]}}" method="POST">
-
-
-
-<textarea
-
-name="notes"
-
-placeholder="Write investigation notes..."
-
-></textarea>
-
-
-<br>
-
-
-<button>
-
-Save Notes
-
-</button>
-
-
-
-</form>
-
-
-
-
-
-
-
-
-
-<h3>
-⚡ Automated Response
-</h3>
-
-
-
-
-
-<p>
-
-<b>Status:</b>
-
-{{incident[7]}}
-
-</p>
-
-
-
-
-
-<p>
-
-<b>Response Time:</b>
-
-{{incident[9]}}
-
-</p>
-
-
-
-
-
-
-
-<h4>
-Actions Taken:
-</h4>
-
-
-
-
-<ul>
-
-
-{% for action in incident[8]|from_json %}
-
-
-
-<li>
-
-✅ {{action}}
-
-</li>
-
-
-
-
-{% endfor %}
-
-
-</ul>
-
-
-
 
 
 
@@ -705,26 +472,17 @@ Actions Taken:
 
 <a href="/investigate/{{incident[0]}}">
 
-
-
 <button>
 
 🤖 AI Investigation Report
 
 </button>
 
-
-
 </a>
 
 
 
-
-
-
 </div>
-
-
 
 
 
@@ -736,13 +494,7 @@ Actions Taken:
 
 
 
-<br>
-
-
-
-
 <a href="/logout">
-
 
 <button>
 
@@ -750,10 +502,7 @@ Logout
 
 </button>
 
-
 </a>
-
-
 
 
 
