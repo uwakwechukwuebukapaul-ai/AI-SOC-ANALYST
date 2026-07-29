@@ -1,30 +1,72 @@
-# AI SOC Analyst
+# \# 🛡️ AI SOC Analyst Dashboard
 
-A Python-based phishing email detection tool.
+# 
 
-## Features
+# An AI-powered Security Operations Center (SOC) monitoring dashboard built with Python and Flask.
 
-- Detects phishing keywords
-- Calculates risk score
-- Assigns risk level
-- Explains why an email is suspicious
-- Ready for Slack notifications
-- Ready for Google Sheets logging
+# 
 
-## Technologies
+# \## Features
 
-- Python
-- VS Code
-- Git
-- GitHub
+# 
 
-## Future Improvements
+# \- 🚨 Security incident detection
 
-- Gmail API integration
-- VirusTotal lookup
-- Machine Learning detection
-- PDF incident reports
-- SOC Dashboard
+# \- 🤖 AI threat analysis
 
-Author:
-Uwakwe Chukwuenika Paul
+# \- 📊 Risk scoring system
+
+# \- 🎯 MITRE ATT\&CK technique mapping
+
+# \- 📁 Incident management
+
+# \- 👤 Analyst assignment
+
+# \- 📝 Investigation notes
+
+# \- 📄 Incident report generation
+
+# 
+
+# \## Technologies
+
+# 
+
+# \- Python
+
+# \- Flask
+
+# \- SQLite
+
+# \- HTML/CSS
+
+# \- MITRE ATT\&CK Framework
+
+# 
+
+# \## Security Detections
+
+# 
+
+# Currently detects:
+
+# 
+
+# \- Phishing attempts
+
+# \- Brute force attacks
+
+# \- Suspicious outbound connections
+
+# 
+
+# \## Project Status
+
+# 
+
+# 🚧 Active development
+
+# 
+
+# Built as a cybersecurity portfolio project.
+
