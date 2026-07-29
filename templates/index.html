@@ -5,44 +5,115 @@
 
 <title>AI SOC Analyst Dashboard</title>
 
+<meta http-equiv="refresh" content="10">
+
 <style>
 
 body {
-    font-family: Arial;
-    background: #111;
+
+    font-family: Arial, sans-serif;
+
+    background: #0f172a;
+
     color: white;
-    padding: 30px;
+
+    padding: 25px;
+
 }
 
-.card {
 
-    background: #222;
+h1 {
+
+    text-align: center;
+
+}
+
+
+
+.container {
+
+    display: flex;
+
+    gap: 20px;
+
+    flex-wrap: wrap;
+
+    justify-content: center;
+
+}
+
+
+
+.box {
+
+    background: #1e293b;
+
     padding: 20px;
-    margin: 15px;
+
     border-radius: 10px;
 
+    width: 220px;
+
+    text-align: center;
+
 }
 
 
-.high {
+
+.alert {
+
+    background: #1e293b;
+
+    margin: 20px;
+
+    padding: 20px;
+
+    border-radius: 10px;
 
     border-left: 8px solid red;
 
 }
 
 
-.medium {
 
-    border-left: 8px solid orange;
+.high {
+
+    color: #ff4444;
 
 }
+
+
+
+.medium {
+
+    color: orange;
+
+}
+
 
 
 .low {
 
-    border-left: 8px solid green;
+    color: lightgreen;
 
 }
+
+
+
+button {
+
+    padding: 10px 20px;
+
+    background: #2563eb;
+
+    color: white;
+
+    border: none;
+
+    border-radius: 5px;
+
+}
+
 
 
 </style>
@@ -56,42 +127,98 @@ body {
 <h1>🛡️ AI SOC Analyst Dashboard</h1>
 
 
-<h2>Detected Security Alerts</h2>
+<div class="container">
+
+
+<div class="box">
+
+<h2>{{ alerts|length }}</h2>
+
+<p>Total Alerts</p>
+
+</div>
+
+
+<div class="box">
+
+<h2>🚨</h2>
+
+<p>Live Monitoring</p>
+
+</div>
+
+
+<div class="box">
+
+<h2>AI</h2>
+
+<p>Threat Analysis</p>
+
+</div>
+
+
+</div>
+
+
+<hr>
+
+
+<h2>Security Alerts</h2>
 
 
 
 {% for alert in alerts %}
 
 
-<div class="card {{ alert.severity.lower() }}">
+<div class="alert">
 
 
-<h3>
+<h2>
 🚨 {{ alert.type }}
-</h3>
+</h2>
 
 
 <p>
+
 <b>Severity:</b>
+
+<span class="{{ alert.severity.lower() }}">
+
 {{ alert.severity }}
+
+</span>
+
 </p>
 
 
 <p>
+
 <b>Risk Score:</b>
+
 {{ alert.score }}/100
+
 </p>
 
 
 <p>
+
 <b>MITRE ATT&CK:</b>
+
 {{ alert.mitre }}
+
 </p>
 
+
+<p><b>Details:</b></p>
 
 <p>
-<b>Recommended Actions:</b>
+
+{{ alert.details }}
+
 </p>
+
+
+<p><b>Response Actions:</b></p>
 
 
 <ul>
@@ -108,7 +235,14 @@ body {
 </div>
 
 
+{% else %}
+
+
+<h3>✅ No threats detected</h3>
+
+
 {% endfor %}
+
 
 
 </body>
