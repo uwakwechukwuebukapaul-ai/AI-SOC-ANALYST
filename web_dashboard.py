@@ -1,4 +1,5 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, request
+
 from soc_analytics import (
     total_incidents,
     risk_summary,
@@ -6,10 +7,16 @@ from soc_analytics import (
 )
 
 from threat_intel import check_ioc
+
 from ai_investigator import investigate
+
+from soc_chat import ask_soc
+
 
 
 app = Flask(__name__)
+
+
 
 
 @app.route("/")
@@ -23,7 +30,7 @@ def home():
 
 
     reputation = {
-        "status": "No IOC checked"
+        "status":"No IOC"
     }
 
 
@@ -42,32 +49,6 @@ def home():
         )
 
 
-    chart_labels = [
-        "HIGH",
-        "MEDIUM",
-        "LOW"
-    ]
-
-
-    chart_values = [
-
-        summary.get(
-            "HIGH",
-            0
-        ),
-
-        summary.get(
-            "MEDIUM",
-            0
-        ),
-
-        summary.get(
-            "LOW",
-            0
-        )
-
-    ]
-
 
     return render_template(
 
@@ -81,44 +62,47 @@ def home():
 
         reputation=reputation,
 
-        investigation=investigation,
-
-        chart_labels=chart_labels,
-
-        chart_values=chart_values
+        investigation=investigation
 
     )
 
 
 
+
+
 @app.route("/investigate")
-def investigation():
+def investigate_page():
 
     latest = latest_incident()
 
 
     if latest:
 
-        report = investigate(
-            latest
-        )
+        report = investigate(latest)
 
     else:
 
         report = {
 
-            "analysis":
-            [
-                "No incident found"
+            "incident":{
+
+                "sender":"None",
+
+                "subject":"None",
+
+                "risk":"None"
+
+            },
+
+            "analysis":[
+                "No incident available"
             ],
 
-            "recommendation":
-            [
-                "Upload an incident"
+            "recommendation":[
+                "Upload incident logs"
             ],
 
-            "mitre":
-            "None"
+            "mitre":"None"
 
         }
 
@@ -130,6 +114,38 @@ def investigation():
         report=report
 
     )
+
+
+
+
+
+@app.route("/chat", methods=["GET","POST"])
+def chat():
+
+    answer = None
+
+
+    if request.method == "POST":
+
+        question = request.form.get(
+            "question"
+        )
+
+        answer = ask_soc(
+            question
+        )
+
+
+    return render_template(
+
+        "chat.html",
+
+        answer=answer
+
+    )
+
+
+
 
 
 
