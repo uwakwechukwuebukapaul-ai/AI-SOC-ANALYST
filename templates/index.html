@@ -57,10 +57,25 @@ color:orange;
 }
 
 
+.success {
+
+color:#22c55e;
+
+}
+
+
+.danger {
+
+color:#ef4444;
+
+}
+
+
 </style>
 
 
 </head>
+
 
 
 <body>
@@ -70,9 +85,12 @@ color:orange;
 
 
 
+
 <div class="card">
 
-<h2>Dashboard Statistics</h2>
+
+<h2>📊 Dashboard Statistics</h2>
+
 
 <p>Total Incidents: {{dashboard.total}}</p>
 
@@ -80,12 +98,16 @@ color:orange;
 
 <p>Open Cases: {{dashboard.open}}</p>
 
+
 </div>
 
 
 
 
+
+
 <h2>🚨 Security Alerts</h2>
+
 
 
 
@@ -99,47 +121,66 @@ color:orange;
 
 
 <p>
+
 Severity:
+
 {{alert.severity}}
+
 </p>
 
 
 <p>
+
 Risk Score:
+
 {{alert.score}}
+
 </p>
 
 
 <p>
+
 MITRE:
+
 {{alert.mitre}}
+
 </p>
+
+
 
 
 
 <h3>🌐 Threat Intelligence</h3>
 
 
+
 {% if alert.threat_intel %}
 
 
 <p>
+
 Domain:
+
 {{alert.threat_intel.domain}}
+
 </p>
+
 
 
 <p class="warning">
 
-Status:
+Verdict:
+
 {{alert.threat_intel.status}}
 
 </p>
 
 
+
 <p>
 
 Malicious:
+
 {{alert.threat_intel.malicious}}
 
 </p>
@@ -148,6 +189,7 @@ Malicious:
 <p>
 
 Suspicious:
+
 {{alert.threat_intel.suspicious}}
 
 </p>
@@ -163,18 +205,83 @@ Suspicious:
 
 
 
+
+
+<h3>⚡ Automated Response</h3>
+
+
+{% if alert.response %}
+
+
+<p class="success">
+
+Status:
+
+{{alert.response.status}}
+
+</p>
+
+
+
+<p>
+
+Response Time:
+
+{{alert.response.time}}
+
+</p>
+
+
+
+<h4>Actions:</h4>
+
+
+<ul>
+
+
+{% for action in alert.response.automated_actions %}
+
+
+<li>{{action}}</li>
+
+
+{% endfor %}
+
+
+</ul>
+
+
+
+{% else %}
+
+
+<p>No automated response generated</p>
+
+
+{% endif %}
+
+
+
+
+
+
 <h3>Recommendations</h3>
 
 
 <ul>
 
+
 {% for item in alert.recommendation %}
+
 
 <li>{{item}}</li>
 
+
 {% endfor %}
 
+
 </ul>
+
 
 
 </div>
@@ -182,6 +289,10 @@ Suspicious:
 
 
 {% endfor %}
+
+
+
+
 
 
 
@@ -190,7 +301,9 @@ Suspicious:
 
 
 
+
 {% for incident in incidents %}
+
 
 
 <div class="card">
@@ -198,21 +311,112 @@ Suspicious:
 
 <p>ID: {{incident[0]}}</p>
 
-<p>Threat: {{incident[2]}}</p>
 
-<p>Severity: {{incident[3]}}</p>
+<p>
 
-<p>Status: {{incident[6]}}</p>
+Threat:
+
+{{incident[2]}}
+
+</p>
+
+
+<p>
+
+Severity:
+
+{{incident[3]}}
+
+</p>
+
+
+
+<p>
+
+Risk Score:
+
+{{incident[4]}}
+
+</p>
+
+
+
+<p>
+
+MITRE:
+
+{{incident[5]}}
+
+</p>
+
+
+
+<p>
+
+Status:
+
+{{incident[6]}}
+
+</p>
+
+
+
+
+
+<h3>⚡ Response Information</h3>
+
+
+<p class="success">
+
+{{incident[7]}}
+
+</p>
+
+
+
+<p>
+
+Response Time:
+
+{{incident[9]}}
+
+</p>
+
+
+
+<h4>Actions:</h4>
+
+
+<ul>
+
+
+{% for action in incident[8]|from_json %}
+
+
+<li>{{action}}</li>
+
+
+{% endfor %}
+
+
+</ul>
+
+
 
 
 
 <a href="/investigate/{{incident[0]}}">
 
+
 <button>
+
 🤖 Investigate
+
 </button>
 
+
 </a>
+
 
 
 </div>
@@ -223,16 +427,27 @@ Suspicious:
 
 
 
+
+
+
+
 <a href="/logout">
 
+
 <button>
+
 Logout
+
 </button>
+
 
 </a>
 
 
 
+
+
 </body>
+
 
 </html>

@@ -1,5 +1,7 @@
 from flask import Flask, render_template, request, redirect, session
 
+import json
+
 from soc_pipeline import run_soc_pipeline
 
 from database import get_incidents
@@ -9,20 +11,45 @@ from auth import login
 from investigation_route import get_investigation_report
 
 
+
 app = Flask(__name__)
 
 app.secret_key = "AI_SOC_SECRET_KEY"
 
 
 
+
+
+# JSON filter for dashboard templates
+
+@app.template_filter("from_json")
+def from_json(value):
+
+    try:
+
+        return json.loads(value)
+
+    except:
+
+        return []
+
+
+
+
+
+
+
 @app.route("/login", methods=["GET", "POST"])
 def login_page():
 
+
     if request.method == "POST":
+
 
         username = request.form["username"]
 
         password = request.form["password"]
+
 
 
         if login(username, password):
@@ -32,7 +59,11 @@ def login_page():
             return redirect("/")
 
 
+
     return render_template("login.html")
+
+
+
 
 
 
@@ -41,31 +72,65 @@ def login_page():
 @app.route("/")
 def home():
 
+
     if "analyst" not in session:
 
         return redirect("/login")
 
 
 
+    # Run SOC detection pipeline
+
     alerts = run_soc_pipeline()
+
+
+
+    # Load stored incidents
 
     incidents = get_incidents()
 
 
 
+
+
     dashboard = {
+
 
         "total": len(incidents),
 
+
+
         "high": len(
-            [i for i in incidents if i[3] == "HIGH"]
+
+            [
+
+                i for i in incidents
+
+                if i[3] == "HIGH"
+
+            ]
+
         ),
 
+
+
         "open": len(
-            [i for i in incidents if i[6] == "OPEN"]
+
+            [
+
+                i for i in incidents
+
+                if i[6] == "OPEN"
+
+            ]
+
         )
 
+
+
     }
+
+
 
 
 
@@ -85,8 +150,13 @@ def home():
 
 
 
+
+
+
+
 @app.route("/investigate/<int:id>")
 def investigate(id):
+
 
     if "analyst" not in session:
 
@@ -95,6 +165,7 @@ def investigate(id):
 
 
     report = get_investigation_report(id)
+
 
 
     return render_template(
@@ -109,10 +180,16 @@ def investigate(id):
 
 
 
+
+
+
+
 @app.route("/logout")
 def logout():
 
+
     session.clear()
+
 
     return redirect("/login")
 
@@ -120,7 +197,12 @@ def logout():
 
 
 
+
+
+
+
 if __name__ == "__main__":
+
 
     app.run(
 
