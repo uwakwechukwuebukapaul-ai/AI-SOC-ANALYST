@@ -1,265 +1,430 @@
 <!DOCTYPE html>
-<html lang="en">
+
+<html>
+
 <head>
-<meta charset="UTF-8">
+
 <title>AI SOC Analyst Dashboard</title>
 
+
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 
 <style>
 
 body{
-    margin:0;
-    background:#0f172a;
-    font-family:Arial,Helvetica,sans-serif;
+
+    font-family: Arial, sans-serif;
+
+    background:#111;
+
     color:white;
+
+    padding:30px;
+
 }
 
-.header{
-    background:#111827;
-    padding:20px;
+
+h1{
+
     text-align:center;
-    font-size:30px;
-    font-weight:bold;
+
 }
 
-.container{
-    width:95%;
-    margin:auto;
-}
-
-.cards{
-    display:grid;
-    grid-template-columns:repeat(4,1fr);
-    gap:20px;
-    margin-top:25px;
-}
 
 .card{
-    background:#1e293b;
+
+    background:#222;
+
     padding:20px;
+
+    margin:20px 0;
+
     border-radius:12px;
-    box-shadow:0 0 12px rgba(0,0,0,.4);
+
+    box-shadow:0 0 10px #000;
+
 }
 
-.card h3{
-    margin:0;
-    color:#cbd5e1;
-}
-
-.number{
-    font-size:40px;
-    margin-top:15px;
-    font-weight:bold;
-}
 
 .high{
-    color:#ef4444;
+
+    color:red;
+
 }
+
 
 .medium{
-    color:#f59e0b;
+
+    color:orange;
+
 }
+
 
 .low{
-    color:#22c55e;
+
+    color:lime;
+
 }
 
-.grid{
-    display:grid;
-    grid-template-columns:2fr 1fr;
-    gap:20px;
-    margin-top:30px;
+
+.ai{
+
+    background:#182818;
+
 }
 
-.panel{
-    background:#1e293b;
-    padding:20px;
-    border-radius:12px;
+
+pre{
+
+    white-space:pre-wrap;
+
+    font-size:15px;
+
 }
 
-table{
-    width:100%;
-    border-collapse:collapse;
-    margin-top:10px;
-}
 
-th,td{
-    padding:10px;
-    border-bottom:1px solid #334155;
-}
+canvas{
 
-th{
-    color:#94a3b8;
-    text-align:left;
-}
+    max-width:500px;
 
-.badge{
-    padding:5px 10px;
-    border-radius:20px;
-    font-weight:bold;
-}
-
-.badge-high{
-    background:#7f1d1d;
-    color:#fecaca;
-}
-
-.badge-medium{
-    background:#78350f;
-    color:#fde68a;
-}
-
-.badge-low{
-    background:#14532d;
-    color:#bbf7d0;
 }
 
 </style>
 
+
 </head>
+
+
 
 <body>
 
-<div class="header">
-🛡 AI SOC Analyst Dashboard
-</div>
 
-<div class="container">
+<h1>
+🛡️ AI SOC Analyst Dashboard
+</h1>
 
-<div class="cards">
 
-<div class="card">
-<h3>Total Incidents</h3>
-<div class="number">{{stats.total}}</div>
-</div>
 
 <div class="card">
-<h3 class="high">High</h3>
-<div class="number high">{{stats.risks["HIGH"]}}</div>
+
+
+<h2>
+📊 Incident Statistics
+</h2>
+
+
+<h1>
+{{stats.total}}
+</h1>
+
+
+<p>
+Total Security Incidents
+</p>
+
+
 </div>
+
+
+
+
 
 <div class="card">
-<h3 class="medium">Medium</h3>
-<div class="number medium">{{stats.risks["MEDIUM"]}}</div>
+
+
+<h2>
+⚠️ Risk Summary
+</h2>
+
+
+<p class="high">
+
+🔴 HIGH:
+
+{{stats.risks.get('HIGH',0)}}
+
+</p>
+
+
+
+<p class="medium">
+
+🟡 MEDIUM:
+
+{{stats.risks.get('MEDIUM',0)}}
+
+</p>
+
+
+
+<p class="low">
+
+🟢 LOW:
+
+{{stats.risks.get('LOW',0)}}
+
+</p>
+
+
 </div>
+
+
+
+
+
+
 
 <div class="card">
-<h3 class="low">Low</h3>
-<div class="number low">{{stats.risks["LOW"]}}</div>
-</div>
 
-</div>
 
-<div class="grid">
+<h2>
+🚨 Latest Incident
+</h2>
 
-<div class="panel">
 
-<h2>Incident Distribution</h2>
 
-<canvas id="riskChart"></canvas>
+{% if latest %}
 
-</div>
 
-<div class="panel">
+<p>
+<b>Sender:</b>
 
-<h2>MITRE ATT&CK</h2>
+{{latest.sender}}
 
-<p>{{attack}}</p>
+</p>
 
-<hr>
 
-<h2>VirusTotal</h2>
 
-{% if reputation.error %}
+<p>
+<b>Subject:</b>
 
-<p>{{reputation.error}}</p>
+{{latest.subject}}
+
+</p>
+
+
+
+<p>
+<b>Risk:</b>
+
+{{latest.risk}}
+
+</p>
+
+
+
+<p>
+<b>Score:</b>
+
+{{latest.score}}
+
+</p>
+
 
 {% else %}
 
-<p>Malicious: {{reputation.malicious}}</p>
-<p>Suspicious: {{reputation.suspicious}}</p>
-<p>Harmless: {{reputation.harmless}}</p>
+
+<p>
+No incidents found.
+</p>
+
 
 {% endif %}
 
-</div>
 
 </div>
 
-<div class="panel" style="margin-top:25px;">
 
-<h2>Latest Incident</h2>
 
-<table>
 
-<tr>
-<th>Sender</th>
-<td>{{latest.sender}}</td>
-</tr>
 
-<tr>
-<th>Subject</th>
-<td>{{latest.subject}}</td>
-</tr>
 
-<tr>
-<th>Risk</th>
 
-<td>
 
-{% if latest.risk=="HIGH" %}
-<span class="badge badge-high">{{latest.risk}}</span>
+<div class="card ai">
 
-{% elif latest.risk=="MEDIUM" %}
-<span class="badge badge-medium">{{latest.risk}}</span>
+
+<h2>
+🤖 AI SOC Assistant
+</h2>
+
+
+
+{% if ai_report %}
+
+
+<h3>
+{{ai_report.status}}
+</h3>
+
+
+<pre>
+{{ai_report.message}}
+</pre>
+
+
 
 {% else %}
-<span class="badge badge-low">{{latest.risk}}</span>
+
+
+<p>
+AI analysis unavailable.
+</p>
+
 
 {% endif %}
 
-</td>
 
-</tr>
-
-<tr>
-<th>Score</th>
-<td>{{latest.score}}</td>
-</tr>
-
-</table>
 
 </div>
 
+
+
+
+
+
+
+
+
+<div class="card">
+
+
+<h2>
+🌐 Threat Intelligence
+</h2>
+
+
+
+<p>
+
+{{reputation}}
+
+</p>
+
+
+
 </div>
+
+
+
+
+
+
+
+
+
+<div class="card">
+
+
+<h2>
+🎯 MITRE ATT&CK Mapping
+</h2>
+
+
+<p>
+
+{{attack}}
+
+</p>
+
+
+</div>
+
+
+
+
+
+
+
+
+<div class="card">
+
+
+<h2>
+📈 Threat Distribution
+</h2>
+
+
+<canvas id="threatChart"></canvas>
+
+
+</div>
+
+
+
+
+
+
 
 <script>
 
-new Chart(document.getElementById("riskChart"),{
 
-type:"doughnut",
+const ctx = document
+.getElementById("threatChart");
+
+
+
+new Chart(ctx, {
+
+
+type:"pie",
+
 
 data:{
 
-labels:["High","Medium","Low"],
+
+labels:[
+
+"HIGH",
+
+"MEDIUM",
+
+"LOW"
+
+],
+
+
 
 datasets:[{
 
+
+label:"Threat Level",
+
+
 data:[
-{{stats.risks["HIGH"]}},
-{{stats.risks["MEDIUM"]}},
-{{stats.risks["LOW"]}}
+
+
+{{stats.risks.get('HIGH',0)}},
+
+
+{{stats.risks.get('MEDIUM',0)}},
+
+
+{{stats.risks.get('LOW',0)}}
+
+
 ]
+
 
 }]
 
+
 }
+
+
 
 });
 
+
+
 </script>
 
+
+
+
+
 </body>
+
 
 </html>
