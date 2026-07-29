@@ -1,5 +1,4 @@
-from flask import Flask, render_template, request
-
+from flask import Flask, render_template
 from soc_analytics import (
     total_incidents,
     risk_summary,
@@ -7,20 +6,14 @@ from soc_analytics import (
 )
 
 from threat_intel import check_ioc
-
-from ai_assistant import analyze_incident
-
-from soc_chat import soc_response
-
+from ai_investigator import investigate
 
 
 app = Flask(__name__)
 
 
-
-
-
-def dashboard_data():
+@app.route("/")
+def home():
 
     total = total_incidents()
 
@@ -29,9 +22,12 @@ def dashboard_data():
     latest = latest_incident()
 
 
-    reputation = "No IOC"
+    reputation = {
+        "status": "No IOC checked"
+    }
 
-    ai_report = None
+
+    investigation = None
 
 
     if latest:
@@ -41,152 +37,104 @@ def dashboard_data():
         )
 
 
-        ai_report = analyze_incident(
+        investigation = investigate(
             latest
         )
 
 
-    stats = {
-
-        "total": total,
-
-        "risks": summary
-
-    }
+    chart_labels = [
+        "HIGH",
+        "MEDIUM",
+        "LOW"
+    ]
 
 
-    attack = "Unknown"
+    chart_values = [
+
+        summary.get(
+            "HIGH",
+            0
+        ),
+
+        summary.get(
+            "MEDIUM",
+            0
+        ),
+
+        summary.get(
+            "LOW",
+            0
+        )
+
+    ]
+
+
+    return render_template(
+
+        "index.html",
+
+        total=total,
+
+        summary=summary,
+
+        latest=latest,
+
+        reputation=reputation,
+
+        investigation=investigation,
+
+        chart_labels=chart_labels,
+
+        chart_values=chart_values
+
+    )
+
+
+
+@app.route("/investigate")
+def investigation():
+
+    latest = latest_incident()
 
 
     if latest:
 
-        if latest["risk"] == "HIGH":
+        report = investigate(
+            latest
+        )
 
-            attack = (
-                "T1566.002 - "
-                "Phishing Link"
-            )
+    else:
 
+        report = {
 
-        elif latest["risk"] == "MEDIUM":
+            "analysis":
+            [
+                "No incident found"
+            ],
 
-            attack = (
-                "T1566 - Phishing"
-            )
+            "recommendation":
+            [
+                "Upload an incident"
+            ],
 
+            "mitre":
+            "None"
 
-        else:
-
-            attack = "Informational"
-
-
-
-    return (
-        stats,
-        latest,
-        reputation,
-        attack,
-        ai_report
-    )
-
-
-
-
-
-
-
-@app.route("/")
-def home():
-
-
-    (
-        stats,
-        latest,
-        reputation,
-        attack,
-        ai_report
-
-    ) = dashboard_data()
-
+        }
 
 
     return render_template(
 
-        "index.html",
+        "investigation.html",
 
-        stats=stats,
-
-        latest=latest,
-
-        reputation=reputation,
-
-        attack=attack,
-
-        ai_report=ai_report,
-
-        chat_answer=None
+        report=report
 
     )
-
-
-
-
-
-
-
-
-
-@app.route("/chat", methods=["POST"])
-def chat():
-
-
-    question = request.form.get(
-        "question"
-    )
-
-
-    answer = soc_response(
-        question
-    )
-
-
-
-    (
-        stats,
-        latest,
-        reputation,
-        attack,
-        ai_report
-
-    ) = dashboard_data()
-
-
-
-    return render_template(
-
-        "index.html",
-
-        stats=stats,
-
-        latest=latest,
-
-        reputation=reputation,
-
-        attack=attack,
-
-        ai_report=ai_report,
-
-        chat_answer=answer
-
-    )
-
-
-
-
-
 
 
 
 if __name__ == "__main__":
 
-    app.run(debug=True)
+    app.run(
+        debug=True
+    )

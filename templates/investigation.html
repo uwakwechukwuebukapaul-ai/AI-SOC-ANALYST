@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<title>AI SOC Investigation</title>
+
+<style>
+
+body{
+    background:#111;
+    color:white;
+    font-family:Arial;
+    padding:30px;
+}
+
+.card{
+
+    background:#222;
+    padding:20px;
+    margin:20px;
+    border-radius:10px;
+
+}
+
+
+h1{
+    color:#00ff99;
+}
+
+
+li{
+    margin:10px;
+}
+
+
+.high{
+    color:red;
+}
+
+
+</style>
+
+</head>
+
+
+<body>
+
+
+<h1>🛡️ AI SOC Investigation Report</h1>
+
+
+<div class="card">
+
+<h2>Incident</h2>
+
+<p>
+Sender:
+{{report.incident.sender}}
+</p>
+
+
+<p>
+Subject:
+{{report.incident.subject}}
+</p>
+
+
+<p>
+Risk:
+<span class="high">
+{{report.incident.risk}}
+</span>
+</p>
+
+
+</div>
+
+
+
+<div class="card">
+
+<h2>🔍 AI Analysis</h2>
+
+<ul>
+
+{% for item in report.analysis %}
+
+<li>
+{{item}}
+</li>
+
+{% endfor %}
+
+</ul>
+
+</div>
+
+
+
+
+<div class="card">
+
+<h2>⚔️ MITRE ATT&CK</h2>
+
+<p>
+
+{{report.mitre}}
+
+</p>
+
+</div>
+
+
+
+
+<div class="card">
+
+<h2>🚨 Recommendations</h2>
+
+<ul>
+
+{% for item in report.recommendation %}
+
+<li>
+{{item}}
+</li>
+
+{% endfor %}
+
+</ul>
+
+</div>
+
+
+
+<a href="/" style="color:#00ff99;">
+⬅ Back to Dashboard
+</a>
+
+
+
+</body>
+
+</html>
