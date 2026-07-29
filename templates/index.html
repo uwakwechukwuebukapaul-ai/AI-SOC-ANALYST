@@ -8,6 +8,7 @@
 AI SOC Analyst Dashboard
 </title>
 
+
 <style>
 
 body {
@@ -15,6 +16,7 @@ body {
 background:#111;
 color:white;
 font-family:Arial;
+padding:20px;
 
 }
 
@@ -23,7 +25,7 @@ font-family:Arial;
 
 background:#222;
 padding:20px;
-margin:20px;
+margin:20px 0;
 border-radius:10px;
 
 }
@@ -34,6 +36,21 @@ border-radius:10px;
 color:red;
 
 }
+
+
+.medium {
+
+color:orange;
+
+}
+
+
+.safe {
+
+color:green;
+
+}
+
 
 </style>
 
@@ -51,15 +68,56 @@ color:red;
 <div class="card">
 
 <h2>
-🚨 Automated Threat Detection
+🚨 Security Alerts
 </h2>
 
 
-{% for threat in threats %}
+{% for alert in alerts %}
 
-<p class="high">
-{{ threat }}
+
+<p>
+<b>Time:</b> {{ alert.time }}
 </p>
+
+
+<p>
+<b>Attack Type:</b> {{ alert.type }}
+</p>
+
+
+<p>
+<b>Severity:</b>
+
+{% if alert.severity == "HIGH" %}
+
+<span class="high">
+{{ alert.severity }}
+</span>
+
+{% elif alert.severity == "MEDIUM" %}
+
+<span class="medium">
+{{ alert.severity }}
+</span>
+
+{% else %}
+
+<span class="safe">
+{{ alert.severity }}
+</span>
+
+{% endif %}
+
+</p>
+
+
+<p>
+<b>Evidence:</b> {{ alert.details }}
+</p>
+
+
+<hr>
+
 
 {% endfor %}
 
@@ -71,28 +129,14 @@ color:red;
 <div class="card">
 
 <h2>
-Modules
+🤖 AI SOC Modules
 </h2>
 
-<p>
-✅ Threat Intelligence
-</p>
-
-<p>
-✅ Phishing Detection
-</p>
-
-<p>
-✅ MITRE ATT&CK Mapping
-</p>
-
-<p>
-✅ AI Investigation
-</p>
-
-<p>
-✅ Automated Detection Engine
-</p>
+<p>✅ Ollama AI Assistant</p>
+<p>✅ Threat Detection Engine</p>
+<p>✅ Log Ingestion</p>
+<p>✅ MITRE ATT&CK Mapping</p>
+<p>✅ Incident Investigation</p>
 
 
 </div>

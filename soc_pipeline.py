@@ -4,29 +4,45 @@ from detection_engine import detect_threats
 
 def run_soc_pipeline():
 
-    print("🛡️ AI SOC PIPELINE")
-    print("=" * 40)
+    alerts = []
 
-    # Load security logs
+    # Load logs
     logs = load_logs("incident_logs.csv")
 
     # Analyze logs
-    alerts = analyze_logs(logs)
+    log_alerts = analyze_logs(logs)
 
-    print("\n🚨 LOG ALERTS")
-    for alert in alerts:
-        print(alert)
+    alerts.extend(log_alerts)
 
 
-    # Run detection engine
+    # Detection engine
     threats = detect_threats("incident_logs.csv")
 
-    print("\n⚠️ DETECTED THREATS")
+
     for threat in threats:
-        print(threat)
+
+        alerts.append({
+
+            "time": "Now",
+            "type": "Threat Detection",
+            "severity": "HIGH",
+            "details": threat
+
+        })
+
+
+    return alerts
 
 
 
 if __name__ == "__main__":
 
-    run_soc_pipeline()
+    results = run_soc_pipeline()
+
+    print("🛡️ AI SOC PIPELINE")
+    print("=" * 40)
+
+
+    for alert in results:
+
+        print(alert)
