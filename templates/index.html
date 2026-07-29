@@ -5,11 +5,15 @@
 <head>
 
 <title>
-AI SOC Dashboard
+AI SOC Analyst Dashboard
 </title>
 
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+
 
 
 <style>
@@ -54,16 +58,6 @@ border:none;
 
 border-radius:5px;
 
-cursor:pointer;
-
-}
-
-
-
-.warning {
-
-color:orange;
-
 }
 
 
@@ -75,6 +69,12 @@ color:red;
 }
 
 
+.warning {
+
+color:orange;
+
+}
+
 
 .success {
 
@@ -83,14 +83,9 @@ color:lime;
 }
 
 
+.active {
 
-canvas {
-
-background:#ffffff;
-
-border-radius:10px;
-
-padding:10px;
+color:#22c55e;
 
 }
 
@@ -119,9 +114,47 @@ padding:10px;
 
 
 <h2>
-📊 Dashboard Statistics
+⚡ LIVE SOC MONITOR
 </h2>
 
+
+<p>
+Status:
+<span class="active">
+ACTIVE
+</span>
+</p>
+
+
+<p>
+Real-Time Alert Stream:
+Connected ✅
+</p>
+
+
+<div id="live-alert">
+
+Waiting for alerts...
+
+</div>
+
+
+</div>
+
+
+
+
+
+
+
+
+
+<div class="card">
+
+
+<h2>
+📊 Dashboard Statistics
+</h2>
 
 
 <p>
@@ -130,12 +163,10 @@ Total Incidents:
 </p>
 
 
-
 <p>
 High Severity:
 {{dashboard.high}}
 </p>
-
 
 
 <p>
@@ -162,61 +193,10 @@ Open Cases:
 </h2>
 
 
-
-<p>
-Total Incidents:
-{{analytics.total}}
-</p>
-
-
-
-<p>
-HIGH:
-{{analytics.high}}
-</p>
-
-
-
-<p>
-MEDIUM:
-{{analytics.medium}}
-</p>
-
-
-
-<p>
-LOW:
-{{analytics.low}}
-</p>
-
-
-
-<p>
-OPEN:
-{{analytics.open}}
-</p>
-
-
-
-<p>
-INVESTIGATING:
-{{analytics.investigating}}
-</p>
-
-
-
-<p>
-RESOLVED:
-{{analytics.resolved}}
-</p>
-
-
-
 <p>
 Average Risk Score:
 {{analytics.average_risk}}
 </p>
-
 
 
 <p>
@@ -225,37 +205,16 @@ Maximum Risk Score:
 </p>
 
 
-</div>
+<p>
+Investigating:
+{{analytics.investigating}}
+</p>
 
 
-
-
-
-
-
-
-<div class="card">
-
-
-<h2>
-📊 Security Visualization
-</h2>
-
-
-
-<canvas id="severityChart"></canvas>
-
-
-<br><br>
-
-
-<canvas id="statusChart"></canvas>
-
-
-<br><br>
-
-
-<canvas id="attackChart"></canvas>
+<p>
+Resolved:
+{{analytics.resolved}}
+</p>
 
 
 </div>
@@ -278,15 +237,12 @@ Maximum Risk Score:
 {% for alert in alerts %}
 
 
-
 <div class="card">
-
 
 
 <h3>
 {{alert.type}}
 </h3>
-
 
 
 <p>
@@ -295,12 +251,10 @@ Severity:
 </p>
 
 
-
 <p>
 Risk Score:
 {{alert.score}}
 </p>
-
 
 
 <p>
@@ -309,13 +263,9 @@ MITRE:
 </p>
 
 
-
-
-
 <h3>
 🌐 Threat Intelligence
 </h3>
-
 
 
 <p>
@@ -324,28 +274,10 @@ Domain:
 </p>
 
 
-
 <p>
 Status:
 {{alert.threat_intel.status}}
 </p>
-
-
-
-<p>
-Malicious:
-{{alert.threat_intel.malicious}}
-</p>
-
-
-
-<p>
-Suspicious:
-{{alert.threat_intel.suspicious}}
-</p>
-
-
-
 
 
 <h3>
@@ -353,27 +285,20 @@ Recommendations
 </h3>
 
 
-
 <ul>
 
-
 {% for item in alert.recommendation %}
-
 
 <li>
 {{item}}
 </li>
 
-
 {% endfor %}
-
 
 </ul>
 
 
-
 </div>
-
 
 
 {% endfor %}
@@ -396,8 +321,6 @@ Recommendations
 {% for incident in incidents %}
 
 
-
-
 <div class="card">
 
 
@@ -406,74 +329,53 @@ Recommendations
 </h3>
 
 
-
-
 <p>
-<b>Time:</b>
+Time:
 {{incident[1]}}
 </p>
 
 
-
-
 <p>
-<b>Threat:</b>
+Threat:
 {{incident[2]}}
 </p>
 
 
-
-
 <p>
-<b>Severity:</b>
+Severity:
 {{incident[3]}}
 </p>
 
 
-
-
 <p>
-<b>Risk Score:</b>
+Risk Score:
 {{incident[4]}}
 </p>
 
 
-
-
 <p>
-<b>MITRE:</b>
+MITRE:
 {{incident[5]}}
 </p>
 
 
 
 
-
-<h3>
-📌 Incident Status
-</h3>
-
-
-
-
-{% if incident[6] == "OPEN" %}
-
+{% if incident[6]=="OPEN" %}
 
 <p class="danger">
 🔴 {{incident[6]}}
 </p>
 
 
-{% elif incident[6] == "INVESTIGATING" %}
-
+{% elif incident[6]=="INVESTIGATING" %}
 
 <p class="warning">
 🟡 {{incident[6]}}
 </p>
 
 
-{% elif incident[6] == "RESOLVED" %}
-
+{% else %}
 
 <p class="success">
 🟢 {{incident[6]}}
@@ -481,51 +383,6 @@ Recommendations
 
 
 {% endif %}
-
-
-
-
-
-
-
-<h3>
-🔄 Change Status
-</h3>
-
-
-<a href="/update_status/{{incident[0]}}/OPEN">
-
-<button>
-🔴 Open
-</button>
-
-</a>
-
-
-
-<a href="/update_status/{{incident[0]}}/INVESTIGATING">
-
-<button>
-🟡 Investigating
-</button>
-
-</a>
-
-
-
-<a href="/update_status/{{incident[0]}}/RESOLVED">
-
-<button>
-🟢 Resolved
-</button>
-
-</a>
-
-
-
-
-
-<br><br>
 
 
 
@@ -543,9 +400,7 @@ Recommendations
 </div>
 
 
-
 {% endfor %}
-
 
 
 
@@ -568,150 +423,37 @@ Logout
 
 
 
-
 <script>
 
 
-new Chart(
+const socket = io();
 
-document.getElementById('severityChart'),
 
-{
 
-type:'bar',
+socket.on(
 
-data:{
+"new_alert",
 
-labels:[
+function(alert){
 
-'HIGH',
 
-'MEDIUM',
 
-'LOW'
+document.getElementById(
+"live-alert"
+).innerHTML =
 
-],
 
+"<h3>🚨 NEW ALERT</h3>" +
 
-datasets:[{
+"<p>Threat: " + alert.threat + "</p>" +
 
-label:'Severity Count',
+"<p>Severity: " + alert.severity + "</p>" +
 
-data:[
+"<p>Risk Score: " + alert.score + "</p>" +
 
-{{analytics.high}},
+"<p>Status: " + alert.status + "</p>";
 
-{{analytics.medium}},
 
-{{analytics.low}}
-
-]
-
-}]
-
-}
-
-}
-
-);
-
-
-
-
-
-
-
-
-new Chart(
-
-document.getElementById('statusChart'),
-
-{
-
-type:'doughnut',
-
-data:{
-
-labels:[
-
-'OPEN',
-
-'INVESTIGATING',
-
-'RESOLVED'
-
-],
-
-
-datasets:[{
-
-label:'Incident Status',
-
-data:[
-
-{{analytics.open}},
-
-{{analytics.investigating}},
-
-{{analytics.resolved}}
-
-]
-
-}]
-
-}
-
-}
-
-);
-
-
-
-
-
-
-
-
-
-new Chart(
-
-document.getElementById('attackChart'),
-
-{
-
-type:'pie',
-
-data:{
-
-labels:[
-
-{% for attack,count in analytics.attack_types.items() %}
-
-"{{attack}}",
-
-{% endfor %}
-
-],
-
-
-
-datasets:[{
-
-label:'Attack Types',
-
-data:[
-
-{% for attack,count in analytics.attack_types.items() %}
-
-{{count}},
-
-{% endfor %}
-
-]
-
-}]
-
-}
 
 }
 
@@ -720,6 +462,7 @@ data:[
 
 
 </script>
+
 
 
 

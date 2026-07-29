@@ -4,11 +4,13 @@ from soc_pipeline import run_soc_pipeline
 
 from database import get_incidents
 
-from analytics import get_analytics
-
 from auth import login
 
 from investigation_route import get_investigation_report
+
+from analytics import get_analytics
+
+from socket_monitor import socketio, start_monitor
 
 
 
@@ -16,6 +18,13 @@ app = Flask(__name__)
 
 
 app.secret_key = "AI_SOC_SECRET_KEY"
+
+
+
+socketio.init_app(
+    app,
+    cors_allowed_origins="*"
+)
 
 
 
@@ -36,7 +45,9 @@ def login_page():
 
         if login(username, password):
 
+
             session["analyst"] = username
+
 
             return redirect("/")
 
@@ -60,11 +71,13 @@ def home():
 
 
 
-
     alerts = run_soc_pipeline()
 
 
     incidents = get_incidents()
+
+
+    analytics = get_analytics()
 
 
 
@@ -75,27 +88,31 @@ def home():
 
 
         "high": len(
+
             [
+
                 i for i in incidents
+
                 if i[3] == "HIGH"
+
             ]
+
         ),
 
 
         "open": len(
+
             [
+
                 i for i in incidents
+
                 if i[6] == "OPEN"
+
             ]
+
         )
 
     }
-
-
-
-
-    analytics = get_analytics()
-
 
 
 
@@ -114,7 +131,6 @@ def home():
         analytics=analytics
 
     )
-
 
 
 
@@ -151,13 +167,10 @@ def investigate(id):
 
 
 
-
 @app.route("/logout")
 def logout():
 
-
     session.clear()
-
 
     return redirect("/login")
 
@@ -170,7 +183,12 @@ def logout():
 if __name__ == "__main__":
 
 
-    app.run(
+    start_monitor()
+
+
+    socketio.run(
+
+        app,
 
         host="127.0.0.1",
 

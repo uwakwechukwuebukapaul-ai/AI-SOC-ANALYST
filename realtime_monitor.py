@@ -1,117 +1,56 @@
-import time
+from database import get_incidents
 from datetime import datetime
 
-from database import get_incidents
 
 
-
-def get_live_alerts():
+def get_live_monitor():
 
     incidents = get_incidents()
 
 
-    alerts = []
+    if not incidents:
 
+        return {
 
-    for incident in incidents:
+            "status": "NO ALERTS",
 
+            "last_check": str(datetime.now()),
 
-        alerts.append({
+            "latest": None
 
-            "id": incident[0],
-
-            "time": incident[1],
-
-            "threat": incident[2],
-
-            "severity": incident[3],
-
-            "score": incident[4],
-
-            "status": incident[6]
-
-        })
-
-
-    return alerts
+        }
 
 
 
+    latest = incidents[0]
 
 
-def monitor():
-
-    print("⚡ REAL-TIME SOC MONITOR")
-
-    print("=" * 40)
+    return {
 
 
-    previous_count = 0
+        "status": "ACTIVE",
 
 
-
-    while True:
-
-
-        incidents = get_incidents()
+        "last_check": str(datetime.now()),
 
 
-        current_count = len(incidents)
+        "latest": {
 
+            "id": latest[0],
 
+            "time": latest[1],
 
-        if current_count > previous_count:
+            "threat": latest[2],
 
+            "severity": latest[3],
 
-            print("\n🚨 NEW SECURITY ALERT")
+            "score": latest[4],
 
+            "status": latest[6]
 
-            latest = incidents[0]
+        }
 
-
-            print(
-                "Threat:",
-                latest[2]
-            )
-
-
-            print(
-                "Severity:",
-                latest[3]
-            )
-
-
-            print(
-                "Risk Score:",
-                latest[4]
-            )
-
-
-            print(
-                "Status:",
-                latest[6]
-            )
-
-
-
-        previous_count = current_count
-
-
-
-        print(
-            "\n🟢 SOC Monitoring Active"
-        )
-
-
-        print(
-            "Last Check:",
-            datetime.now()
-        )
-
-
-
-        time.sleep(10)
-
+    }
 
 
 
@@ -119,4 +58,13 @@ def monitor():
 
 if __name__ == "__main__":
 
-    monitor()
+
+    monitor = get_live_monitor()
+
+
+    print("⚡ REAL-TIME SOC MONITOR")
+
+    print("=" * 40)
+
+
+    print(monitor)
