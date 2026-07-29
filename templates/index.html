@@ -4,56 +4,37 @@
 
 <head>
 
-<title>
-AI SOC Dashboard
-</title>
-
+<title>AI SOC Dashboard</title>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
 
 <style>
 
 body{
-
 font-family: Arial;
 background:#111;
 color:white;
 padding:30px;
-
 }
 
-
 .card{
-
 background:#222;
 padding:20px;
 margin:15px;
 border-radius:10px;
-
 }
-
 
 .high{
-
 color:red;
-
 }
-
 
 .medium{
-
 color:orange;
-
 }
-
 
 .low{
-
 color:lime;
-
 }
-
 
 </style>
 
@@ -63,39 +44,40 @@ color:lime;
 <body>
 
 
-<h1>
-🛡️ AI SOC Analyst Dashboard
-</h1>
+<h1>🛡️ AI SOC Analyst Dashboard</h1>
 
 
 <div class="card">
 
-<h2>
-Incident Overview
-</h2>
+<h2>Total Incidents</h2>
+
+<h1>
+{{stats.total}}
+</h1>
+
+</div>
 
 
-<p>
-Total Incidents:
-{{total}}
-</p>
 
+<div class="card">
+
+<h2>Risk Summary</h2>
 
 <p class="high">
 🔴 HIGH:
-{{high}}
+{{stats.risks['HIGH']}}
 </p>
 
 
 <p class="medium">
 🟡 MEDIUM:
-{{medium}}
+{{stats.risks['MEDIUM']}}
 </p>
 
 
 <p class="low">
 🟢 LOW:
-{{low}}
+{{stats.risks['LOW']}}
 </p>
 
 
@@ -105,12 +87,8 @@ Total Incidents:
 
 <div class="card">
 
-<h2>
-Latest Incident
-</h2>
+<h2>Latest Incident</h2>
 
-
-{% if latest %}
 
 <p>
 Sender:
@@ -130,48 +108,9 @@ Risk:
 </p>
 
 
-{% else %}
-
 <p>
-No incidents found
-</p>
-
-
-{% endif %}
-
-
-</div>
-
-
-
-<div class="card">
-
-<h2>
-Threat Intelligence
-</h2>
-
-
-<p>
-Domain:
-micr0soft-login.xyz
-</p>
-
-
-<p>
-Malicious:
-{{threat.malicious}}
-</p>
-
-
-<p>
-Suspicious:
-{{threat.suspicious}}
-</p>
-
-
-<p>
-Harmless:
-{{threat.harmless}}
+Score:
+{{latest.score}}
 </p>
 
 
@@ -181,13 +120,9 @@ Harmless:
 
 <div class="card">
 
-<h2>
-Risk Chart
-</h2>
-
+<h2>Threat Chart</h2>
 
 <canvas id="chart"></canvas>
-
 
 </div>
 
@@ -195,9 +130,7 @@ Risk Chart
 
 <script>
 
-
 new Chart(
-
 document.getElementById("chart"),
 
 {
@@ -206,39 +139,29 @@ type:"pie",
 
 data:{
 
-
 labels:[
-
 "HIGH",
-
 "MEDIUM",
-
 "LOW"
-
 ],
-
 
 datasets:[{
 
 data:[
 
-{{high}},
+{{stats.risks['HIGH']}},
 
-{{medium}},
+{{stats.risks['MEDIUM']}},
 
-{{low}}
+{{stats.risks['LOW']}}
 
 ]
 
-
 }]
 
-
 }
 
-
 }
-
 
 );
 
@@ -246,8 +169,6 @@ data:[
 </script>
 
 
-
 </body>
-
 
 </html>
