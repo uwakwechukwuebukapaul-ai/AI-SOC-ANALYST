@@ -1,103 +1,163 @@
-from mitre_attack import get_attack
+from datetime import datetime
 
 
-def investigate(incident):
+def investigate_alert(alert):
 
-    risk = incident.get("risk", "UNKNOWN")
-    sender = incident.get("sender", "Unknown")
-    subject = incident.get("subject", "Unknown")
+    threat = alert.get("type", "Unknown Threat")
+
+    severity = alert.get("severity", "UNKNOWN")
+
+    score = alert.get("score", 0)
+
+    mitre = alert.get("mitre", "Unknown")
 
 
-    report = {
+    investigation = {
 
-        "incident": {
-            "sender": sender,
-            "subject": subject,
-            "risk": risk
-        },
+        "time": str(datetime.now()),
 
-        "analysis": [],
+        "threat": threat,
 
-        "recommendation": []
+        "severity": severity,
+
+        "risk_score": score,
+
+        "mitre": mitre,
+
+        "analysis": "",
+
+        "investigation_steps": [],
+
+        "response_actions": []
 
     }
 
 
-    if risk == "HIGH":
+    if "phishing" in threat.lower():
 
-        report["analysis"].append(
-            "High risk activity detected"
+        investigation["analysis"] = (
+
+            "The alert indicates a possible phishing campaign. "
+
+            "Suspicious indicators suggest an attempt to steal "
+
+            "credentials or deliver malicious content."
+
         )
 
-        report["analysis"].append(
-            "Possible phishing or credential theft attempt"
+
+        investigation["investigation_steps"] = [
+
+            "Analyze sender reputation",
+
+            "Check suspicious URLs",
+
+            "Review affected users",
+
+            "Verify if credentials were exposed"
+
+        ]
+
+
+        investigation["response_actions"] = [
+
+            "Block malicious sender",
+
+            "Remove phishing emails",
+
+            "Reset compromised passwords",
+
+            "Enable MFA"
+
+        ]
+
+
+
+    elif "brute" in threat.lower():
+
+
+        investigation["analysis"] = (
+
+            "Multiple authentication failures suggest a possible "
+
+            "credential guessing or brute-force attack."
+
         )
 
-        report["recommendation"].append(
-            "Block sender"
-        )
 
-        report["recommendation"].append(
-            "Reset affected credentials"
-        )
+        investigation["investigation_steps"] = [
 
-        report["recommendation"].append(
-            "Review user activity logs"
-        )
+            "Review authentication logs",
 
-        report["mitre"] = get_attack("phishing")
+            "Identify targeted accounts",
+
+            "Check source IP reputation",
+
+            "Look for successful logins"
+
+        ]
 
 
-    elif risk == "MEDIUM":
+        investigation["response_actions"] = [
 
-        report["analysis"].append(
-            "Suspicious activity detected"
-        )
+            "Block suspicious IP",
 
-        report["recommendation"].append(
-            "Monitor the event"
-        )
+            "Lock affected accounts",
 
-        report["mitre"] = get_attack("malware")
+            "Reset credentials",
+
+            "Enable MFA"
+
+        ]
+
 
 
     else:
 
-        report["analysis"].append(
-            "Low risk event"
+
+        investigation["analysis"] = (
+
+            "The alert requires further investigation "
+
+            "to determine the attack method."
+
         )
 
-        report["recommendation"].append(
-            "No immediate action required"
-        )
-
-        report["mitre"] = "Informational"
 
 
-    return report
+    return investigation
+
 
 
 
 if __name__ == "__main__":
 
-    test_incident = {
 
-        "sender":
-        "security@micr0soft-login.xyz",
+    test_alert = {
 
-        "subject":
-        "URGENT: Verify your account",
 
-        "risk":
-        "HIGH"
+        "type": "Possible phishing attempt detected",
+
+        "severity": "HIGH",
+
+        "score": 85,
+
+        "mitre": "T1566 - Phishing"
 
     }
 
 
-    result = investigate(test_incident)
+
+    result = investigate_alert(test_alert)
 
 
-    print("🛡️ AI SOC INVESTIGATION")
-    print("="*40)
+    print("🤖 AI SOC INVESTIGATION REPORT")
 
-    print(result)
+    print("=" * 40)
+
+
+    for key, value in result.items():
+
+        print("\n", key.upper())
+
+        print(value)
