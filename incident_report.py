@@ -2,7 +2,7 @@ from datetime import datetime
 
 
 def create_incident_report(subject, sender, analysis_result):
-    incident_id = datetime.now().strftime("INC-%Y%m%d-%H%M%S")
+    incident_id = datetime.now().strftime("INC-%Y%m%d-%H%M%S-%f")
 
     report = {
         "incident_id": incident_id,

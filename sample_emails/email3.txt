@@ -1,0 +1,6 @@
+Subject: Bank login alert
+Sender: support@secure-bank-alert.ru
+
+We detected unusual login activity on your bank account.
+Click here to verify your identity:
+http://bank-security-verify.ru/login
