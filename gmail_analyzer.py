@@ -2,13 +2,9 @@ import re
 
 
 def analyze_email(subject, sender, body):
-
     score = 0
     reasons = []
 
-    email_text = (subject + " " + sender + " " + body).lower()
-
-    # Phishing keywords
     suspicious_words = [
         "urgent",
         "verify",
@@ -17,52 +13,60 @@ def analyze_email(subject, sender, body):
         "bank",
         "account suspended",
         "click here",
-        "confirm",
-        "security alert"
     ]
 
-    # Check suspicious words
     for word in suspicious_words:
-        if word in email_text:
+        if word.lower() in subject.lower() or word.lower() in body.lower():
             score += 1
-            reasons.append(f"Suspicious keyword detected: {word}")
+            reasons.append(f"Suspicious keyword: {word}")
 
-    # URL detection
-    urls = re.findall(r'https?://\S+', body)
+    trusted_domains = [
+        "microsoft.com",
+        "google.com",
+        "github.com",
+    ]
+
+    if "@" in sender:
+        domain = sender.split("@")[1].lower()
+
+        if domain not in trusted_domains:
+            score += 2
+            reasons.append(f"Suspicious sender domain: {domain}")
+    else:
+        score += 2
+        reasons.append("Invalid sender email")
+
+    urls = re.findall(r"https?://[^\s]+", body)
 
     for url in urls:
         score += 2
-        reasons.append(f"Suspicious URL detected: {url}")
+        reasons.append(f"URL found in email body: {url}")
 
-    # Sender analysis
-    suspicious_domains = [
-        "xyz",
-        "top",
-        "click",
-        "login",
-        "verify"
-    ]
+        suspicious_url_signs = [
+            ".xyz",
+            ".ru",
+            "login",
+            "verify",
+            "security",
+            "password",
+        ]
 
-    for domain in suspicious_domains:
-        if domain in sender.lower():
-            score += 2
-            reasons.append(
-                f"Suspicious sender domain detected: {domain}"
-            )
+        for sign in suspicious_url_signs:
+            if sign in url.lower():
+                score += 2
+                reasons.append(f"Suspicious URL detected: {url}")
+                break
 
-    # Risk calculation
-    if score >= 5:
+    if score >= 7:
         risk = "HIGH"
-
-    elif score >= 3:
+    elif score >= 4:
         risk = "MEDIUM"
-
     else:
         risk = "LOW"
-
 
     return {
         "risk": risk,
         "score": score,
-        "reasons": reasons
+        "reasons": reasons,
+        "urls": urls,
     }
