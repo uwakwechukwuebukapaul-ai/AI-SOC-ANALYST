@@ -1,72 +1,66 @@
-# \# 🛡️ AI SOC Analyst Dashboard
+\# AI SOC Analyst
 
-# 
 
-# An AI-powered Security Operations Center (SOC) monitoring dashboard built with Python and Flask.
 
-# 
+A Python-based phishing detection and SOC automation project.
 
-# \## Features
 
-# 
 
-# \- 🚨 Security incident detection
+\## Features
 
-# \- 🤖 AI threat analysis
 
-# \- 📊 Risk scoring system
 
-# \- 🎯 MITRE ATT\&CK technique mapping
+\- Analyze multiple sample emails
 
-# \- 📁 Incident management
+\- Detect suspicious phishing keywords
 
-# \- 👤 Analyst assignment
+\- Detect suspicious sender domains
 
-# \- 📝 Investigation notes
+\- Extract URLs from email bodies
 
-# \- 📄 Incident report generation
+\- Flag suspicious URLs
 
-# 
+\- Generate structured incident reports
 
-# \## Technologies
+\- Save reports as JSON files
 
-# 
+\- Log incidents to a CSV file
 
-# \- Python
+\- Print a daily SOC summary dashboard
 
-# \- Flask
 
-# \- SQLite
 
-# \- HTML/CSS
+\## Project Structure
 
-# \- MITRE ATT\&CK Framework
 
-# 
 
-# \## Security Detections
+```text
 
-# 
+AI-SOC-Analyst/
 
-# Currently detects:
+├── main.py
 
-# 
+├── gmail\_analyzer.py
 
-# \- Phishing attempts
+├── incident\_report.py
 
-# \- Brute force attacks
+├── report\_writer.py
 
-# \- Suspicious outbound connections
+├── csv\_logger.py
 
-# 
+├── sample\_email.txt
 
-# \## Project Status
+├── sample\_emails/
 
-# 
+│   ├── email1.txt
 
-# 🚧 Active development
+│   ├── email2.txt
 
-# 
+│   └── email3.txt
 
-# Built as a cybersecurity portfolio project.
+├── reports/
+
+├── logs/
+
+└── README.md
 
