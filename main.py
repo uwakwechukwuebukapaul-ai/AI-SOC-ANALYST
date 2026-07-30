@@ -114,7 +114,29 @@ def print_summary_dashboard(incident_reports):
     print(f"Summary Saved To      : {summary_file}")
 
 
+def print_help():
+    print("AI SOC Analyst")
+    print()
+    print("Usage:")
+    print("  python main.py")
+    print("  python main.py sample_emails")
+    print("  python main.py sample_emails HIGH")
+    print("  python main.py sample_emails MEDIUM")
+    print("  python main.py sample_emails LOW")
+    print()
+    print("Options:")
+    print("  --help     Show this help message")
+    print()
+    print("Examples:")
+    print("  python main.py sample_emails HIGH")
+    print("  python main.py sample_emails LOW")
+
+
 def main():
+    if len(sys.argv) > 1 and sys.argv[1] == "--help":
+        print_help()
+        return
+
     if len(sys.argv) > 1:
         email_folder = sys.argv[1]
     else:
