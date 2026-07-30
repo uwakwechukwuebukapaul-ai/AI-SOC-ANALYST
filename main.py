@@ -31,14 +31,7 @@ def read_email_from_file(file_path):
     return subject, sender, body
 
 
-def analyze_email_file(file_path):
-    subject, sender, body = read_email_from_file(file_path)
-
-    analysis_result = analyze_email(subject, sender, body)
-    incident_report = create_incident_report(subject, sender, analysis_result)
-    saved_file = save_report_to_json(incident_report)
-    csv_log = log_incident_to_csv(incident_report)
-
+def print_incident_report(file_path, incident_report, saved_file, csv_log):
     print("===== AI SOC ANALYST INCIDENT REPORT =====")
     print(f"Source File       : {file_path}")
     print(f"Incident ID       : {incident_report['incident_id']}")
@@ -72,6 +65,18 @@ def analyze_email_file(file_path):
     print(csv_log)
 
     print("\n" + "=" * 60 + "\n")
+
+
+def analyze_email_file(file_path, risk_filter=None):
+    subject, sender, body = read_email_from_file(file_path)
+
+    analysis_result = analyze_email(subject, sender, body)
+    incident_report = create_incident_report(subject, sender, analysis_result)
+    saved_file = save_report_to_json(incident_report)
+    csv_log = log_incident_to_csv(incident_report)
+
+    if risk_filter is None or incident_report["risk_level"] == risk_filter:
+        print_incident_report(file_path, incident_report, saved_file, csv_log)
 
     return incident_report
 
@@ -115,12 +120,17 @@ def main():
     else:
         email_folder = "sample_emails"
 
+    if len(sys.argv) > 2:
+        risk_filter = sys.argv[2].upper()
+    else:
+        risk_filter = None
+
     incident_reports = []
 
     for filename in os.listdir(email_folder):
         if filename.endswith(".txt"):
             file_path = os.path.join(email_folder, filename)
-            incident_report = analyze_email_file(file_path)
+            incident_report = analyze_email_file(file_path, risk_filter)
             incident_reports.append(incident_report)
 
     print_summary_dashboard(incident_reports)
