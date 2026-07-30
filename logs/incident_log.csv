@@ -1,0 +1,4 @@
+incident_id,created_at,title,sender,risk_level,risk_score,urls,recommended_action
+INC-20260730-120541-916749,2026-07-30 12:05:41,Phishing Investigation: URGENT: Verify your account,security@micr0soft-login.xyz,HIGH,11,http://micr0soft-security-login.xyz,"Do not click any links. Block sender, report email, and investigate URLs."
+INC-20260730-120541-924461,2026-07-30 12:05:41,Phishing Investigation: Meeting notes from today,manager@company.com,LOW,2,,No immediate action required. Continue monitoring.
+INC-20260730-120541-932106,2026-07-30 12:05:41,Phishing Investigation: Bank login alert,support@secure-bank-alert.ru,HIGH,10,http://bank-security-verify.ru/login,"Do not click any links. Block sender, report email, and investigate URLs."

@@ -1,0 +1,22 @@
+{
+    "incident_id": "INC-20260730-120541-916749",
+    "created_at": "2026-07-30 12:05:41",
+    "title": "Phishing Investigation: URGENT: Verify your account",
+    "sender": "security@micr0soft-login.xyz",
+    "risk_level": "HIGH",
+    "risk_score": 11,
+    "indicators": [
+        "Suspicious keyword: urgent",
+        "Suspicious keyword: verify",
+        "Suspicious keyword: password",
+        "Suspicious keyword: login",
+        "Suspicious keyword: click here",
+        "Suspicious sender domain: micr0soft-login.xyz",
+        "URL found in email body: http://micr0soft-security-login.xyz",
+        "Suspicious URL detected: http://micr0soft-security-login.xyz"
+    ],
+    "urls": [
+        "http://micr0soft-security-login.xyz"
+    ],
+    "recommended_action": "Do not click any links. Block sender, report email, and investigate URLs."
+}

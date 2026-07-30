@@ -3,6 +3,7 @@ import os
 from gmail_analyzer import analyze_email
 from incident_report import create_incident_report
 from report_writer import save_report_to_json
+from csv_logger import log_incident_to_csv
 
 
 def read_email_from_file(file_path):
@@ -34,6 +35,7 @@ def analyze_email_file(file_path):
     analysis_result = analyze_email(subject, sender, body)
     incident_report = create_incident_report(subject, sender, analysis_result)
     saved_file = save_report_to_json(incident_report)
+    csv_log = log_incident_to_csv(incident_report)
 
     print("===== AI SOC ANALYST INCIDENT REPORT =====")
     print(f"Source File       : {file_path}")
@@ -60,6 +62,10 @@ def analyze_email_file(file_path):
 
     print("\nReport Saved To:")
     print(saved_file)
+
+    print("\nCSV Log Updated:")
+    print(csv_log)
+
     print("\n" + "=" * 60 + "\n")
 
 

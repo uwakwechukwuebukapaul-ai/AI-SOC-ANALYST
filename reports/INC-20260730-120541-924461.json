@@ -1,0 +1,13 @@
+{
+    "incident_id": "INC-20260730-120541-924461",
+    "created_at": "2026-07-30 12:05:41",
+    "title": "Phishing Investigation: Meeting notes from today",
+    "sender": "manager@company.com",
+    "risk_level": "LOW",
+    "risk_score": 2,
+    "indicators": [
+        "Suspicious sender domain: company.com"
+    ],
+    "urls": [],
+    "recommended_action": "No immediate action required. Continue monitoring."
+}
