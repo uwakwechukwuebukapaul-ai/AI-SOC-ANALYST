@@ -142,6 +142,12 @@ def main():
     else:
         email_folder = "sample_emails"
 
+    if not os.path.isdir(email_folder):
+        print(f"Error: Folder not found: {email_folder}")
+        print("Use: python main.py sample_emails")
+        print("Or:  python main.py --help")
+        return
+
     if len(sys.argv) > 2:
         risk_filter = sys.argv[2].upper()
     else:
