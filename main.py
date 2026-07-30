@@ -3,13 +3,30 @@ from incident_report import create_incident_report
 from report_writer import save_report_to_json
 
 
-subject = "URGENT: Verify your account"
-sender = "security@micr0soft-login.xyz"
-body = """
-Your account has been suspended.
-Click here immediately to verify your password:
-http://micr0soft-security-login.xyz
-"""
+def read_email_from_file(file_path):
+    with open(file_path, "r") as file:
+        content = file.read()
+
+    lines = content.splitlines()
+
+    subject = ""
+    sender = ""
+    body_lines = []
+
+    for line in lines:
+        if line.startswith("Subject:"):
+            subject = line.replace("Subject:", "").strip()
+        elif line.startswith("Sender:"):
+            sender = line.replace("Sender:", "").strip()
+        else:
+            body_lines.append(line)
+
+    body = "\n".join(body_lines).strip()
+
+    return subject, sender, body
+
+
+subject, sender, body = read_email_from_file("sample_email.txt")
 
 analysis_result = analyze_email(subject, sender, body)
 incident_report = create_incident_report(subject, sender, analysis_result)
