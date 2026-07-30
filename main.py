@@ -1,4 +1,5 @@
 from gmail_analyzer import analyze_email
+from incident_report import create_incident_report
 
 
 subject = "URGENT: Verify your account"
@@ -9,19 +10,27 @@ Click here immediately to verify your password:
 http://micr0soft-security-login.xyz
 """
 
-result = analyze_email(subject, sender, body)
+analysis_result = analyze_email(subject, sender, body)
+incident_report = create_incident_report(subject, sender, analysis_result)
 
-print("===== AI SOC ANALYST REPORT =====")
-print(f"Risk Level: {result['risk']}")
-print(f"Risk Score: {result['score']}")
+print("===== AI SOC ANALYST INCIDENT REPORT =====")
+print(f"Incident ID       : {incident_report['incident_id']}")
+print(f"Created At        : {incident_report['created_at']}")
+print(f"Title             : {incident_report['title']}")
+print(f"Sender            : {incident_report['sender']}")
+print(f"Risk Level        : {incident_report['risk_level']}")
+print(f"Risk Score        : {incident_report['risk_score']}")
 
-print("\nReasons:")
-for reason in result["reasons"]:
-    print("-", reason)
+print("\nIndicators:")
+for indicator in incident_report["indicators"]:
+    print("-", indicator)
 
 print("\nURLs Found:")
-if result["urls"]:
-    for url in result["urls"]:
+if incident_report["urls"]:
+    for url in incident_report["urls"]:
         print("-", url)
 else:
     print("No URLs found.")
+
+print("\nRecommended Action:")
+print(incident_report["recommended_action"])
