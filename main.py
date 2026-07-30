@@ -1,9 +1,11 @@
 import os
+import sys
 
 from gmail_analyzer import analyze_email
 from incident_report import create_incident_report
 from report_writer import save_report_to_json
 from csv_logger import log_incident_to_csv
+from summary_writer import save_summary_to_json
 
 
 def read_email_from_file(file_path):
@@ -88,16 +90,31 @@ def print_summary_dashboard(incident_reports):
         elif report["risk_level"] == "LOW":
             low_risk += 1
 
+    summary = {
+        "total_emails": total_emails,
+        "high_risk": high_risk,
+        "medium_risk": medium_risk,
+        "low_risk": low_risk,
+        "reports_saved": total_emails,
+    }
+
+    summary_file = save_summary_to_json(summary)
+
     print("===== DAILY SOC SUMMARY =====")
-    print(f"Total Emails Analyzed : {total_emails}")
-    print(f"High Risk             : {high_risk}")
-    print(f"Medium Risk           : {medium_risk}")
-    print(f"Low Risk              : {low_risk}")
-    print(f"Reports Saved         : {total_emails}")
+    print(f"Total Emails Analyzed : {summary['total_emails']}")
+    print(f"High Risk             : {summary['high_risk']}")
+    print(f"Medium Risk           : {summary['medium_risk']}")
+    print(f"Low Risk              : {summary['low_risk']}")
+    print(f"Reports Saved         : {summary['reports_saved']}")
+    print(f"Summary Saved To      : {summary_file}")
 
 
 def main():
-    email_folder = "sample_emails"
+    if len(sys.argv) > 1:
+        email_folder = sys.argv[1]
+    else:
+        email_folder = "sample_emails"
+
     incident_reports = []
 
     for filename in os.listdir(email_folder):
