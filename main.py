@@ -47,8 +47,11 @@ def analyze_email_file(file_path):
     print(f"Risk Score        : {incident_report['risk_score']}")
 
     print("\nIndicators:")
-    for indicator in incident_report["indicators"]:
-        print("-", indicator)
+    if incident_report["indicators"]:
+        for indicator in incident_report["indicators"]:
+            print("-", indicator)
+    else:
+        print("No suspicious indicators found.")
 
     print("\nURLs Found:")
     if incident_report["urls"]:
@@ -68,14 +71,42 @@ def analyze_email_file(file_path):
 
     print("\n" + "=" * 60 + "\n")
 
+    return incident_report
+
+
+def print_summary_dashboard(incident_reports):
+    total_emails = len(incident_reports)
+    high_risk = 0
+    medium_risk = 0
+    low_risk = 0
+
+    for report in incident_reports:
+        if report["risk_level"] == "HIGH":
+            high_risk += 1
+        elif report["risk_level"] == "MEDIUM":
+            medium_risk += 1
+        elif report["risk_level"] == "LOW":
+            low_risk += 1
+
+    print("===== DAILY SOC SUMMARY =====")
+    print(f"Total Emails Analyzed : {total_emails}")
+    print(f"High Risk             : {high_risk}")
+    print(f"Medium Risk           : {medium_risk}")
+    print(f"Low Risk              : {low_risk}")
+    print(f"Reports Saved         : {total_emails}")
+
 
 def main():
     email_folder = "sample_emails"
+    incident_reports = []
 
     for filename in os.listdir(email_folder):
         if filename.endswith(".txt"):
             file_path = os.path.join(email_folder, filename)
-            analyze_email_file(file_path)
+            incident_report = analyze_email_file(file_path)
+            incident_reports.append(incident_report)
+
+    print_summary_dashboard(incident_reports)
 
 
 main()
