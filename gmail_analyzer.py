@@ -20,18 +20,39 @@ def analyze_email(subject, sender, body):
             score += 1
             reasons.append(f"Suspicious keyword: {word}")
 
-    trusted_domains = [
-        "microsoft.com",
-        "google.com",
-        "github.com",
+    suspicious_domain_signs = [
+        "login",
+        "secure",
+        "verify",
+        "security",
+        "alert",
+        "bank",
+        "micr0soft",
+        "g00gle",
+    ]
+
+    suspicious_tlds = [
+        ".xyz",
+        ".ru",
+        ".top",
+        ".click",
+        ".zip",
     ]
 
     if "@" in sender:
         domain = sender.split("@")[1].lower()
 
-        if domain not in trusted_domains:
-            score += 2
-            reasons.append(f"Suspicious sender domain: {domain}")
+        for sign in suspicious_domain_signs:
+            if sign in domain:
+                score += 2
+                reasons.append(f"Suspicious sender domain keyword: {domain}")
+                break
+
+        for tld in suspicious_tlds:
+            if domain.endswith(tld):
+                score += 2
+                reasons.append(f"Suspicious sender domain extension: {domain}")
+                break
     else:
         score += 2
         reasons.append("Invalid sender email")
