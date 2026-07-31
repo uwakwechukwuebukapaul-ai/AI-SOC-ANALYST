@@ -8,23 +8,38 @@
     <meta name="viewport"
           content="width=device-width, initial-scale=1.0">
 
-    <title>Sentinel DNA</title>
+    <title>🧬 Sentinel DNA</title>
+
+    <!-- Bootstrap -->
 
     <link
         href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
         rel="stylesheet">
 
+    <!-- Custom CSS -->
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='css/style.css') }}">
+
 </head>
 
-<body class="bg-light">
+<body>
 
-<nav class="navbar navbar-dark bg-dark">
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
 
-    <div class="container-fluid">
+    <div class="container">
 
-        <span class="navbar-brand mb-0 h1">
+        <a class="navbar-brand fw-bold"
+           href="/">
 
             🧬 Sentinel DNA
+
+        </a>
+
+        <span class="navbar-text">
+
+            AI SOC Investigation Platform
 
         </span>
 
@@ -33,7 +48,7 @@
 </nav>
 
 
-<div class="container mt-4">
+<div class="container py-4">
 
     {% block content %}
 
@@ -42,7 +57,17 @@
 </div>
 
 
+<!-- Bootstrap -->
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- Chart.js -->
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+{% block scripts %}
+
+{% endblock %}
 
 </body>
 

@@ -1,13 +1,7 @@
 """
 Sentinel DNA
-Dashboard Route
-
-Provides:
-- SOC dashboard statistics
-- Analytics data
-- Chart information
+Dashboard Analytics Route
 """
-
 
 from pathlib import Path
 import sys
@@ -15,130 +9,128 @@ import sys
 from flask import render_template
 
 
-
-# =====================================
-# PROJECT PATH
-# =====================================
-
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 
-
 if str(PROJECT_ROOT) not in sys.path:
-
     sys.path.append(str(PROJECT_ROOT))
 
 
-
-
-
-# =====================================
-# IMPORTS
-# =====================================
-
 from database.repository import get_cases
 
-from web.analytics.dashboard_stats import (
-    get_dashboard_analytics
-)
 
-
-
-
-
-# =====================================
-# DASHBOARD
-# =====================================
 
 def dashboard():
 
-
-    try:
-
-        cases = get_cases()
-
-
-    except Exception:
-
-        cases = []
-
-
-
-
-
-    try:
-
-        analytics = get_dashboard_analytics()
-
-
-    except Exception:
-
-        analytics = {
-
-            "statistics": {},
-
-            "severity": {},
-
-            "status": {},
-
-            "threats": {},
-
-            "timeline": {},
-
-            "risk": {}
-
-        }
-
-
-
-
-
+    cases = get_cases()
 
 
     stats = {
 
+        "total_cases": len(cases),
 
-        "total_cases":
+        "high_cases": len(
+            [
+                c for c in cases
+                if c.get("severity") == "HIGH"
+            ]
+        ),
 
-            analytics["statistics"].get(
-                "total_cases",
-                0
-            ),
-
-
-
-        "open_cases":
-
-            analytics["statistics"].get(
-                "open_cases",
-                0
-            ),
-
+        "open_cases": len(
+            [
+                c for c in cases
+                if c.get("status") == "OPEN"
+            ]
+        ),
 
 
-        "closed_cases":
-
-            analytics["statistics"].get(
-                "closed_cases",
-                0
-            ),
-
-
-
-        "high_cases":
-
-            analytics["statistics"].get(
-                "high_cases",
-                0
-            ),
+        "closed_cases": len(
+            [
+                c for c in cases
+                if c.get("status") == "CLOSED"
+            ]
+        ),
 
 
-
-        "cases":
-
-            cases
+        "cases": cases
 
     }
 
+
+
+    # ================================
+    # Severity Analytics
+    # ================================
+
+
+    severity = {}
+
+
+    for case in cases:
+
+        level = case.get("severity","UNKNOWN")
+
+        severity[level] = severity.get(level,0)+1
+
+
+
+
+
+
+    # ================================
+    # Threat Analytics
+    # ================================
+
+
+    threats = {}
+
+
+    for case in cases:
+
+        title = case.get("title","Unknown")
+
+        threats[title] = threats.get(title,0)+1
+
+
+
+
+
+
+
+
+    # ================================
+    # Timeline Analytics
+    # ================================
+
+
+    timeline = {}
+
+
+    for case in cases:
+
+        date = case.get("created","")[:10]
+
+        timeline[date] = timeline.get(date,0)+1
+
+
+
+
+
+
+    analytics = {
+
+
+        "risk": {
+
+            "risk_level":"HIGH",
+
+            "critical_cases":stats["high_cases"],
+
+            "total_incidents":stats["total_cases"]
+
+        }
+
+
+    }
 
 
 
@@ -150,41 +142,21 @@ def dashboard():
 
         stats=stats,
 
-
         analytics=analytics,
 
 
-        severity_labels=list(
-            analytics["severity"].keys()
-        ),
+        severity_labels=list(severity.keys()),
+
+        severity_values=list(severity.values()),
 
 
-        severity_values=list(
-            analytics["severity"].values()
-        ),
+        threat_labels=list(threats.keys()),
+
+        threat_values=list(threats.values()),
 
 
+        timeline_labels=list(timeline.keys()),
 
-        threat_labels=list(
-            analytics["threats"].keys()
-        ),
-
-
-        threat_values=list(
-            analytics["threats"].values()
-        ),
-
-
-
-
-        timeline_labels=list(
-            analytics["timeline"].keys()
-        ),
-
-
-
-        timeline_values=list(
-            analytics["timeline"].values()
-        )
+        timeline_values=list(timeline.values())
 
     )

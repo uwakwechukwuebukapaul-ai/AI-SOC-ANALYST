@@ -1,121 +1,168 @@
-/*
-Sentinel DNA
-SOC Dashboard Charts
-*/
+document.addEventListener("DOMContentLoaded", () => {
 
+    // -------------------------
+    // Severity Chart
+    // -------------------------
 
-// Severity Doughnut Chart
+    const severityCanvas = document.getElementById("severityChart");
 
-const severityCtx = document.getElementById(
-    "severityChart"
-);
+    if (severityCanvas) {
 
+        new Chart(severityCanvas, {
 
-if (severityCtx) {
+            type: "doughnut",
 
-    new Chart(severityCtx, {
+            data: {
 
-        type: "doughnut",
+                labels: severityLabels,
 
-        data: {
+                datasets: [{
 
-            labels: severityLabels,
+                    label: "Severity",
 
-            datasets: [
+                    data: severityValues,
 
-                {
+                    backgroundColor: [
 
-                    data: severityValues
+                        "#dc3545",
+                        "#ffc107",
+                        "#198754",
+                        "#0d6efd"
 
-                }
+                    ],
 
-            ]
+                    borderWidth: 2
 
-        }
+                }]
 
-    });
+            },
 
-}
+            options: {
 
+                responsive: true,
 
+                maintainAspectRatio: false,
 
+                plugins: {
 
-// Threat Distribution Chart
+                    legend: {
 
-const threatCtx = document.getElementById(
-    "threatChart"
-);
+                        position: "bottom"
 
-
-if (threatCtx) {
-
-    new Chart(threatCtx, {
-
-        type: "bar",
-
-        data: {
-
-            labels: threatLabels,
-
-            datasets: [
-
-                {
-
-                    label:
-                    "Threats",
-
-                    data:
-                    threatValues
+                    }
 
                 }
 
-            ]
+            }
 
-        }
+        });
 
-    });
+    }
 
-}
+    // -------------------------
+    // Threat Chart
+    // -------------------------
 
+    const threatCanvas = document.getElementById("threatChart");
 
+    if (threatCanvas) {
 
+        new Chart(threatCanvas, {
 
+            type: "bar",
 
-// Incident Timeline Chart
+            data: {
 
-const timelineCtx = document.getElementById(
-    "timelineChart"
-);
+                labels: threatLabels,
 
+                datasets: [{
 
-if (timelineCtx) {
+                    label: "Threat Count",
 
-    new Chart(timelineCtx, {
+                    data: threatValues,
 
-        type: "line",
+                    backgroundColor: "#0d6efd"
 
-        data: {
+                }]
 
-            labels:
-            timelineLabels,
+            },
 
+            options: {
 
-            datasets: [
+                responsive: true,
 
-                {
+                maintainAspectRatio: false,
 
-                    label:
-                    "Incidents",
+                scales: {
 
-                    data:
-                    timelineValues
+                    y: {
+
+                        beginAtZero: true
+
+                    }
 
                 }
 
-            ]
+            }
 
-        }
+        });
 
-    });
+    }
 
-}
+    // -------------------------
+    // Timeline Chart
+    // -------------------------
+
+    const timelineCanvas = document.getElementById("timelineChart");
+
+    if (timelineCanvas) {
+
+        new Chart(timelineCanvas, {
+
+            type: "line",
+
+            data: {
+
+                labels: timelineLabels,
+
+                datasets: [{
+
+                    label: "Incidents",
+
+                    data: timelineValues,
+
+                    borderColor: "#dc3545",
+
+                    backgroundColor: "rgba(220,53,69,.2)",
+
+                    fill: true,
+
+                    tension: 0.3
+
+                }]
+
+            },
+
+            options: {
+
+                responsive: true,
+
+                maintainAspectRatio: false,
+
+                scales: {
+
+                    y: {
+
+                        beginAtZero: true
+
+                    }
+
+                }
+
+            }
+
+        });
+
+    }
+
+});
