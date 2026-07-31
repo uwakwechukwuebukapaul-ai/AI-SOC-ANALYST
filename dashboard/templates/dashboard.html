@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="card">
+
+<h2>Dashboard Statistics</h2>
+
+<p>Total Cases: {{ stats.cases }}</p>
+
+<p>Total Evidence: {{ stats.evidence }}</p>
+
+<p>Total Timeline Events: {{ stats.timeline }}</p>
+
+<p>Total IOCs: {{ stats.iocs }}</p>
+
+</div>
+
+{% endblock %}
