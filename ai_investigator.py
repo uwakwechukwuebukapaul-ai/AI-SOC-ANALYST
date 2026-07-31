@@ -1,47 +1,111 @@
+"""
+Sentinel DNA
+AI Investigation Orchestrator
+
+Analyzes alerts and creates investigation reports.
+"""
+
+
 from datetime import datetime
+import uuid
+
 
 
 def investigate_alert(alert):
 
-    threat = alert.get("type", "Unknown Threat")
 
-    severity = alert.get("severity", "UNKNOWN")
+    investigation_id = (
+        "INV-" + uuid.uuid4().hex[:8].upper()
+    )
 
-    score = alert.get("score", 0)
 
-    mitre = alert.get("mitre", "Unknown")
+    threat = alert.get(
+        "type",
+        "Unknown Threat"
+    )
+
+
+    severity = alert.get(
+        "severity",
+        "UNKNOWN"
+    )
+
+
+    score = alert.get(
+        "score",
+        0
+    )
+
+
+    mitre = alert.get(
+        "mitre",
+        "Unknown"
+    )
 
 
     investigation = {
 
-        "time": str(datetime.now()),
 
-        "threat": threat,
+        "investigation_id":
+            investigation_id,
 
-        "severity": severity,
 
-        "risk_score": score,
+        "time":
+            datetime.now().isoformat(),
 
-        "mitre": mitre,
 
-        "analysis": "",
+        "threat":
+            threat,
 
-        "investigation_steps": [],
 
-        "response_actions": []
+        "severity":
+            severity,
+
+
+        "risk_score":
+            score,
+
+
+        "mitre":
+            mitre,
+
+
+        "confidence":
+            calculate_confidence(score),
+
+
+        "analysis":
+            "",
+
+
+        "investigation_steps":
+            [],
+
+
+        "evidence_required":
+            [],
+
+
+        "response_actions":
+            []
+
 
     }
 
 
+
+    # ==============================
+    # PHISHING ANALYSIS
+    # ==============================
+
     if "phishing" in threat.lower():
+
 
         investigation["analysis"] = (
 
-            "The alert indicates a possible phishing campaign. "
-
-            "Suspicious indicators suggest an attempt to steal "
-
-            "credentials or deliver malicious content."
+            "Possible phishing activity detected. "
+            "Indicators suggest credential theft "
+            "or malicious link delivery."
 
         )
 
@@ -50,22 +114,37 @@ def investigate_alert(alert):
 
             "Analyze sender reputation",
 
-            "Check suspicious URLs",
+            "Extract malicious URLs",
+
+            "Check domain intelligence",
 
             "Review affected users",
 
-            "Verify if credentials were exposed"
+            "Confirm credential exposure"
+
+        ]
+
+
+        investigation["evidence_required"] = [
+
+            "Email headers",
+
+            "Sender domain",
+
+            "URL reputation",
+
+            "User reports"
 
         ]
 
 
         investigation["response_actions"] = [
 
-            "Block malicious sender",
+            "Block malicious domain",
 
-            "Remove phishing emails",
+            "Remove phishing messages",
 
-            "Reset compromised passwords",
+            "Reset exposed credentials",
 
             "Enable MFA"
 
@@ -73,14 +152,17 @@ def investigate_alert(alert):
 
 
 
+    # ==============================
+    # BRUTE FORCE ANALYSIS
+    # ==============================
+
     elif "brute" in threat.lower():
 
 
         investigation["analysis"] = (
 
-            "Multiple authentication failures suggest a possible "
-
-            "credential guessing or brute-force attack."
+            "Authentication attack suspected "
+            "based on repeated login failures."
 
         )
 
@@ -91,20 +173,31 @@ def investigate_alert(alert):
 
             "Identify targeted accounts",
 
-            "Check source IP reputation",
+            "Analyze source IP",
 
-            "Look for successful logins"
+            "Check successful access"
+
+        ]
+
+
+        investigation["evidence_required"] = [
+
+            "Login logs",
+
+            "Source IP address",
+
+            "User activity"
 
         ]
 
 
         investigation["response_actions"] = [
 
-            "Block suspicious IP",
+            "Block attacking IP",
 
-            "Lock affected accounts",
+            "Lock compromised accounts",
 
-            "Reset credentials",
+            "Reset passwords",
 
             "Enable MFA"
 
@@ -117,15 +210,47 @@ def investigate_alert(alert):
 
         investigation["analysis"] = (
 
-            "The alert requires further investigation "
-
-            "to determine the attack method."
+            "Unknown threat detected. "
+            "Additional analysis required."
 
         )
 
 
+        investigation["investigation_steps"] = [
+
+            "Collect additional evidence",
+
+            "Review indicators",
+
+            "Perform threat intelligence lookup"
+
+        ]
+
+
 
     return investigation
+
+
+
+
+
+def calculate_confidence(score):
+
+
+    if score >= 80:
+
+        return "HIGH"
+
+
+    elif score >= 50:
+
+        return "MEDIUM"
+
+
+    else:
+
+        return "LOW"
+
 
 
 
@@ -136,28 +261,40 @@ if __name__ == "__main__":
     test_alert = {
 
 
-        "type": "Possible phishing attempt detected",
+        "type":
+            "Possible phishing attempt detected",
 
-        "severity": "HIGH",
 
-        "score": 85,
+        "severity":
+            "HIGH",
 
-        "mitre": "T1566 - Phishing"
+
+        "score":
+            85,
+
+
+        "mitre":
+            "T1566 - Phishing"
 
     }
 
 
-
-    result = investigate_alert(test_alert)
-
-
-    print("🤖 AI SOC INVESTIGATION REPORT")
-
-    print("=" * 40)
+    report = investigate_alert(
+        test_alert
+    )
 
 
-    for key, value in result.items():
+    print(
+        "🤖 AI SOC INVESTIGATION REPORT"
+    )
 
-        print("\n", key.upper())
+    print("=" * 45)
+
+
+    for key, value in report.items():
+
+        print(
+            f"\n{key.upper()}:"
+        )
 
         print(value)
