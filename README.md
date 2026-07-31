@@ -1,81 +1,163 @@
-# AI SOC Analyst
+# 🧬 Sentinel DNA
 
-A Python-based phishing detection and SOC automation project.
+AI-Powered Security Operations Center (SOC) Investigation Platform
+
+Sentinel DNA is a Python-based SOC platform designed to automate phishing investigations, manage security cases, collect digital evidence, extract Indicators of Compromise (IOCs), and assist analysts through an integrated investigation workflow.
+
+It combines email analysis, evidence management, IOC intelligence, timeline tracking, and a web dashboard into a single investigation platform.
+
+---
 
 ## Features
 
-- Analyze multiple sample emails
-- Detect suspicious phishing keywords
-- Detect suspicious sender domains
-- Extract URLs from email bodies
-- Flag suspicious URLs
-- Generate structured incident reports
-- Save reports as JSON files
-- Log incidents to a CSV file
-- Print a daily SOC summary dashboard
+✅ Email Analysis Engine
+
+• Phishing keyword detection
+• Suspicious sender analysis
+• URL extraction
+• Risk scoring
+
+✅ Case Management
+
+• Automatic case creation
+• Analyst assignment
+• Status tracking
+
+✅ Evidence Engine
+
+• SHA-256 hashing
+• Evidence repository
+• Chain-of-custody support
+
+✅ IOC Intelligence
+
+• Domain extraction
+• URL extraction
+• Email extraction
+• IOC repository
+• IOC statistics
+
+✅ Investigation Timeline
+
+• Alert events
+• Evidence collection
+• Analyst actions
+• Investigation history
+
+✅ Dashboard
+
+• Live Flask dashboard
+• Case statistics
+• IOC statistics
+• Evidence statistics
+
+---
+
+## Architecture
+
+Email
+
+↓
+
+Evidence Engine
+
+↓
+
+Investigation Pipeline
+
+↓
+
+Case Management
+
+↓
+
+Evidence Repository
+
+↓
+
+IOC Intelligence
+
+↓
+
+Timeline
+
+↓
+
+Dashboard
+
+---
+
+## Technologies
+
+Python
+
+Flask
+
+SQLite
+
+HTML/CSS
+
+Git
+
+GitHub
+
+ReportLab (planned)
+
+---
 
 ## Project Structure
 
-```text
-AI-SOC-Analyst/
-├── main.py
-├── gmail_analyzer.py
-├── incident_report.py
-├── report_writer.py
-├── csv_logger.py
-├── sample_email.txt
-├── sample_emails/
-│   ├── email1.txt
-│   ├── email2.txt
-│   └── email3.txt
+Sentinel-DNA/
+├── cases/
+├── dashboard/
+├── database/
+├── evidence_engine/
+├── ioc_engine/
+├── services/
 ├── reports/
-├── logs/
+├── tests/
 └── README.md
-```
 
-## How It Works
+---
 
-1. The program reads email samples from the `sample_emails` folder.
-2. Each email is analyzed for phishing indicators.
-3. The analyzer assigns a risk score and risk level.
-4. A structured incident report is created.
-5. The report is saved as a JSON file.
-6. The incident is logged in a CSV file.
-7. A daily SOC summary is printed.
+## Roadmap
 
-## How to Run
+Sprint 1
+Core Email Analyzer
 
-```powershell
-python main.py
-```
+Sprint 2
+Evidence Repository
 
-## Sample Output
+Sprint 3
+Investigation Pipeline
 
-```text
-===== DAILY SOC SUMMARY =====
-Total Emails Analyzed : 3
-High Risk             : 2
-Medium Risk           : 0
-Low Risk              : 1
-Reports Saved         : 3
-```
+Sprint 4
+IOC Intelligence
 
-## Skills Demonstrated
+Sprint 5
+SOC Dashboard
 
-- Python programming
-- File handling
-- Regex URL extraction
-- CSV logging
-- JSON report generation
-- Basic phishing detection
-- SOC-style incident reporting
-- Git and GitHub version control
+Sprint 6
+PDF Reports
 
-## Future Improvements
+Sprint 7
+AI SOC Analyst
 
-- Connect to Gmail
-- Add AI-powered analysis
-- Send Slack alerts
-- Save reports to Notion
-- Add VirusTotal URL checks
-- Add a simple dashboard interface
+---
+
+## Upcoming Features
+
+• PDF Investigation Reports
+• MITRE ATT&CK Mapping
+• VirusTotal Integration
+• AI Investigation Assistant
+• Threat Intelligence Feeds
+• REST API
+• Authentication
+• Multi-user SOC Console
+
+---
+
+## License
+
+MIT License
