@@ -11,6 +11,10 @@ from flask import Flask, render_template
 
 from dashboard import dashboard
 
+from investigation_route import (
+    get_investigation_report
+)
+
 
 
 app = Flask(__name__)
@@ -23,7 +27,6 @@ app = Flask(__name__)
 # DASHBOARD ROUTE
 # =====================================
 
-
 @app.route("/")
 def home():
 
@@ -34,28 +37,46 @@ def home():
 
 
 # =====================================
-# CASE VIEW PLACEHOLDER
+# CASE INVESTIGATION VIEW
 # =====================================
-
 
 @app.route("/case/<case_id>")
 def case_view(case_id):
 
-    return f"""
-    <h1>🧬 Sentinel DNA Case Investigation</h1>
 
-    <h3>Case ID:</h3>
-
-    <p>{case_id}</p>
-
-    <hr>
-
-    Investigation module coming next...
-
-    """
+    report = get_investigation_report(
+        case_id
+    )
 
 
+    if not report:
 
+        return """
+        <h1>
+        🧬 Sentinel DNA
+        </h1>
+
+        <h3>
+        Case not found
+        </h3>
+        """
+
+
+
+    return render_template(
+        "investigation.html",
+        report=report
+    )
+
+
+
+
+
+
+
+# =====================================
+# START SERVER
+# =====================================
 
 
 if __name__ == "__main__":

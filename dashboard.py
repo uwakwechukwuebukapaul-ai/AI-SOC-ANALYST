@@ -36,6 +36,23 @@ def dashboard():
 
 
     # ==============================
+    # FIX CASE ID FOR DASHBOARD LINKS
+    # ==============================
+
+    for case in cases:
+
+        if not case.get("case_id"):
+
+            case["case_id"] = (
+                case.get("id")
+                or "UNKNOWN"
+            )
+
+
+
+
+
+    # ==============================
     # CASE METRICS
     # ==============================
 
@@ -168,6 +185,7 @@ def dashboard():
 
 
 
+
     # ==============================
     # THREAT CATEGORY DATA
     # ==============================
@@ -195,6 +213,8 @@ def dashboard():
 
 
 
+
+
     # ==============================
     # TIMELINE DATA
     # ==============================
@@ -217,6 +237,7 @@ def dashboard():
             date,
             0
         ) + 1
+
 
 
 

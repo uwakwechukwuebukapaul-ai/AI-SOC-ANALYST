@@ -1,64 +1,10 @@
-<!DOCTYPE html>
-
-<html>
-
-<head>
-
-<title>
-AI SOC Investigation Report
-</title>
+{% extends "base.html" %}
 
 
-<style>
-
-body{
-
-background:#0f172a;
-
-color:white;
-
-font-family:Arial;
-
-padding:30px;
-
-}
+{% block content %}
 
 
-.card{
-
-background:#1e293b;
-
-padding:20px;
-
-margin:20px 0;
-
-border-radius:10px;
-
-}
-
-
-.green{
-
-color:#22c55e;
-
-}
-
-
-.red{
-
-color:#ef4444;
-
-}
-
-
-</style>
-
-
-</head>
-
-
-<body>
-
+<div class="container mt-4">
 
 
 <h1>
@@ -66,38 +12,66 @@ color:#ef4444;
 </h1>
 
 
-
-<div class="card">
-
-
-<h2>
-Incident #{{report.id}}
-</h2>
+<hr>
 
 
-<p>
-<b>Threat:</b>
-{{report.threat}}
-</p>
+<div class="card mb-3">
+
+<div class="card-body">
 
 
-<p>
-<b>Severity:</b>
-{{report.severity}}
-</p>
+<h3>
+Incident #{{ report.id }}
+</h3>
+
+
+<h4>
+Threat:
+{{ report.threat }}
+</h4>
 
 
 <p>
-<b>Risk Score:</b>
-{{report.risk_score}}
+<strong>Severity:</strong>
+
+<span class="badge bg-danger">
+
+{{ report.severity }}
+
+</span>
+
 </p>
+
 
 
 <p>
-<b>MITRE ATT&CK:</b>
-{{report.mitre}}
+<strong>Status:</strong>
+
+{{ report.status }}
+
 </p>
 
+
+
+<p>
+<strong>Risk Score:</strong>
+
+{{ report.risk_score }}
+
+</p>
+
+
+
+<p>
+<strong>MITRE ATT&CK:</strong>
+
+{{ report.mitre }}
+
+</p>
+
+
+
+</div>
 
 </div>
 
@@ -105,81 +79,31 @@ Incident #{{report.id}}
 
 
 
-<div class="card">
+<div class="row">
 
 
-<h2>
+<div class="col-md-6">
+
+
+<div class="card mb-3">
+
+
+<div class="card-header">
 🕒 Incident Timeline
-</h2>
-
-
-<pre>
-{{report.timeline}}
-</pre>
-
-
 </div>
 
 
+<div class="card-body">
 
 
-
-
-<div class="card">
-
-
-<h2>
-🔎 Evidence Collected
-</h2>
-
-
-<pre>
-{{report.evidence}}
-</pre>
-
-
-</div>
-
-
-
-
-
-
-<div class="card">
-
-
-<h2>
-🤖 AI Analysis
-</h2>
-
-
-<p>
-{{report.analysis}}
-</p>
-
-
-</div>
-
-
-
-
-
-
-
-<div class="card">
-
-
-<h2>
-🔍 Investigation Steps
-</h2>
-
+{% if report.timeline %}
 
 <ul>
 
-{% for step in report.steps %}
+{% for item in report.timeline %}
 
 <li>
-{{step}}
+{{ item }}
 </li>
 
 {% endfor %}
@@ -187,6 +111,150 @@ Incident #{{report.id}}
 </ul>
 
 
+{% else %}
+
+<p>
+No timeline events recorded
+</p>
+
+{% endif %}
+
+
+</div>
+
+
+</div>
+
+
+</div>
+
+
+
+
+
+<div class="col-md-6">
+
+
+<div class="card mb-3">
+
+
+<div class="card-header">
+🔎 Evidence Collected
+</div>
+
+
+<div class="card-body">
+
+
+{% if report.evidence %}
+
+
+<ul>
+
+{% for item in report.evidence %}
+
+<li>
+{{ item }}
+</li>
+
+{% endfor %}
+
+</ul>
+
+
+{% else %}
+
+<p>
+No evidence collected yet
+</p>
+
+{% endif %}
+
+
+</div>
+
+
+</div>
+
+
+</div>
+
+
+</div>
+
+
+
+
+
+
+<div class="card mb-3">
+
+
+<div class="card-header">
+🧬 Indicators Of Compromise
+</div>
+
+
+<div class="card-body">
+
+
+{% if report.iocs %}
+
+
+<ul>
+
+{% for ioc in report.iocs %}
+
+<li>
+
+{{ ioc }}
+
+</li>
+
+{% endfor %}
+
+
+</ul>
+
+
+{% else %}
+
+<p>
+No IOC records available
+</p>
+
+{% endif %}
+
+
+
+</div>
+
+
+</div>
+
+
+
+
+
+
+
+<div class="card mb-3">
+
+
+<div class="card-header">
+🤖 AI Analysis
+</div>
+
+
+<div class="card-body">
+
+
+{{ report.analysis }}
+
+
+</div>
+
+
 </div>
 
 
@@ -196,57 +264,38 @@ Incident #{{report.id}}
 
 
 
-<div class="card">
+<div class="card mb-3">
 
 
-<h2>
-👤 Analyst Review
-</h2>
-
-
-<p>
-Assigned Analyst:
-{{report.analyst}}
-</p>
-
-
-<p>
-Status:
-{{report.status}}
-</p>
-
-
-<p>
-Notes:
-{{report.notes}}
-</p>
-
-
-</div>
-
-
-
-
-
-
-
-
-<div class="card">
-
-
-<h2>
+<div class="card-header">
 ⚡ Response Actions
-</h2>
+</div>
 
 
-<p>
-{{report.response_status}}
-</p>
+<div class="card-body">
 
 
-<pre>
-{{report.actions}}
-</pre>
+<h5>
+{{ report.response_status }}
+</h5>
+
+
+<ul>
+
+
+{% for action in report.actions %}
+
+<li>
+{{ action }}
+</li>
+
+{% endfor %}
+
+
+</ul>
+
+
+</div>
 
 
 </div>
@@ -257,19 +306,50 @@ Notes:
 
 
 
-<a href="/">
+<div class="card mb-3">
 
-<button>
+
+<div class="card-header">
+👤 Analyst Review
+</div>
+
+
+<div class="card-body">
+
+
+<p>
+<strong>Assigned Analyst:</strong>
+{{ report.analyst }}
+</p>
+
+
+<p>
+<strong>Notes:</strong>
+{{ report.notes }}
+</p>
+
+
+
+</div>
+
+
+</div>
+
+
+
+
+
+
+
+<a href="/" class="btn btn-primary">
 
 ⬅ Back to Dashboard
-
-</button>
 
 </a>
 
 
 
+</div>
 
-</body>
 
-</html>
+{% endblock %}

@@ -1,7 +1,21 @@
+"""
+Sentinel DNA
+Database Migration Tool
+
+Updates:
+- Adds analyst column
+- Adds notes column
+- Repairs IOC table structure
+- Fixes old records
+"""
+
+
 import sqlite3
 
 
+
 DATABASE = "soc.db"
+
 
 
 conn = sqlite3.connect(DATABASE)
@@ -10,7 +24,10 @@ cursor = conn.cursor()
 
 
 
-# Add analyst and notes columns if missing
+# =====================================
+# INCIDENT TABLE UPDATES
+# =====================================
+
 
 try:
 
@@ -21,9 +38,13 @@ try:
         """
     )
 
-except:
+    print("✅ Added analyst column")
+
+except sqlite3.Error:
 
     pass
+
+
 
 
 
@@ -36,26 +57,152 @@ try:
         """
     )
 
-except:
+    print("✅ Added notes column")
+
+except sqlite3.Error:
 
     pass
 
 
 
-# Fix old records
+
+
+
+# =====================================
+# FIX OLD INCIDENT RECORDS
+# =====================================
+
+
+try:
+
+    cursor.execute(
+        """
+        UPDATE incidents
+
+        SET 
+        analyst='None',
+        notes='No investigation notes'
+
+        WHERE analyst IS NULL
+        """
+    )
+
+except sqlite3.Error:
+
+    pass
+
+
+
+
+
+
+
+# =====================================
+# REBUILD IOC TABLE
+# =====================================
+
 
 cursor.execute(
     """
-    UPDATE incidents
-
-    SET analyst='None',
-
-    notes='No investigation notes'
-
-    WHERE analyst IS NULL
+    SELECT name
+    FROM sqlite_master
+    WHERE type='table'
+    AND name='iocs'
     """
 )
 
+
+ioc_table = cursor.fetchone()
+
+
+
+if ioc_table:
+
+
+    cursor.execute(
+        """
+        PRAGMA table_info(iocs)
+        """
+    )
+
+
+    columns = [
+        column[1]
+        for column in cursor.fetchall()
+    ]
+
+
+
+    if "type" not in columns:
+
+
+        print("⚠️ Old IOC table detected")
+
+        cursor.execute(
+            """
+            DROP TABLE iocs
+            """
+        )
+
+
+        cursor.execute(
+            """
+            CREATE TABLE iocs
+            (
+
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+            case_id TEXT,
+
+            type TEXT,
+
+            value TEXT,
+
+            created TEXT
+
+            )
+            """
+        )
+
+
+        print("✅ IOC table rebuilt")
+
+
+
+else:
+
+
+    cursor.execute(
+        """
+        CREATE TABLE iocs
+        (
+
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+        case_id TEXT,
+
+        type TEXT,
+
+        value TEXT,
+
+        created TEXT
+
+        )
+        """
+    )
+
+
+    print("✅ IOC table created")
+
+
+
+
+
+
+
+# =====================================
+# COMMIT
+# =====================================
 
 
 conn.commit()
@@ -64,4 +211,4 @@ conn.close()
 
 
 
-print("✅ Database migration completed")
+print("\n🧬 Sentinel DNA database migration completed successfully")

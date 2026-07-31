@@ -214,6 +214,7 @@ Risk Level
 
 
 
+
 <!-- CASE TABLE -->
 
 
@@ -253,17 +254,26 @@ Risk Level
 <tbody>
 
 
+
 {% for case in stats.cases %}
+
 
 
 <tr>
 
 
+
 <td>
+
+<a href="/case/{{case.case_id}}" 
+class="btn btn-sm btn-outline-primary">
 
 {{case.case_id}}
 
+</a>
+
 </td>
+
 
 
 <td>
@@ -273,7 +283,12 @@ Risk Level
 </td>
 
 
+
+
 <td>
+
+
+{% if case.severity == "CRITICAL" %}
 
 <span class="badge bg-danger">
 
@@ -281,7 +296,35 @@ Risk Level
 
 </span>
 
+
+
+{% elif case.severity == "HIGH" %}
+
+
+<span class="badge bg-warning text-dark">
+
+{{case.severity}}
+
+</span>
+
+
+
+{% else %}
+
+
+<span class="badge bg-info">
+
+{{case.severity}}
+
+</span>
+
+
+{% endif %}
+
+
+
 </td>
+
 
 
 
@@ -290,6 +333,7 @@ Risk Level
 {{case.status}}
 
 </td>
+
 
 
 
@@ -304,7 +348,9 @@ Risk Level
 </tr>
 
 
+
 {% endfor %}
+
 
 
 </tbody>

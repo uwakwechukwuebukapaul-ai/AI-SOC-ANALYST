@@ -1,125 +1,250 @@
 """
 Sentinel DNA
-Database Seed Generator
+SOC Investigation Seed Generator
 
-Creates realistic SOC investigation cases
-for dashboard testing.
+Creates realistic:
+- Cases
+- Evidence
+- IOCs
+- Timeline events
+- Analyst notes
+
+For dashboard simulation.
 """
 
-from datetime import datetime, timedelta
+
+from datetime import datetime
 import uuid
 
-from database.repository import create_case
+
+from database.repository import (
+    create_case,
+    add_evidence_record,
+    add_ioc,
+    add_timeline_event,
+    add_note
+)
+
 
 
 # =====================================
-# TEST CASE DATA
+# SOC CASE DATA
 # =====================================
+
 
 cases = [
 
-    {
-        "title": "Malware Detection Investigation",
-        "severity": "CRITICAL",
-        "description": "Malware detected on endpoint workstation."
-    },
+{
+"title":"Malware Detection Investigation",
+"severity":"CRITICAL",
+"description":"Malware detected on endpoint workstation.",
+"mitre":"T1204 - User Execution"
+},
 
-    {
-        "title": "Suspicious Login Activity",
-        "severity": "HIGH",
-        "description": "Multiple failed login attempts detected."
-    },
 
-    {
-        "title": "Ransomware Behavior Detection",
-        "severity": "CRITICAL",
-        "description": "File encryption activity detected."
-    },
+{
+"title":"Suspicious Login Activity",
+"severity":"HIGH",
+"description":"Multiple failed login attempts detected.",
+"mitre":"T1110 - Brute Force"
+},
 
-    {
-        "title": "Phishing Email Investigation",
-        "severity": "HIGH",
-        "description": "Credential harvesting email detected."
-    },
 
-    {
-        "title": "Brute Force Attack Detection",
-        "severity": "HIGH",
-        "description": "Repeated authentication attacks detected."
-    },
+{
+"title":"Ransomware Behavior Detection",
+"severity":"CRITICAL",
+"description":"File encryption activity detected.",
+"mitre":"T1486 - Data Encrypted for Impact"
+},
 
-    {
-        "title": "Data Exfiltration Alert",
-        "severity": "CRITICAL",
-        "description": "Large outbound data transfer detected."
-    },
 
-    {
-        "title": "Suspicious PowerShell Activity",
-        "severity": "HIGH",
-        "description": "Encoded PowerShell execution detected."
-    },
+{
+"title":"Phishing Email Investigation",
+"severity":"HIGH",
+"description":"Credential harvesting email detected.",
+"mitre":"T1566 - Phishing"
+},
 
-    {
-        "title": "Unauthorized Access Attempt",
-        "severity": "MEDIUM",
-        "description": "Unknown user attempted restricted access."
-    },
 
-    {
-        "title": "Malicious URL Detection",
-        "severity": "HIGH",
-        "description": "Malicious domain communication detected."
-    },
+{
+"title":"Brute Force Attack Detection",
+"severity":"HIGH",
+"description":"Repeated authentication attacks detected.",
+"mitre":"T1110 - Brute Force"
+},
 
-    {
-        "title": "Insider Threat Investigation",
-        "severity": "MEDIUM",
-        "description": "Suspicious employee activity detected."
-    }
+
+{
+"title":"Data Exfiltration Alert",
+"severity":"CRITICAL",
+"description":"Large outbound data transfer detected.",
+"mitre":"T1041 - Exfiltration Over C2 Channel"
+},
+
+
+{
+"title":"Suspicious PowerShell Activity",
+"severity":"HIGH",
+"description":"Encoded PowerShell execution detected.",
+"mitre":"T1059.001 - PowerShell"
+},
+
+
+{
+"title":"Unauthorized Access Attempt",
+"severity":"MEDIUM",
+"description":"Unknown user attempted restricted access.",
+"mitre":"T1078 - Valid Accounts"
+},
+
+
+{
+"title":"Malicious URL Detection",
+"severity":"HIGH",
+"description":"Malicious domain communication detected.",
+"mitre":"T1583 - Acquire Infrastructure"
+},
+
+
+{
+"title":"Insider Threat Investigation",
+"severity":"MEDIUM",
+"description":"Suspicious employee activity detected.",
+"mitre":"T1530 - Data From Cloud Storage"
+}
 
 ]
 
 
 
+
+
 # =====================================
-# INSERT CASES
+# CREATE INVESTIGATIONS
 # =====================================
 
 
 for item in cases:
 
+
+    case_id = (
+        "INC-"
+        +
+        datetime.now().strftime("%Y%m%d")
+        +
+        "-"
+        +
+        uuid.uuid4().hex[:6].upper()
+    )
+
+
     case = {
 
-        "case_id":
-            "INC-" + datetime.now().strftime("%Y%m%d")
-            + "-"
-            + uuid.uuid4().hex[:6].upper(),
+        "case_id": case_id,
 
+        "title": item["title"],
 
-        "title":
-            item["title"],
+        "severity": item["severity"],
 
-
-        "severity":
-            item["severity"],
-
-
-        "description":
-            item["description"]
+        "description": item["description"]
 
     }
+
 
 
     create_case(case)
 
 
-    print(
-        "Created:",
-        case["case_id"],
-        case["title"]
+
+    # ===============================
+    # ADD EVIDENCE
+    # ===============================
+
+
+    add_evidence_record(
+        case_id,
+        "LOG FILE",
+        f"{item['title']} security event log collected"
+    )
+
+
+    add_evidence_record(
+        case_id,
+        "AI ANALYSIS",
+        "Sentinel DNA AI engine completed threat analysis"
     )
 
 
 
-print("\n✅ Sentinel DNA test cases added successfully")
+    # ===============================
+    # ADD IOC
+    # ===============================
+
+
+    add_ioc(
+        case_id,
+        "DOMAIN",
+        "malicious-example.xyz"
+    )
+
+
+    add_ioc(
+        case_id,
+        "IP ADDRESS",
+        "185.22.45.100"
+    )
+
+
+
+    # ===============================
+    # ADD TIMELINE
+    # ===============================
+
+
+    add_timeline_event(
+        case_id,
+        "ALERT",
+        "Security alert generated by monitoring engine",
+        "AI ENGINE"
+    )
+
+
+    add_timeline_event(
+        case_id,
+        "ANALYSIS",
+        "Threat analysis completed",
+        "Sentinel DNA AI"
+    )
+
+
+    add_timeline_event(
+        case_id,
+        "CONTAINMENT",
+        "Response actions initiated",
+        "SOC ANALYST"
+    )
+
+
+
+    # ===============================
+    # ADD NOTES
+    # ===============================
+
+
+    add_note(
+        case_id,
+        f"Investigation started for {item['title']}. MITRE Mapping: {item['mitre']}"
+    )
+
+
+
+    print(
+        "Created Investigation:",
+        case_id,
+        item["title"]
+    )
+
+
+
+
+print("\n🧬 Sentinel DNA full SOC dataset generated successfully")
