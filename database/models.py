@@ -14,40 +14,77 @@ def create_tables():
         cursor = conn.cursor()
 
 
+        # ==============================
+        # CASES TABLE
+        # ==============================
+
         cursor.execute("""
         CREATE TABLE IF NOT EXISTS cases (
 
             id INTEGER PRIMARY KEY AUTOINCREMENT,
 
-            case_id TEXT UNIQUE,
+            case_id TEXT UNIQUE NOT NULL,
 
             title TEXT NOT NULL,
 
-            severity TEXT,
+            severity TEXT NOT NULL,
 
-            description TEXT,
+            description TEXT DEFAULT '',
 
             status TEXT DEFAULT 'OPEN',
 
-            created TEXT
+            analyst TEXT DEFAULT '',
+
+            created TEXT NOT NULL
 
         )
         """)
 
 
+
+        # ==============================
+        # CASE NOTES
+        # ==============================
+
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS case_notes (
+
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+            case_id TEXT NOT NULL,
+
+            note TEXT NOT NULL,
+
+            analyst TEXT DEFAULT '',
+
+            created TEXT NOT NULL,
+
+            FOREIGN KEY(case_id)
+            REFERENCES cases(case_id)
+
+        )
+        """)
+
+
+
+        # ==============================
+        # EVIDENCE
+        # ==============================
 
         cursor.execute("""
         CREATE TABLE IF NOT EXISTS evidence (
 
             id INTEGER PRIMARY KEY AUTOINCREMENT,
 
-            case_id TEXT,
+            case_id TEXT NOT NULL,
 
-            evidence_type TEXT,
+            evidence_type TEXT NOT NULL,
 
-            data TEXT,
+            data TEXT NOT NULL,
 
-            created TEXT,
+            sha256 TEXT DEFAULT '',
+
+            created TEXT NOT NULL,
 
             FOREIGN KEY(case_id)
             REFERENCES cases(case_id)
@@ -56,24 +93,29 @@ def create_tables():
         """)
 
 
+
+        # ==============================
+        # INVESTIGATION TIMELINE
+        # ==============================
 
         cursor.execute("""
         CREATE TABLE IF NOT EXISTS timeline (
 
             id INTEGER PRIMARY KEY AUTOINCREMENT,
 
-            case_id TEXT,
+            case_id TEXT NOT NULL,
 
-            event TEXT,
+            event TEXT NOT NULL,
 
-            created TEXT,
+            actor TEXT DEFAULT 'SYSTEM',
+
+            created TEXT NOT NULL,
 
             FOREIGN KEY(case_id)
             REFERENCES cases(case_id)
 
         )
         """)
-
 
 
     return True
