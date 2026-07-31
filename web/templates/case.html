@@ -1,0 +1,484 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h1 class="mb-4">
+    🧬 Sentinel DNA Investigation Workspace
+</h1>
+
+
+<!-- ==============================
+     CASE INFORMATION
+================================ -->
+
+<div class="card mb-4">
+
+<div class="card-header">
+    📌 Case Information
+</div>
+
+
+<div class="card-body">
+
+<p><strong>Case ID:</strong> {{ case.case_id }}</p>
+
+<p><strong>Title:</strong> {{ case.title }}</p>
+
+
+<p>
+<strong>Severity:</strong>
+
+<span class="badge bg-danger">
+{{ case.severity }}
+</span>
+
+</p>
+
+
+<p><strong>Status:</strong> {{ case.status }}</p>
+
+<p><strong>Analyst:</strong> {{ case.analyst or "Unassigned" }}</p>
+
+<p><strong>Created:</strong> {{ case.created }}</p>
+
+<p><strong>Description:</strong> {{ case.description }}</p>
+
+
+</div>
+
+</div>
+
+
+
+
+
+<!-- ==============================
+     AI SUMMARY
+================================ -->
+
+<div class="card mb-4">
+
+<div class="card-header">
+    🤖 AI Investigation Summary
+</div>
+
+
+<div class="card-body">
+
+
+{% if summary %}
+
+
+<p>
+{{ summary.overall_assessment }}
+</p>
+
+
+<p>
+<strong>Evidence Items:</strong>
+{{ summary.evidence_count }}
+</p>
+
+
+<p>
+<strong>Timeline Events:</strong>
+{{ summary.timeline_count }}
+</p>
+
+
+{% else %}
+
+<p>
+No AI summary available.
+</p>
+
+{% endif %}
+
+
+</div>
+
+</div>
+
+
+
+
+
+
+<!-- ==============================
+     THREAT INTELLIGENCE
+================================ -->
+
+
+<div class="card mb-4">
+
+
+<div class="card-header">
+    🛡️ Threat Intelligence
+</div>
+
+
+
+<div class="card-body">
+
+
+{% if threat %}
+
+
+<p>
+<strong>Threat Type:</strong>
+
+{{ threat.get('threat') 
+or threat.get('threat_type')
+or "Unknown" }}
+
+</p>
+
+
+
+<p>
+<strong>Confidence:</strong>
+
+{{ threat.get('confidence','0') }}
+
+</p>
+
+
+
+{% else %}
+
+
+<p>
+No threat classification available.
+</p>
+
+
+{% endif %}
+
+
+
+
+
+{% if confidence %}
+
+
+<p>
+
+<strong>
+Risk Score:
+</strong>
+
+{{ confidence.get('risk_score','0') }}/100
+
+</p>
+
+
+
+<p>
+
+<strong>
+AI Confidence:
+</strong>
+
+{{ confidence.get('confidence_score')
+or confidence.get('confidence')
+or "0" }}
+
+</p>
+
+
+
+{% endif %}
+
+
+</div>
+
+</div>
+
+
+
+
+
+
+
+<!-- ==============================
+     EVIDENCE
+================================ -->
+
+
+<div class="card mb-4">
+
+
+<div class="card-header">
+    📂 Evidence
+</div>
+
+
+<div class="card-body">
+
+
+{% if evidence %}
+
+
+<ul>
+
+
+{% for item in evidence %}
+
+
+<li>
+
+<strong>
+{{ item.type }}
+</strong>
+
+:
+
+{{ item.data }}
+
+
+</li>
+
+
+{% endfor %}
+
+
+</ul>
+
+
+
+{% else %}
+
+
+<p>
+No evidence found.
+</p>
+
+
+
+{% endif %}
+
+
+</div>
+
+
+</div>
+
+
+
+
+
+
+
+
+<!-- ==============================
+     TIMELINE
+================================ -->
+
+
+<div class="card mb-4">
+
+
+<div class="card-header">
+    🕒 Investigation Timeline
+</div>
+
+
+
+<div class="card-body">
+
+
+{% if timeline %}
+
+
+{% for event in timeline %}
+
+
+<div class="border-bottom mb-3 pb-2">
+
+
+<strong>
+{{ event.event_type }}
+</strong>
+
+
+<br>
+
+
+{{ event.description }}
+
+
+<br>
+
+
+<small>
+
+Actor:
+{{ event.actor }}
+
+<br>
+
+{{ event.created }}
+
+</small>
+
+
+
+</div>
+
+
+
+{% endfor %}
+
+
+
+{% else %}
+
+
+<p>
+No timeline events.
+</p>
+
+
+
+{% endif %}
+
+
+</div>
+
+
+</div>
+
+
+
+
+
+
+
+
+<!-- ==============================
+     AI RECOMMENDATIONS
+================================ -->
+
+
+<div class="card mb-4">
+
+
+<div class="card-header">
+
+🧠 AI Recommendations
+
+</div>
+
+
+
+<div class="card-body">
+
+
+{% if recommendations %}
+
+
+<ol>
+
+
+{% for item in recommendations.get('recommendations', []) %}
+
+
+<li>
+{{ item }}
+</li>
+
+
+{% endfor %}
+
+
+</ol>
+
+
+
+{% else %}
+
+
+<p>
+No recommendations available.
+</p>
+
+
+
+{% endif %}
+
+
+
+</div>
+
+
+</div>
+
+
+
+
+
+
+
+<!-- ==============================
+     NOTES
+================================ -->
+
+
+<div class="card mb-4">
+
+
+<div class="card-header">
+
+📝 Analyst Notes
+
+</div>
+
+
+
+<div class="card-body">
+
+
+{% if notes %}
+
+
+{% for note in notes %}
+
+
+<p>
+{{ note.note }}
+</p>
+
+
+{% endfor %}
+
+
+
+{% else %}
+
+
+<p>
+No notes.
+</p>
+
+
+
+{% endif %}
+
+
+</div>
+
+
+</div>
+
+
+
+
+
+<a href="/" class="btn btn-dark">
+
+⬅ Back to Dashboard
+
+</a>
+
+
+{% endblock %}

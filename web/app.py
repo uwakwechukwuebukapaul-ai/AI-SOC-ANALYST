@@ -10,6 +10,7 @@ import sys
 
 from flask import Flask
 
+
 # =====================================
 # PROJECT PATH
 # =====================================
@@ -31,18 +32,34 @@ app = Flask(
 )
 
 
+
 # =====================================
 # ROUTES
 # =====================================
 
 from routes.dashboard import dashboard
+from routes.cases import case_view
 
+
+
+# Dashboard
 
 app.add_url_rule(
     "/",
     "dashboard",
     dashboard
 )
+
+
+
+# Investigation Workspace
+
+app.add_url_rule(
+    "/case/<case_id>",
+    "case_view",
+    case_view
+)
+
 
 
 # =====================================
@@ -54,9 +71,19 @@ if __name__ == "__main__":
     print("=" * 60)
     print("🧬 SENTINEL DNA WEB PLATFORM")
     print("=" * 60)
+
     print("Starting Flask server...")
-    print("Dashboard: http://127.0.0.1:5000")
+
+    print("")
+    print("Dashboard:")
+    print("http://127.0.0.1:5000")
+
+    print("")
+    print("Investigation Example:")
+    print("http://127.0.0.1:5000/case/INC-20260731-TEST01")
+
     print("=" * 60)
+
 
     app.run(
         debug=True,
