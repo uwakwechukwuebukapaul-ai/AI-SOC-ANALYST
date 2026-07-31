@@ -1,139 +1,112 @@
 """
 Sentinel DNA
+Case Management Engine
 
-Case Management System
-
-Handles security investigations.
+Responsible for:
+- Creating investigations
+- Generating case IDs
+- Attaching evidence
+- Connecting cases to database
 """
 
-import uuid
 from datetime import datetime
+import uuid
+
+from database.repository import create_case
 
 
 
-class CaseManager:
+def generate_case_id():
+
+    timestamp = datetime.now().strftime(
+        "%Y%m%d"
+    )
+
+    unique = str(uuid.uuid4())[:6].upper()
+
+    return f"INC-{timestamp}-{unique}"
 
 
-    def __init__(self):
 
-        self.cases = {}
-
-
-
-    def create_case(
-        self,
+def create_investigation(
         title,
         severity,
-        description
-    ):
+        description,
+        evidence=None
+):
+
+    case_id = generate_case_id()
 
 
-        case_id = (
+    case = {
 
-            "CASE-"
+        "case_id": case_id,
 
-            +
+        "title": title,
 
-            str(uuid.uuid4())[:8].upper()
+        "severity": severity,
 
-        )
+        "description": description
 
-
-        case = {
-
-
-            "case_id":
-
-                case_id,
+    }
 
 
-            "title":
+    # Save case into database
 
-                title,
-
-
-            "severity":
-
-                severity,
+    create_case(case)
 
 
-            "description":
+    investigation = {
 
-                description,
+        "case_id": case_id,
 
+        "title": title,
 
-            "status":
+        "severity": severity,
 
-                "OPEN",
+        "description": description,
 
+        "evidence": evidence or [],
 
-            "created":
+        "status": "OPEN",
 
-                str(datetime.now()),
+        "created":
+            datetime.now().isoformat()
 
-
-            "evidence":
-
-                [],
-
-
-            "timeline":
-
-                []
-
-        }
+    }
 
 
-        self.cases[case_id] = case
-
-
-        return case
+    return investigation
 
 
 
+if __name__ == "__main__":
 
 
-    def get_case(
-        self,
-        case_id
-    ):
+    test = create_investigation(
 
-        return self.cases.get(
-            case_id
-        )
+        title="Phishing Attack Investigation",
 
+        severity="HIGH",
 
+        description=
+        "Suspicious credential harvesting email detected",
 
+        evidence=[
 
-    def update_status(
-        self,
-        case_id,
-        status
-    ):
+            {
+                "type":"url",
+                "value":
+                "https://fake-login.xyz"
+            }
 
+        ]
 
-        if case_id in self.cases:
-
-            self.cases[case_id][
-                "status"
-            ] = status
+    )
 
 
-            return True
+    print("🧬 SENTINEL DNA CASE CREATED")
 
+    print("="*40)
 
-        return False
-
-
-
-
-
-    def list_cases(self):
-
-        return list(
-            self.cases.values()
-        )
-
-
-
-case_manager = CaseManager()
+    print(test)

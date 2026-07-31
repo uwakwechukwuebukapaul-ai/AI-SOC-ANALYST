@@ -7,7 +7,7 @@ create_tables()
 
 create_case({
 
-    "case_id":"INC-001",
+    "case_id": "INC-002",
 
     "title":"Phishing Investigation",
 
