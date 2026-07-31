@@ -2,7 +2,7 @@
 Sentinel DNA
 SOC Investigation Pipeline
 
-Detection -> Investigation -> Case Creation
+Detection -> Investigation -> Case Creation -> Timeline
 """
 
 
@@ -12,10 +12,16 @@ import uuid
 
 from ai_investigator import investigate_alert
 
+
 from database.repository import (
     create_case,
     assign_analyst
 )
+
+
+from cases.timeline import add_timeline_event
+
+
 
 
 
@@ -30,25 +36,23 @@ def analyze_log(log):
     event = log["event"].lower()
 
 
-    alert = {
 
+    alert = {
 
         "type":
             "Unknown Threat",
 
-
         "severity":
             "LOW",
 
-
         "score":
             0,
-
 
         "mitre":
             "Unknown"
 
     }
+
 
 
 
@@ -60,19 +64,18 @@ def analyze_log(log):
             "type":
                 "Phishing Attack",
 
-
             "severity":
                 "HIGH",
 
-
             "score":
                 90,
-
 
             "mitre":
                 "T1566 - Phishing"
 
         })
+
+
 
 
 
@@ -84,19 +87,18 @@ def analyze_log(log):
             "type":
                 "Brute Force Attack",
 
-
             "severity":
                 "MEDIUM",
 
-
             "score":
                 70,
-
 
             "mitre":
                 "T1110 - Brute Force"
 
         })
+
+
 
 
 
@@ -108,19 +110,17 @@ def analyze_log(log):
             "type":
                 "Suspicious Network Connection",
 
-
             "severity":
                 "HIGH",
 
-
             "score":
                 85,
-
 
             "mitre":
                 "T1071 - Application Layer Protocol"
 
         })
+
 
 
     return alert
@@ -129,8 +129,9 @@ def analyze_log(log):
 
 
 
+
 # =====================================
-# CREATE CASE FROM INVESTIGATION
+# CREATE CASE
 # =====================================
 
 def create_investigation_case(report):
@@ -150,24 +151,64 @@ def create_investigation_case(report):
 
 
 
+
     create_case({
 
         "case_id":
+
             case_id,
 
 
         "title":
+
             report["threat"],
 
 
         "severity":
+
             report["severity"],
 
 
         "description":
+
             report["analysis"]
 
     })
+
+
+
+
+    # Timeline: Case Created
+
+    add_timeline_event(
+
+        case_id,
+
+        "CASE",
+
+        "Investigation case created",
+
+        "SYSTEM"
+
+    )
+
+
+
+
+    # Timeline: AI completed
+
+    add_timeline_event(
+
+        case_id,
+
+        "AI ANALYSIS",
+
+        "AI threat investigation completed",
+
+        "AI ENGINE"
+
+    )
+
 
 
 
@@ -180,14 +221,33 @@ def create_investigation_case(report):
     )
 
 
+
+
+    # Timeline: Analyst assigned
+
+    add_timeline_event(
+
+        case_id,
+
+        "ASSIGNMENT",
+
+        "SOC analyst assigned",
+
+        "SYSTEM"
+
+    )
+
+
+
     return case_id
 
 
 
 
 
+
 # =====================================
-# MAIN PIPELINE
+# RUN PIPELINE
 # =====================================
 
 def run_soc_pipeline(log):
@@ -197,7 +257,7 @@ def run_soc_pipeline(log):
         "🧬 SENTINEL DNA PIPELINE"
     )
 
-    print("="*40)
+    print("=" * 40)
 
 
 
@@ -206,17 +266,22 @@ def run_soc_pipeline(log):
 
 
     print("\nDetection:")
+
     print(alert)
+
 
 
 
     if alert["severity"] == "LOW":
 
+
         print(
             "No threat detected"
         )
 
+
         return None
+
 
 
 
@@ -228,13 +293,16 @@ def run_soc_pipeline(log):
 
 
     print("\nAI Investigation:")
+
     print(report)
+
 
 
 
     case_id = create_investigation_case(
         report
     )
+
 
 
     print(
@@ -251,8 +319,9 @@ def run_soc_pipeline(log):
 
 
 
+
 # =====================================
-# TEST
+# TEST MODE
 # =====================================
 
 if __name__ == "__main__":
@@ -267,6 +336,8 @@ if __name__ == "__main__":
 
 
     }
+
+
 
 
     run_soc_pipeline(
