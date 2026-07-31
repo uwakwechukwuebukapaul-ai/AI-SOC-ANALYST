@@ -1,58 +1,301 @@
-import csv
-from collections import Counter
+"""
+Sentinel DNA
+Dashboard Analytics Engine
+
+SOC Metrics:
+- Cases
+- Critical Threats
+- Evidence Collection
+- IOC Intelligence
+- Phishing Alerts
+"""
 
 
-def load_incidents():
-
-    incidents = []
-
-    try:
-        with open("incident_logs.csv", "r") as file:
-
-            reader = csv.DictReader(file)
-
-            for row in reader:
-                incidents.append(row)
-
-    except FileNotFoundError:
-        print("No incident logs found.")
-        return []
-
-    return incidents
+from flask import render_template
 
 
-def show_dashboard():
+from database.repository import (
+    get_cases,
+    get_evidence,
+    get_iocs
+)
 
-    incidents = load_incidents()
 
-    if not incidents:
-        return
 
-    risks = Counter(
-        incident["Risk Level"]
-        for incident in incidents
+
+
+def dashboard():
+
+
+    cases = get_cases()
+
+    evidence = get_evidence()
+
+    iocs = get_iocs()
+
+
+
+    # ==============================
+    # CASE METRICS
+    # ==============================
+
+
+    total_cases = len(cases)
+
+
+
+    critical_cases = len(
+        [
+            c for c in cases
+            if c.get("severity") == "CRITICAL"
+        ]
     )
 
-    print("=" * 50)
-    print("🛡️ AI SOC DASHBOARD")
-    print("=" * 50)
-
-    print(f"\nTotal Incidents: {len(incidents)}")
-
-    print("\nRisk Summary:")
-    print(f"🔴 HIGH: {risks['HIGH']}")
-    print(f"🟡 MEDIUM: {risks['MEDIUM']}")
-    print(f"🟢 LOW: {risks['LOW']}")
-
-    latest = incidents[-1]
-
-    print("\nLatest Incident:")
-    print(f"Sender: {latest['Sender']}")
-    print(f"Subject: {latest['Subject']}")
-    print(f"Risk: {latest['Risk Level']}")
-    print(f"Score: {latest['Risk Score']}")
-
-    print("\nDashboard Complete ✅")
 
 
-show_dashboard()
+    high_cases = len(
+        [
+            c for c in cases
+            if c.get("severity") == "HIGH"
+        ]
+    )
+
+
+
+    open_cases = len(
+        [
+            c for c in cases
+            if c.get("status") == "OPEN"
+        ]
+    )
+
+
+
+    closed_cases = len(
+        [
+            c for c in cases
+            if c.get("status") == "CLOSED"
+        ]
+    )
+
+
+
+
+
+    phishing_alerts = len(
+        [
+            c for c in cases
+            if "Phishing" in c.get(
+                "title",
+                ""
+            )
+        ]
+    )
+
+
+
+
+
+    stats = {
+
+
+        "total_cases":
+            total_cases,
+
+
+        "critical_cases":
+            critical_cases,
+
+
+        "high_cases":
+            high_cases,
+
+
+        "open_cases":
+            open_cases,
+
+
+        "closed_cases":
+            closed_cases,
+
+
+        "evidence_count":
+            len(evidence),
+
+
+        "ioc_count":
+            len(iocs),
+
+
+        "phishing_alerts":
+            phishing_alerts,
+
+
+        "cases":
+            cases
+
+    }
+
+
+
+
+
+    # ==============================
+    # SEVERITY DATA
+    # ==============================
+
+
+    severity = {}
+
+
+
+    for case in cases:
+
+
+        level = case.get(
+            "severity",
+            "UNKNOWN"
+        )
+
+
+        severity[level] = severity.get(
+            level,
+            0
+        ) + 1
+
+
+
+
+
+
+    # ==============================
+    # THREAT CATEGORY DATA
+    # ==============================
+
+
+    threats = {}
+
+
+
+    for case in cases:
+
+
+        title = case.get(
+            "title",
+            "Unknown"
+        )
+
+
+        threats[title] = threats.get(
+            title,
+            0
+        ) + 1
+
+
+
+
+
+    # ==============================
+    # TIMELINE DATA
+    # ==============================
+
+
+    timeline = {}
+
+
+
+    for case in cases:
+
+
+        date = case.get(
+            "created",
+            ""
+        )[:10]
+
+
+        timeline[date] = timeline.get(
+            date,
+            0
+        ) + 1
+
+
+
+
+
+
+    analytics = {
+
+
+        "risk": {
+
+
+            "risk_level":
+
+                "CRITICAL"
+
+                if critical_cases > 0
+
+                else "NORMAL",
+
+
+
+            "critical_cases":
+
+                critical_cases,
+
+
+
+            "total_incidents":
+
+                total_cases
+
+        }
+
+    }
+
+
+
+
+
+    return render_template(
+
+
+        "dashboard.html",
+
+
+        stats=stats,
+
+
+        analytics=analytics,
+
+
+        severity_labels=list(
+            severity.keys()
+        ),
+
+
+        severity_values=list(
+            severity.values()
+        ),
+
+
+        threat_labels=list(
+            threats.keys()
+        ),
+
+
+        threat_values=list(
+            threats.values()
+        ),
+
+
+        timeline_labels=list(
+            timeline.keys()
+        ),
+
+
+        timeline_values=list(
+            timeline.values()
+        )
+
+    )

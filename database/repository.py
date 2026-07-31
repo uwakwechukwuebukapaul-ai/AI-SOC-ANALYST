@@ -9,6 +9,7 @@ Handles:
 - Analyst assignment
 - Notes
 - Evidence tracking
+- IOC tracking
 - Timeline support
 """
 
@@ -17,7 +18,6 @@ from datetime import datetime
 import hashlib
 
 from database.connection import database
-
 
 
 
@@ -33,10 +33,8 @@ def generate_sha256(data):
 
 
 
-
-
 # =====================================
-# CREATE CASE
+# CASE MANAGEMENT
 # =====================================
 
 def create_case(case):
@@ -59,7 +57,6 @@ def create_case(case):
 
             VALUES (?,?,?,?,?,?)
             """,
-
             (
                 case["case_id"],
                 case["title"],
@@ -72,17 +69,9 @@ def create_case(case):
 
         conn.commit()
 
-
     return case["case_id"]
 
 
-
-
-
-
-# =====================================
-# GET ALL CASES
-# =====================================
 
 def get_cases():
 
@@ -98,23 +87,12 @@ def get_cases():
             """
         )
 
-
         return [
-
             dict(row)
-
             for row in cursor.fetchall()
-
         ]
 
 
-
-
-
-
-# =====================================
-# GET SINGLE CASE
-# =====================================
 
 def get_case(case_id):
 
@@ -128,31 +106,16 @@ def get_case(case_id):
             FROM cases
             WHERE case_id=?
             """,
-
-            (
-                case_id,
-            )
+            (case_id,)
         )
 
-
         row = cursor.fetchone()
-
 
         return dict(row) if row else None
 
 
 
-
-
-
-# =====================================
-# UPDATE STATUS
-# =====================================
-
-def update_case_status(
-        case_id,
-        status
-):
+def update_case_status(case_id, status):
 
     with database.session() as conn:
 
@@ -161,13 +124,9 @@ def update_case_status(
         cursor.execute(
             """
             UPDATE cases
-
             SET status=?
-
             WHERE case_id=?
-
             """,
-
             (
                 status,
                 case_id
@@ -176,22 +135,11 @@ def update_case_status(
 
         conn.commit()
 
-
     return True
 
 
 
-
-
-
-# =====================================
-# ASSIGN ANALYST
-# =====================================
-
-def assign_analyst(
-        case_id,
-        analyst
-):
+def assign_analyst(case_id, analyst):
 
     with database.session() as conn:
 
@@ -200,13 +148,9 @@ def assign_analyst(
         cursor.execute(
             """
             UPDATE cases
-
             SET analyst=?
-
             WHERE case_id=?
-
             """,
-
             (
                 analyst,
                 case_id
@@ -215,22 +159,15 @@ def assign_analyst(
 
         conn.commit()
 
-
     return True
 
 
 
-
-
-
 # =====================================
-# ADD NOTE
+# NOTES
 # =====================================
 
-def add_note(
-        case_id,
-        note
-):
+def add_note(case_id, note):
 
     with database.session() as conn:
 
@@ -246,9 +183,7 @@ def add_note(
             )
 
             VALUES (?,?,?)
-
             """,
-
             (
                 case_id,
                 note,
@@ -258,17 +193,9 @@ def add_note(
 
         conn.commit()
 
-
     return True
 
 
-
-
-
-
-# =====================================
-# GET NOTES
-# =====================================
 
 def get_notes(case_id):
 
@@ -279,36 +206,22 @@ def get_notes(case_id):
         cursor.execute(
             """
             SELECT *
-
             FROM case_notes
-
             WHERE case_id=?
-
             ORDER BY id DESC
-
             """,
-
-            (
-                case_id,
-            )
+            (case_id,)
         )
 
-
         return [
-
             dict(row)
-
             for row in cursor.fetchall()
-
         ]
 
 
 
-
-
-
 # =====================================
-# ADD EVIDENCE
+# EVIDENCE ENGINE
 # =====================================
 
 def add_evidence_record(
@@ -321,11 +234,9 @@ def add_evidence_record(
         evidence_data
     )
 
-
     with database.session() as conn:
 
         cursor = conn.cursor()
-
 
         cursor.execute(
             """
@@ -339,9 +250,7 @@ def add_evidence_record(
             )
 
             VALUES (?,?,?,?,?)
-
             """,
-
             (
                 case_id,
                 evidence_type,
@@ -351,22 +260,166 @@ def add_evidence_record(
             )
         )
 
-
         conn.commit()
-
 
     return evidence_hash
 
 
 
+def get_evidence(case_id=None):
+
+    with database.session() as conn:
+
+        cursor = conn.cursor()
+
+        if case_id:
+
+            cursor.execute(
+                """
+                SELECT *
+                FROM evidence
+                WHERE case_id=?
+                ORDER BY id DESC
+                """,
+                (case_id,)
+            )
+
+        else:
+
+            cursor.execute(
+                """
+                SELECT *
+                FROM evidence
+                ORDER BY id DESC
+                """
+            )
+
+        return [
+            dict(row)
+            for row in cursor.fetchall()
+        ]
 
 
 
 # =====================================
-# GET EVIDENCE
+# IOC MANAGEMENT
 # =====================================
 
-def get_evidence(case_id):
+def add_ioc(
+        case_id,
+        ioc_type,
+        value
+):
+
+    with database.session() as conn:
+
+        cursor = conn.cursor()
+
+        cursor.execute(
+            """
+            INSERT INTO iocs
+            (
+                case_id,
+                type,
+                value,
+                created
+            )
+
+            VALUES (?,?,?,?)
+            """,
+            (
+                case_id,
+                ioc_type,
+                value,
+                datetime.now().isoformat()
+            )
+        )
+
+        conn.commit()
+
+    return True
+
+
+
+def get_iocs(case_id=None):
+
+    with database.session() as conn:
+
+        cursor = conn.cursor()
+
+        if case_id:
+
+            cursor.execute(
+                """
+                SELECT *
+                FROM iocs
+                WHERE case_id=?
+                ORDER BY id DESC
+                """,
+                (case_id,)
+            )
+
+        else:
+
+            cursor.execute(
+                """
+                SELECT *
+                FROM iocs
+                ORDER BY id DESC
+                """
+            )
+
+        return [
+            dict(row)
+            for row in cursor.fetchall()
+        ]
+
+
+
+# =====================================
+# TIMELINE
+# =====================================
+
+def add_timeline_event(
+        case_id,
+        event_type,
+        description,
+        actor
+):
+
+    with database.session() as conn:
+
+        cursor = conn.cursor()
+
+        cursor.execute(
+            """
+            INSERT INTO timeline
+            (
+                case_id,
+                event_type,
+                description,
+                actor,
+                created
+            )
+
+            VALUES (?,?,?,?,?)
+            """,
+            (
+                case_id,
+                event_type,
+                description,
+                actor,
+                datetime.now().isoformat()
+            )
+        )
+
+        conn.commit()
+
+    return True
+
+
+
+def get_timeline(case_id):
 
     with database.session() as conn:
 
@@ -375,25 +428,14 @@ def get_evidence(case_id):
         cursor.execute(
             """
             SELECT *
-
-            FROM evidence
-
+            FROM timeline
             WHERE case_id=?
-
             ORDER BY id DESC
-
             """,
-
-            (
-                case_id,
-            )
+            (case_id,)
         )
 
-
         return [
-
             dict(row)
-
             for row in cursor.fetchall()
-
         ]

@@ -5,9 +5,12 @@ Investigation Pipeline
 End-to-end investigation workflow.
 
 Flow:
+
 Email
     ↓
 Email Analysis
+    ↓
+IOC Reputation
     ↓
 Case Creation
     ↓
@@ -18,21 +21,57 @@ Timeline
 Analyst Assignment
 """
 
+
+import sys
+import os
+
 from datetime import datetime
 import uuid
 
+
+
+# =====================================
+# SENTINEL DNA PROJECT PATH FIX
+# =====================================
+
+PROJECT_ROOT = os.path.dirname(
+    os.path.dirname(
+        os.path.abspath(__file__)
+    )
+)
+
+sys.path.append(PROJECT_ROOT)
+
+
+
+# =====================================
+# IMPORT MODULES
+# =====================================
+
 from evidence_engine.email_analyzer import analyze_email
 
+
 from database.repository import (
+
     create_case,
+
     add_evidence_record,
+
     assign_analyst
+
 )
+
 
 from cases.timeline import add_timeline_event
 
 
+
+
+
 DEFAULT_ANALYST = "SOC ANALYST"
+
+
+
 
 
 # =====================================
@@ -40,12 +79,23 @@ DEFAULT_ANALYST = "SOC ANALYST"
 # =====================================
 
 def generate_case_id():
+
     return (
+
         "INC-"
+
         + datetime.now().strftime("%Y%m%d")
+
         + "-"
+
         + uuid.uuid4().hex[:6].upper()
+
     )
+
+
+
+
+
 
 
 # =====================================
@@ -53,55 +103,104 @@ def generate_case_id():
 # =====================================
 
 def investigate_email(
-    subject,
-    sender,
-    body
+
+        subject,
+
+        sender,
+
+        body
+
 ):
+
     """
     Complete Sentinel DNA investigation.
     """
 
-    # ---------------------------------
-    # Analyze Email
-    # ---------------------------------
+
+
+    # =================================
+    # EMAIL ANALYSIS
+    # =================================
+
 
     analysis = analyze_email(
+
         subject,
+
         sender,
+
         body
+
     )
 
-    # ---------------------------------
-    # Create Case
-    # ---------------------------------
+
+
+
+
+
+    # =================================
+    # CREATE CASE
+    # =================================
+
 
     case_id = generate_case_id()
 
+
+
     create_case({
 
-        "case_id": case_id,
+        "case_id":
 
-        "title": "Email Investigation",
+            case_id,
 
-        "severity": analysis["risk"],
+
+        "title":
+
+            "Phishing Investigation",
+
+
+        "severity":
+
+            analysis["risk"],
+
 
         "description":
-            f"Email investigation from {sender}"
+
+            f"Suspicious email detected from {sender}"
 
     })
 
-    # ---------------------------------
-    # Assign Analyst
-    # ---------------------------------
+
+
+
+
+
+
+
+    # =================================
+    # ASSIGN ANALYST
+    # =================================
+
 
     assign_analyst(
+
         case_id,
+
         DEFAULT_ANALYST
+
     )
 
-    # ---------------------------------
-    # Timeline
-    # ---------------------------------
+
+
+
+
+
+
+
+    # =================================
+    # TIMELINE EVENT
+    # =================================
+
 
     add_timeline_event(
 
@@ -109,19 +208,31 @@ def investigate_email(
 
         "ALERT",
 
-        "Email received for investigation",
+        "Suspicious email detected by AI Engine",
 
-        "SYSTEM"
+        "AI ENGINE"
 
     )
 
-    # ---------------------------------
-    # Save Evidence
-    # ---------------------------------
+
+
+
+
+
+
+
+    # =================================
+    # SAVE EVIDENCE
+    # =================================
+
 
     evidence_saved = 0
 
+
+
     for item in analysis["evidence"]:
+
+
 
         add_evidence_record(
 
@@ -133,11 +244,19 @@ def investigate_email(
 
         )
 
+
         evidence_saved += 1
 
-    # ---------------------------------
-    # Timeline
-    # ---------------------------------
+
+
+
+
+
+
+    # =================================
+    # MORE TIMELINE EVENTS
+    # =================================
+
 
     add_timeline_event(
 
@@ -151,41 +270,83 @@ def investigate_email(
 
     )
 
+
+
+
     add_timeline_event(
 
         case_id,
 
         "ASSIGNMENT",
 
-        f"Assigned to {DEFAULT_ANALYST}",
+        f"Case assigned to {DEFAULT_ANALYST}",
 
         "SYSTEM"
 
     )
 
-    # ---------------------------------
-    # Investigation Summary
-    # ---------------------------------
+
+
+
+
+
+
+
+    # =================================
+    # RETURN INVESTIGATION REPORT
+    # =================================
+
 
     return {
 
-        "case_id": case_id,
 
-        "risk": analysis["risk"],
+        "case_id":
 
-        "score": analysis["score"],
+            case_id,
 
-        "analyst": DEFAULT_ANALYST,
 
-        "status": "OPEN",
+        "risk":
 
-        "evidence_count": evidence_saved,
+            analysis["risk"],
 
-        "timeline_events": 3,
 
-        "analysis": analysis
+        "score":
+
+            analysis["score"],
+
+
+        "analyst":
+
+            DEFAULT_ANALYST,
+
+
+        "status":
+
+            "OPEN",
+
+
+        "evidence_count":
+
+            evidence_saved,
+
+
+        "timeline_events":
+
+            3,
+
+
+        "analysis":
+
+            analysis
 
     }
+
+
+
+
+
+
+
 
 
 # =====================================
@@ -194,13 +355,27 @@ def investigate_email(
 
 if __name__ == "__main__":
 
+
+
     report = investigate_email(
 
-        subject="URGENT: Verify your account",
 
-        sender="security@micr0soft-login.xyz",
+        subject=
 
-        body="""
+        "URGENT: Verify your account",
+
+
+
+        sender=
+
+        "security@micr0soft-login.xyz",
+
+
+
+        body=
+
+        """
+
 Your Microsoft account has been suspended.
 
 Click here immediately:
@@ -208,16 +383,34 @@ Click here immediately:
 https://micr0soft-login.xyz/verify
 
 Verify your password now.
+
 """
 
     )
 
+
+
+
     print()
 
-    print("🧬 SENTINEL DNA INVESTIGATION")
+
+    print(
+
+        "🧬 SENTINEL DNA INVESTIGATION"
+
+    )
+
 
     print("=" * 50)
 
+
+
     for key, value in report.items():
 
-        print(f"{key}: {value}")
+        print()
+
+        print(
+
+            f"{key}: {value}"
+
+        )

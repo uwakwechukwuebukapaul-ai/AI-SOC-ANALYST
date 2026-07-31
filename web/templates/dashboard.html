@@ -2,353 +2,558 @@
 
 {% block content %}
 
+
 <h1 class="mb-4">
 
-    🧬 Sentinel DNA SOC Dashboard
+🧬 Sentinel DNA SOC Dashboard
 
 </h1>
 
 
+
 <!-- ==========================
-STAT CARDS
+SOC METRIC CARDS
 ========================== -->
+
 
 <div class="row g-4 mb-4">
 
-    <div class="col-md-3">
 
-        <div class="card bg-primary text-white">
+<div class="col-md-3">
 
-            <div class="card-body">
+<div class="card bg-primary text-white">
 
-                <h6>Total Cases</h6>
+<div class="card-body">
 
-                <h2>{{ stats.total_cases }}</h2>
+<h6>Total Cases</h6>
 
-            </div>
-
-        </div>
-
-    </div>
-
-    <div class="col-md-3">
-
-        <div class="card bg-danger text-white">
-
-            <div class="card-body">
-
-                <h6>High Severity</h6>
-
-                <h2>{{ stats.high_cases }}</h2>
-
-            </div>
-
-        </div>
-
-    </div>
-
-    <div class="col-md-3">
-
-        <div class="card bg-warning text-dark">
-
-            <div class="card-body">
-
-                <h6>Open Cases</h6>
-
-                <h2>{{ stats.open_cases }}</h2>
-
-            </div>
-
-        </div>
-
-    </div>
-
-    <div class="col-md-3">
-
-        <div class="card bg-success text-white">
-
-            <div class="card-body">
-
-                <h6>Closed Cases</h6>
-
-                <h2>{{ stats.closed_cases }}</h2>
-
-            </div>
-
-        </div>
-
-    </div>
+<h2>{{ stats.total_cases }}</h2>
 
 </div>
+
+</div>
+
+</div>
+
+
+
+
+<div class="col-md-3">
+
+<div class="card bg-danger text-white">
+
+<div class="card-body">
+
+<h6>Critical Threats</h6>
+
+<h2>{{ stats.critical_cases }}</h2>
+
+</div>
+
+</div>
+
+</div>
+
+
+
+
+<div class="col-md-3">
+
+<div class="card bg-warning text-dark">
+
+<div class="card-body">
+
+<h6>Evidence Collected</h6>
+
+<h2>{{ stats.evidence_count }}</h2>
+
+</div>
+
+</div>
+
+</div>
+
+
+
+
+<div class="col-md-3">
+
+<div class="card bg-dark text-white">
+
+<div class="card-body">
+
+<h6>IOC Records</h6>
+
+<h2>{{ stats.ioc_count }}</h2>
+
+</div>
+
+</div>
+
+</div>
+
+
+</div>
+
+
+
+
 
 
 <!-- ==========================
-AI PANEL
+AI RISK PANEL
 ========================== -->
+
 
 <div class="card mb-4">
 
-    <div class="card-header">
 
-        🧠 AI Risk Overview
+<div class="card-header">
 
-    </div>
-
-    <div class="card-body">
-
-        <h3>
-
-            Risk Level
-
-            <span class="badge bg-danger">
-
-                {{ analytics.risk.risk_level }}
-
-            </span>
-
-        </h3>
-
-        <hr>
-
-        <div class="row">
-
-            <div class="col">
-
-                <strong>Critical Cases</strong>
-
-                <h4>{{ analytics.risk.critical_cases }}</h4>
-
-            </div>
-
-            <div class="col">
-
-                <strong>Total Incidents</strong>
-
-                <h4>{{ analytics.risk.total_incidents }}</h4>
-
-            </div>
-
-        </div>
-
-    </div>
+🧠 AI Risk Overview
 
 </div>
+
+
+
+<div class="card-body">
+
+
+<h3>
+
+Risk Level
+
+
+{% if analytics.risk.risk_level == "CRITICAL" %}
+
+<span class="badge bg-danger">
+
+{{ analytics.risk.risk_level }}
+
+</span>
+
+
+{% elif analytics.risk.risk_level == "HIGH" %}
+
+<span class="badge bg-warning text-dark">
+
+{{ analytics.risk.risk_level }}
+
+</span>
+
+
+{% else %}
+
+<span class="badge bg-success">
+
+{{ analytics.risk.risk_level }}
+
+</span>
+
+
+{% endif %}
+
+
+</h3>
+
+
+<hr>
+
+
+
+<div class="row">
+
+
+<div class="col">
+
+<strong>Critical Cases</strong>
+
+<h4>
+
+{{ analytics.risk.critical_cases }}
+
+</h4>
+
+</div>
+
+
+
+<div class="col">
+
+<strong>Total Incidents</strong>
+
+<h4>
+
+{{ analytics.risk.total_incidents }}
+
+</h4>
+
+</div>
+
+
+
+
+<div class="col">
+
+<strong>Phishing Alerts</strong>
+
+<h4>
+
+{{ stats.phishing_cases }}
+
+</h4>
+
+</div>
+
+
+</div>
+
+
+</div>
+
+</div>
+
+
+
+
+
 
 
 <!-- ==========================
 CHARTS
 ========================== -->
 
+
 <div class="row">
 
-    <div class="col-lg-4">
 
-        <div class="card mb-4">
+<div class="col-lg-4">
 
-            <div class="card-header">
+<div class="card mb-4">
 
-                🔴 Severity Distribution
+<div class="card-header">
 
-            </div>
-
-            <div class="card-body">
-
-                <canvas id="severityChart"></canvas>
-
-            </div>
-
-        </div>
-
-    </div>
-
-    <div class="col-lg-4">
-
-        <div class="card mb-4">
-
-            <div class="card-header">
-
-                📊 Threat Categories
-
-            </div>
-
-            <div class="card-body">
-
-                <canvas id="threatChart"></canvas>
-
-            </div>
-
-        </div>
-
-    </div>
-
-    <div class="col-lg-4">
-
-        <div class="card mb-4">
-
-            <div class="card-header">
-
-                📈 Incident Timeline
-
-            </div>
-
-            <div class="card-body">
-
-                <canvas id="timelineChart"></canvas>
-
-            </div>
-
-        </div>
-
-    </div>
+🔴 Severity Distribution
 
 </div>
+
+
+<div class="card-body">
+
+<canvas id="severityChart"></canvas>
+
+</div>
+
+
+</div>
+
+</div>
+
+
+
+
+
+<div class="col-lg-4">
+
+<div class="card mb-4">
+
+<div class="card-header">
+
+📊 Threat Categories
+
+</div>
+
+
+<div class="card-body">
+
+<canvas id="threatChart"></canvas>
+
+</div>
+
+
+</div>
+
+</div>
+
+
+
+
+
+<div class="col-lg-4">
+
+<div class="card mb-4">
+
+<div class="card-header">
+
+📈 Incident Timeline
+
+</div>
+
+
+<div class="card-body">
+
+<canvas id="timelineChart"></canvas>
+
+</div>
+
+
+</div>
+
+</div>
+
+
+</div>
+
+
+
+
+
+
+
 
 
 <!-- ==========================
 RECENT CASES
 ========================== -->
 
+
 <div class="card">
 
-    <div class="card-header">
 
-        📋 Recent Investigations
+<div class="card-header">
 
-    </div>
-
-    <div class="card-body p-0">
-
-        <table class="table table-hover table-striped mb-0">
-
-            <thead class="table-dark">
-
-            <tr>
-
-                <th>Case ID</th>
-
-                <th>Title</th>
-
-                <th>Severity</th>
-
-                <th>Status</th>
-
-                <th>Created</th>
-
-            </tr>
-
-            </thead>
-
-            <tbody>
-
-            {% for case in stats.cases %}
-
-            <tr>
-
-                <td>
-
-                    <a href="/case/{{ case.case_id }}">
-
-                        {{ case.case_id }}
-
-                    </a>
-
-                </td>
-
-                <td>
-
-                    {{ case.title }}
-
-                </td>
-
-                <td>
-
-                    <span class="badge bg-danger">
-
-                        {{ case.severity }}
-
-                    </span>
-
-                </td>
-
-                <td>
-
-                    {% if case.status=="OPEN" %}
-
-                        <span class="badge bg-primary">
-
-                            OPEN
-
-                        </span>
-
-                    {% elif case.status=="INVESTIGATING" %}
-
-                        <span class="badge bg-warning text-dark">
-
-                            INVESTIGATING
-
-                        </span>
-
-                    {% else %}
-
-                        <span class="badge bg-success">
-
-                            {{ case.status }}
-
-                        </span>
-
-                    {% endif %}
-
-                </td>
-
-                <td>
-
-                    {{ case.created }}
-
-                </td>
-
-            </tr>
-
-            {% else %}
-
-            <tr>
-
-                <td colspan="5"
-                    class="text-center">
-
-                    No investigations found
-
-                </td>
-
-            </tr>
-
-            {% endfor %}
-
-            </tbody>
-
-        </table>
-
-    </div>
+📋 Recent Investigations
 
 </div>
+
+
+
+<div class="card-body p-0">
+
+
+<table class="table table-hover table-striped mb-0">
+
+
+<thead class="table-dark">
+
+
+<tr>
+
+<th>Case ID</th>
+
+<th>Title</th>
+
+<th>Severity</th>
+
+<th>Status</th>
+
+<th>Created</th>
+
+</tr>
+
+
+</thead>
+
+
+
+<tbody>
+
+
+
+{% for case in stats.cases[:10] %}
+
+
+
+<tr>
+
+
+<td>
+
+<a href="/case/{{ case.case_id }}">
+
+{{ case.case_id }}
+
+</a>
+
+
+</td>
+
+
+
+
+<td>
+
+{{ case.title }}
+
+</td>
+
+
+
+
+<td>
+
+
+{% if case.severity == "CRITICAL" %}
+
+<span class="badge bg-danger">
+
+{{ case.severity }}
+
+</span>
+
+
+{% elif case.severity == "HIGH" %}
+
+<span class="badge bg-warning text-dark">
+
+{{ case.severity }}
+
+</span>
+
+
+{% else %}
+
+<span class="badge bg-success">
+
+{{ case.severity }}
+
+</span>
+
+
+{% endif %}
+
+
+</td>
+
+
+
+
+<td>
+
+
+{% if case.status=="OPEN" %}
+
+<span class="badge bg-primary">
+
+OPEN
+
+</span>
+
+
+{% elif case.status=="INVESTIGATING" %}
+
+
+<span class="badge bg-warning text-dark">
+
+INVESTIGATING
+
+</span>
+
+
+{% else %}
+
+
+<span class="badge bg-success">
+
+{{ case.status }}
+
+</span>
+
+
+{% endif %}
+
+
+
+</td>
+
+
+
+<td>
+
+{{ case.created }}
+
+</td>
+
+
+
+</tr>
+
+
+
+{% else %}
+
+
+
+<tr>
+
+<td colspan="5"
+
+class="text-center">
+
+No investigations found
+
+</td>
+
+</tr>
+
+
+{% endfor %}
+
+
+
+</tbody>
+
+
+</table>
+
+
+</div>
+
+
+</div>
+
+
+
+
+
 
 {% endblock %}
 
 
+
+
+
 {% block scripts %}
+
+
 
 <script>
 
+
 const severityLabels = {{ severity_labels|tojson }};
+
 const severityValues = {{ severity_values|tojson }};
 
+
+
 const threatLabels = {{ threat_labels|tojson }};
+
 const threatValues = {{ threat_values|tojson }};
 
+
+
 const timelineLabels = {{ timeline_labels|tojson }};
+
 const timelineValues = {{ timeline_values|tojson }};
+
+
 
 </script>
 
+
+
 <script src="{{ url_for('static', filename='js/charts.js') }}"></script>
+
+
 
 {% endblock %}

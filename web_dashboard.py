@@ -1,180 +1,58 @@
-from flask import Flask, render_template, request, redirect, session
+"""
+Sentinel DNA
+Web Dashboard Server
 
-from soc_pipeline import run_soc_pipeline
+Main Flask Application
+"""
 
-from database import get_incidents
 
-from auth import login
+from flask import Flask, render_template
 
-from investigation_route import get_investigation_report
 
-from analytics import get_analytics
-
-from socket_monitor import socketio, start_monitor
+from dashboard import dashboard
 
 
 
 app = Flask(__name__)
 
 
-app.secret_key = "AI_SOC_SECRET_KEY"
 
 
 
-socketio.init_app(
-    app,
-    cors_allowed_origins="*"
-)
-
-
-
-
-
-@app.route("/login", methods=["GET", "POST"])
-def login_page():
-
-
-    if request.method == "POST":
-
-
-        username = request.form["username"]
-
-        password = request.form["password"]
-
-
-
-        if login(username, password):
-
-
-            session["analyst"] = username
-
-
-            return redirect("/")
-
-
-
-    return render_template("login.html")
-
-
-
-
-
+# =====================================
+# DASHBOARD ROUTE
+# =====================================
 
 
 @app.route("/")
 def home():
 
+    return dashboard()
 
-    if "analyst" not in session:
 
-        return redirect("/login")
 
 
 
-    alerts = run_soc_pipeline()
+# =====================================
+# CASE VIEW PLACEHOLDER
+# =====================================
 
 
-    incidents = get_incidents()
+@app.route("/case/<case_id>")
+def case_view(case_id):
 
+    return f"""
+    <h1>🧬 Sentinel DNA Case Investigation</h1>
 
-    analytics = get_analytics()
+    <h3>Case ID:</h3>
 
+    <p>{case_id}</p>
 
+    <hr>
 
-    dashboard = {
+    Investigation module coming next...
 
-
-        "total": len(incidents),
-
-
-        "high": len(
-
-            [
-
-                i for i in incidents
-
-                if i[3] == "HIGH"
-
-            ]
-
-        ),
-
-
-        "open": len(
-
-            [
-
-                i for i in incidents
-
-                if i[6] == "OPEN"
-
-            ]
-
-        )
-
-    }
-
-
-
-
-
-    return render_template(
-
-        "index.html",
-
-        alerts=alerts,
-
-        incidents=incidents,
-
-        dashboard=dashboard,
-
-        analytics=analytics
-
-    )
-
-
-
-
-
-
-
-
-@app.route("/investigate/<int:id>")
-def investigate(id):
-
-
-    if "analyst" not in session:
-
-        return redirect("/login")
-
-
-
-    report = get_investigation_report(id)
-
-
-
-    return render_template(
-
-        "investigation.html",
-
-        report=report
-
-    )
-
-
-
-
-
-
-
-@app.route("/logout")
-def logout():
-
-    session.clear()
-
-    return redirect("/login")
-
-
+    """
 
 
 
@@ -183,12 +61,12 @@ def logout():
 if __name__ == "__main__":
 
 
-    start_monitor()
+    print(
+        "🧬 Sentinel DNA SOC Dashboard Running"
+    )
 
 
-    socketio.run(
-
-        app,
+    app.run(
 
         host="127.0.0.1",
 

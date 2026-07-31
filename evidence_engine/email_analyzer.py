@@ -6,12 +6,37 @@ Purpose:
 Extract security evidence from emails.
 Detect phishing indicators,
 suspicious domains and URLs.
+
+Integrated With:
+- IOC Reputation Engine
+- Risk Scoring
+- Case Investigation Pipeline
 """
 
 
 import re
 import uuid
+import sys
+import os
+
 from datetime import datetime
+
+
+# =====================================
+# PROJECT PATH FIX
+# =====================================
+
+PROJECT_ROOT = os.path.dirname(
+    os.path.dirname(
+        os.path.abspath(__file__)
+    )
+)
+
+sys.path.append(PROJECT_ROOT)
+
+
+from ioc_engine.reputation import check_reputation
+
 
 
 
@@ -28,6 +53,7 @@ SUSPICIOUS_KEYWORDS = [
     "confirm identity"
 
 ]
+
 
 
 
@@ -64,15 +90,12 @@ def generate_evidence_id():
 
 
 
+
 # =====================================
 # ANALYZE EMAIL
 # =====================================
 
-def analyze_email(
-        subject,
-        sender,
-        body
-):
+def analyze_email(subject, sender, body):
 
 
     score = 0
@@ -80,6 +103,8 @@ def analyze_email(
     evidence = []
 
     urls = []
+
+    ioc_analysis = []
 
 
 
@@ -95,10 +120,12 @@ def analyze_email(
 
 
 
-    # ===============================
-    # KEYWORD DETECTION
-    # ===============================
 
+
+
+    # =====================================
+    # KEYWORD DETECTION
+    # =====================================
 
     for keyword in SUSPICIOUS_KEYWORDS:
 
@@ -112,22 +139,15 @@ def analyze_email(
             evidence.append({
 
                 "evidence_id":
-
                     generate_evidence_id(),
 
-
                 "type":
-
                     "KEYWORD",
 
-
                 "value":
-
                     keyword,
 
-
                 "confidence":
-
                     "MEDIUM"
 
             })
@@ -137,10 +157,10 @@ def analyze_email(
 
 
 
-    # ===============================
-    # SENDER ANALYSIS
-    # ===============================
 
+    # =====================================
+    # SENDER ANALYSIS
+    # =====================================
 
     if "@" in sender:
 
@@ -158,26 +178,18 @@ def analyze_email(
                 score += 2
 
 
-
                 evidence.append({
 
                     "evidence_id":
-
                         generate_evidence_id(),
 
-
                     "type":
-
                         "SUSPICIOUS_DOMAIN",
 
-
                     "value":
-
                         domain,
 
-
                     "confidence":
-
                         "HIGH"
 
                 })
@@ -193,22 +205,15 @@ def analyze_email(
         evidence.append({
 
             "evidence_id":
-
                 generate_evidence_id(),
 
-
             "type":
-
                 "INVALID_SENDER",
 
-
             "value":
-
                 sender,
 
-
             "confidence":
-
                 "HIGH"
 
         })
@@ -219,9 +224,10 @@ def analyze_email(
 
 
 
-    # ===============================
-    # URL EXTRACTION
-    # ===============================
+
+    # =====================================
+    # URL EXTRACTION + IOC ANALYSIS
+    # =====================================
 
 
     urls = re.findall(
@@ -244,23 +250,67 @@ def analyze_email(
         evidence.append({
 
             "evidence_id":
-
                 generate_evidence_id(),
 
+            "type":
+                "MALICIOUS_URL",
+
+            "value":
+                url,
+
+            "confidence":
+                "HIGH"
+
+        })
+
+
+
+
+        # IOC Reputation Check
+
+        ioc_result = check_reputation({
 
             "type":
 
-                "MALICIOUS_URL",
-
+                "URL",
 
             "value":
 
+                url
+
+        })
+
+
+
+        ioc_analysis.append(ioc_result)
+
+
+
+        evidence.append({
+
+            "evidence_id":
+                generate_evidence_id(),
+
+            "type":
+                "IOC_REPUTATION",
+
+            "value":
                 url,
 
+            "status":
+                ioc_result["status"],
+
+            "threat_score":
+                ioc_result["threat_score"],
+
+            "risk_level":
+                ioc_result["risk_level"],
 
             "confidence":
+                ioc_result["confidence"],
 
-                "HIGH"
+            "reasons":
+                ioc_result["reasons"]
 
         })
 
@@ -270,30 +320,51 @@ def analyze_email(
 
 
 
-    # ===============================
-    # RISK CALCULATION
-    # ===============================
+
+    # =====================================
+    # FINAL RISK CALCULATION
+    # =====================================
 
 
-    if score >= 7:
+    highest_ioc_score = 0
 
+
+
+    for item in ioc_analysis:
+
+
+        if item["threat_score"] > highest_ioc_score:
+
+            highest_ioc_score = item["threat_score"]
+
+
+
+
+
+    final_score = score + highest_ioc_score
+
+
+
+
+
+    if final_score >= 70:
+
+        risk = "CRITICAL"
+
+
+    elif final_score >= 7:
 
         risk = "HIGH"
 
 
-
-    elif score >= 4:
-
+    elif final_score >= 4:
 
         risk = "MEDIUM"
 
 
-
     else:
 
-
         risk = "LOW"
-
 
 
 
@@ -308,17 +379,14 @@ def analyze_email(
             datetime.now().isoformat(),
 
 
-
         "risk":
 
             risk,
 
 
-
         "score":
 
-            score,
-
+            final_score,
 
 
         "sender":
@@ -326,11 +394,9 @@ def analyze_email(
             sender,
 
 
-
         "subject":
 
             subject,
-
 
 
         "evidence":
@@ -338,12 +404,20 @@ def analyze_email(
             evidence,
 
 
-
         "urls":
 
-            urls
+            urls,
+
+
+        "ioc_analysis":
+
+            ioc_analysis
 
     }
+
+
+
+
 
 
 
@@ -356,12 +430,15 @@ def analyze_email(
 if __name__ == "__main__":
 
 
-
     result = analyze_email(
+
 
         "URGENT: Verify your account",
 
+
         "security@micr0soft-login.xyz",
+
+
 
         """
 
@@ -378,20 +455,21 @@ if __name__ == "__main__":
 
 
     print(
+
         "🧬 SENTINEL DNA EMAIL EVIDENCE REPORT"
+
     )
 
 
-    print("=" * 45)
+    print("=" * 50)
 
 
 
-    for key,value in result.items():
+    for key, value in result.items():
 
-        print(
 
-            f"\n{key.upper()}:"
+        print()
 
-        )
+        print(key.upper() + ":")
 
         print(value)
