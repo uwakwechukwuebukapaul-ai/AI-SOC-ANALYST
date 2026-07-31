@@ -16,7 +16,6 @@ Handles:
 from datetime import datetime
 import hashlib
 
-
 from database.connection import database
 
 
@@ -29,9 +28,7 @@ from database.connection import database
 def generate_sha256(data):
 
     return hashlib.sha256(
-
         str(data).encode()
-
     ).hexdigest()
 
 
@@ -47,7 +44,6 @@ def create_case(case):
     with database.session() as conn:
 
         cursor = conn.cursor()
-
 
         cursor.execute(
             """
@@ -65,22 +61,16 @@ def create_case(case):
             """,
 
             (
-
                 case["case_id"],
-
                 case["title"],
-
                 case["severity"],
-
                 case["description"],
-
                 "OPEN",
-
                 datetime.now().isoformat()
-
             )
-
         )
+
+        conn.commit()
 
 
     return case["case_id"]
@@ -100,12 +90,10 @@ def get_cases():
 
         cursor = conn.cursor()
 
-
         cursor.execute(
             """
             SELECT *
             FROM cases
-
             ORDER BY id DESC
             """
         )
@@ -134,23 +122,16 @@ def get_case(case_id):
 
         cursor = conn.cursor()
 
-
         cursor.execute(
             """
             SELECT *
-
             FROM cases
-
             WHERE case_id=?
-
             """,
 
             (
-
                 case_id,
-
             )
-
         )
 
 
@@ -158,6 +139,7 @@ def get_case(case_id):
 
 
         return dict(row) if row else None
+
 
 
 
@@ -176,7 +158,6 @@ def update_case_status(
 
         cursor = conn.cursor()
 
-
         cursor.execute(
             """
             UPDATE cases
@@ -188,14 +169,15 @@ def update_case_status(
             """,
 
             (
-
                 status,
-
                 case_id
-
             )
-
         )
+
+        conn.commit()
+
+
+    return True
 
 
 
@@ -215,7 +197,6 @@ def assign_analyst(
 
         cursor = conn.cursor()
 
-
         cursor.execute(
             """
             UPDATE cases
@@ -227,14 +208,15 @@ def assign_analyst(
             """,
 
             (
-
                 analyst,
-
                 case_id
-
             )
-
         )
+
+        conn.commit()
+
+
+    return True
 
 
 
@@ -254,7 +236,6 @@ def add_note(
 
         cursor = conn.cursor()
 
-
         cursor.execute(
             """
             INSERT INTO case_notes
@@ -269,16 +250,16 @@ def add_note(
             """,
 
             (
-
                 case_id,
-
                 note,
-
                 datetime.now().isoformat()
-
             )
-
         )
+
+        conn.commit()
+
+
+    return True
 
 
 
@@ -295,7 +276,6 @@ def get_notes(case_id):
 
         cursor = conn.cursor()
 
-
         cursor.execute(
             """
             SELECT *
@@ -309,11 +289,8 @@ def get_notes(case_id):
             """,
 
             (
-
                 case_id,
-
             )
-
         )
 
 
@@ -340,11 +317,8 @@ def add_evidence_record(
         evidence_data
 ):
 
-
     evidence_hash = generate_sha256(
-
         evidence_data
-
     )
 
 
@@ -369,20 +343,16 @@ def add_evidence_record(
             """,
 
             (
-
                 case_id,
-
                 evidence_type,
-
                 evidence_data,
-
                 evidence_hash,
-
                 datetime.now().isoformat()
-
             )
-
         )
+
+
+        conn.commit()
 
 
     return evidence_hash
@@ -402,7 +372,6 @@ def get_evidence(case_id):
 
         cursor = conn.cursor()
 
-
         cursor.execute(
             """
             SELECT *
@@ -416,11 +385,8 @@ def get_evidence(case_id):
             """,
 
             (
-
                 case_id,
-
             )
-
         )
 
 
