@@ -9,12 +9,32 @@ Handles:
 - Analyst assignment
 - Notes
 - Evidence tracking
+- Timeline support
 """
 
 
 from datetime import datetime
+import hashlib
+
 
 from database.connection import database
+
+
+
+
+# =====================================
+# HASH GENERATOR
+# =====================================
+
+def generate_sha256(data):
+
+    return hashlib.sha256(
+
+        str(data).encode()
+
+    ).hexdigest()
+
+
 
 
 
@@ -27,6 +47,7 @@ def create_case(case):
     with database.session() as conn:
 
         cursor = conn.cursor()
+
 
         cursor.execute(
             """
@@ -44,14 +65,28 @@ def create_case(case):
             """,
 
             (
+
                 case["case_id"],
+
                 case["title"],
+
                 case["severity"],
+
                 case["description"],
+
                 "OPEN",
+
                 datetime.now().isoformat()
+
             )
+
         )
+
+
+    return case["case_id"]
+
+
+
 
 
 
@@ -65,19 +100,27 @@ def get_cases():
 
         cursor = conn.cursor()
 
+
         cursor.execute(
             """
             SELECT *
             FROM cases
+
             ORDER BY id DESC
             """
         )
 
 
         return [
+
             dict(row)
+
             for row in cursor.fetchall()
+
         ]
+
+
+
 
 
 
@@ -91,14 +134,23 @@ def get_case(case_id):
 
         cursor = conn.cursor()
 
+
         cursor.execute(
             """
             SELECT *
+
             FROM cases
+
             WHERE case_id=?
+
             """,
 
-            (case_id,)
+            (
+
+                case_id,
+
+            )
+
         )
 
 
@@ -106,6 +158,8 @@ def get_case(case_id):
 
 
         return dict(row) if row else None
+
+
 
 
 
@@ -122,18 +176,29 @@ def update_case_status(
 
         cursor = conn.cursor()
 
+
         cursor.execute(
             """
             UPDATE cases
+
             SET status=?
+
             WHERE case_id=?
+
             """,
 
             (
+
                 status,
+
                 case_id
+
             )
+
         )
+
+
+
 
 
 
@@ -150,23 +215,34 @@ def assign_analyst(
 
         cursor = conn.cursor()
 
+
         cursor.execute(
             """
             UPDATE cases
+
             SET analyst=?
+
             WHERE case_id=?
+
             """,
 
             (
+
                 analyst,
+
                 case_id
+
             )
+
         )
 
 
 
+
+
+
 # =====================================
-# ADD INVESTIGATION NOTE
+# ADD NOTE
 # =====================================
 
 def add_note(
@@ -189,19 +265,28 @@ def add_note(
             )
 
             VALUES (?,?,?)
+
             """,
 
             (
+
                 case_id,
+
                 note,
+
                 datetime.now().isoformat()
+
             )
+
         )
 
 
 
+
+
+
 # =====================================
-# GET CASE NOTES
+# GET NOTES
 # =====================================
 
 def get_notes(case_id):
@@ -214,34 +299,54 @@ def get_notes(case_id):
         cursor.execute(
             """
             SELECT *
+
             FROM case_notes
+
             WHERE case_id=?
+
             ORDER BY id DESC
+
             """,
 
             (
+
                 case_id,
+
             )
+
         )
 
 
         return [
+
             dict(row)
+
             for row in cursor.fetchall()
+
         ]
 
 
 
+
+
+
 # =====================================
-# ADD EVIDENCE RECORD
+# ADD EVIDENCE
 # =====================================
 
 def add_evidence_record(
         case_id,
         evidence_type,
-        evidence_data,
-        evidence_hash
+        evidence_data
 ):
+
+
+    evidence_hash = generate_sha256(
+
+        evidence_data
+
+    )
+
 
     with database.session() as conn:
 
@@ -260,21 +365,35 @@ def add_evidence_record(
             )
 
             VALUES (?,?,?,?,?)
+
             """,
 
             (
+
                 case_id,
+
                 evidence_type,
+
                 evidence_data,
+
                 evidence_hash,
+
                 datetime.now().isoformat()
+
             )
+
         )
+
+
+    return evidence_hash
+
+
+
 
 
 
 # =====================================
-# GET CASE EVIDENCE
+# GET EVIDENCE
 # =====================================
 
 def get_evidence(case_id):
@@ -287,18 +406,28 @@ def get_evidence(case_id):
         cursor.execute(
             """
             SELECT *
+
             FROM evidence
+
             WHERE case_id=?
+
             ORDER BY id DESC
+
             """,
 
             (
+
                 case_id,
+
             )
+
         )
 
 
         return [
+
             dict(row)
+
             for row in cursor.fetchall()
+
         ]

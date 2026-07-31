@@ -6,17 +6,18 @@ Database Models
 from database.connection import database
 
 
-
 def create_tables():
+    """
+    Create all Sentinel DNA database tables.
+    """
 
     with database.session() as conn:
 
         cursor = conn.cursor()
 
-
-        # ==============================
-        # CASES TABLE
-        # ==============================
+        # =====================================
+        # CASES
+        # =====================================
 
         cursor.execute("""
         CREATE TABLE IF NOT EXISTS cases (
@@ -40,11 +41,9 @@ def create_tables():
         )
         """)
 
-
-
-        # ==============================
+        # =====================================
         # CASE NOTES
-        # ==============================
+        # =====================================
 
         cursor.execute("""
         CREATE TABLE IF NOT EXISTS case_notes (
@@ -60,16 +59,14 @@ def create_tables():
             created TEXT NOT NULL,
 
             FOREIGN KEY(case_id)
-            REFERENCES cases(case_id)
+                REFERENCES cases(case_id)
 
         )
         """)
 
-
-
-        # ==============================
+        # =====================================
         # EVIDENCE
-        # ==============================
+        # =====================================
 
         cursor.execute("""
         CREATE TABLE IF NOT EXISTS evidence (
@@ -78,25 +75,23 @@ def create_tables():
 
             case_id TEXT NOT NULL,
 
-            evidence_type TEXT NOT NULL,
+            type TEXT NOT NULL,
 
             data TEXT NOT NULL,
 
-            sha256 TEXT DEFAULT '',
+            sha256 TEXT NOT NULL,
 
             created TEXT NOT NULL,
 
             FOREIGN KEY(case_id)
-            REFERENCES cases(case_id)
+                REFERENCES cases(case_id)
 
         )
         """)
 
-
-
-        # ==============================
-        # INVESTIGATION TIMELINE
-        # ==============================
+        # =====================================
+        # TIMELINE
+        # =====================================
 
         cursor.execute("""
         CREATE TABLE IF NOT EXISTS timeline (
@@ -105,17 +100,25 @@ def create_tables():
 
             case_id TEXT NOT NULL,
 
-            event TEXT NOT NULL,
+            event_type TEXT NOT NULL,
+
+            description TEXT NOT NULL,
 
             actor TEXT DEFAULT 'SYSTEM',
 
             created TEXT NOT NULL,
 
             FOREIGN KEY(case_id)
-            REFERENCES cases(case_id)
+                REFERENCES cases(case_id)
 
         )
         """)
 
-
     return True
+
+
+if __name__ == "__main__":
+
+    create_tables()
+
+    print("✅ Sentinel DNA database tables created successfully.")
