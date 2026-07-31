@@ -10,7 +10,9 @@ suspicious domains and URLs.
 
 
 import re
+import uuid
 from datetime import datetime
+
 
 
 
@@ -28,6 +30,7 @@ SUSPICIOUS_KEYWORDS = [
 ]
 
 
+
 SUSPICIOUS_TLDS = [
 
     ".xyz",
@@ -39,11 +42,38 @@ SUSPICIOUS_TLDS = [
 ]
 
 
+
+
+
+# =====================================
+# GENERATE EVIDENCE ID
+# =====================================
+
+def generate_evidence_id():
+
+    return (
+
+        "EVD-"
+
+        + uuid.uuid4().hex[:8].upper()
+
+    )
+
+
+
+
+
+
+# =====================================
+# ANALYZE EMAIL
+# =====================================
+
 def analyze_email(
         subject,
         sender,
         body
 ):
+
 
     score = 0
 
@@ -52,69 +82,147 @@ def analyze_email(
     urls = []
 
 
+
     text = (
-        subject +
-        " " +
-        body
+
+        subject
+
+        + " "
+
+        + body
+
     ).lower()
 
 
 
-    # Keyword extraction
+    # ===============================
+    # KEYWORD DETECTION
+    # ===============================
+
 
     for keyword in SUSPICIOUS_KEYWORDS:
 
+
         if keyword in text:
+
 
             score += 1
 
+
             evidence.append({
 
-                "type":"keyword",
+                "evidence_id":
 
-                "value":keyword
+                    generate_evidence_id(),
+
+
+                "type":
+
+                    "KEYWORD",
+
+
+                "value":
+
+                    keyword,
+
+
+                "confidence":
+
+                    "MEDIUM"
 
             })
 
 
 
-    # Sender analysis
+
+
+
+    # ===============================
+    # SENDER ANALYSIS
+    # ===============================
+
 
     if "@" in sender:
+
 
         domain = sender.split("@")[1].lower()
 
 
+
         for tld in SUSPICIOUS_TLDS:
+
 
             if domain.endswith(tld):
 
+
                 score += 2
+
+
 
                 evidence.append({
 
-                    "type":"domain",
+                    "evidence_id":
 
-                    "value":domain
+                        generate_evidence_id(),
+
+
+                    "type":
+
+                        "SUSPICIOUS_DOMAIN",
+
+
+                    "value":
+
+                        domain,
+
+
+                    "confidence":
+
+                        "HIGH"
 
                 })
 
 
+
     else:
+
 
         score += 2
 
+
         evidence.append({
 
-            "type":"sender",
+            "evidence_id":
 
-            "value":"invalid email"
+                generate_evidence_id(),
+
+
+            "type":
+
+                "INVALID_SENDER",
+
+
+            "value":
+
+                sender,
+
+
+            "confidence":
+
+                "HIGH"
 
         })
 
 
 
-    # URL extraction
+
+
+
+
+    # ===============================
+    # URL EXTRACTION
+    # ===============================
+
 
     urls = re.findall(
 
@@ -125,32 +233,70 @@ def analyze_email(
     )
 
 
+
     for url in urls:
+
 
         score += 2
 
 
+
         evidence.append({
 
-            "type":"url",
+            "evidence_id":
 
-            "value":url
+                generate_evidence_id(),
+
+
+            "type":
+
+                "MALICIOUS_URL",
+
+
+            "value":
+
+                url,
+
+
+            "confidence":
+
+                "HIGH"
 
         })
 
 
 
+
+
+
+
+    # ===============================
+    # RISK CALCULATION
+    # ===============================
+
+
     if score >= 7:
 
-        risk="HIGH"
 
-    elif score >=4:
+        risk = "HIGH"
 
-        risk="MEDIUM"
+
+
+    elif score >= 4:
+
+
+        risk = "MEDIUM"
+
+
 
     else:
 
-        risk="LOW"
+
+        risk = "LOW"
+
+
+
+
 
 
 
@@ -158,22 +304,94 @@ def analyze_email(
 
 
         "timestamp":
-        datetime.now().isoformat(),
+
+            datetime.now().isoformat(),
+
 
 
         "risk":
-        risk,
+
+            risk,
+
 
 
         "score":
-        score,
+
+            score,
+
+
+
+        "sender":
+
+            sender,
+
+
+
+        "subject":
+
+            subject,
+
 
 
         "evidence":
-        evidence,
+
+            evidence,
+
 
 
         "urls":
-        urls
+
+            urls
 
     }
+
+
+
+
+
+# =====================================
+# TEST MODE
+# =====================================
+
+if __name__ == "__main__":
+
+
+
+    result = analyze_email(
+
+        "URGENT: Verify your account",
+
+        "security@micr0soft-login.xyz",
+
+        """
+
+        Your account has been suspended.
+
+        Click here to verify your password:
+
+        https://micr0soft-login.xyz/verify
+
+        """
+
+    )
+
+
+
+    print(
+        "🧬 SENTINEL DNA EMAIL EVIDENCE REPORT"
+    )
+
+
+    print("=" * 45)
+
+
+
+    for key,value in result.items():
+
+        print(
+
+            f"\n{key.upper()}:"
+
+        )
+
+        print(value)
