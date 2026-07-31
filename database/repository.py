@@ -1,239 +1,101 @@
 """
 Sentinel DNA
 Database Repository Layer
-
-Handles all database operations for incidents.
 """
 
-import json
-
+from datetime import datetime
 from database.connection import database
-from database.models import Incident
 
 
-class IncidentRepository:
-    """
-    Repository responsible for Incident database operations.
-    """
 
-    def create(self, incident: Incident) -> int:
-        """
-        Save a new incident.
-        """
+def create_case(case):
 
-        incident.validate()
+    with database.session() as conn:
 
-        with database.session() as conn:
+        cursor = conn.cursor()
 
-            cursor = conn.cursor()
-
-            cursor.execute(
-                """
-                INSERT INTO incidents
-                (
-                    time,
-                    threat,
-                    severity,
-                    risk_score,
-                    mitre,
-                    response_status,
-                    status,
-                    evidence,
-                    actions,
-                    analyst,
-                    notes
-                )
-
-                VALUES
-                (
-                    ?,
-                    ?,
-                    ?,
-                    ?,
-                    ?,
-                    ?,
-                    ?,
-                    ?,
-                    ?,
-                    ?,
-                    ?
-                )
-                """,
-                (
-                    incident.timestamp,
-                    incident.threat,
-                    incident.severity,
-                    incident.risk_score,
-                    incident.mitre,
-                    incident.response_status,
-                    incident.status,
-                    incident.evidence,
-                    json.dumps(incident.actions),
-                    incident.analyst,
-                    incident.notes,
-                ),
+        cursor.execute(
+            """
+            INSERT INTO cases
+            (
+                case_id,
+                title,
+                severity,
+                description,
+                status,
+                created
             )
 
-            return cursor.lastrowid
+            VALUES (?,?,?,?,?,?)
+            """,
 
-
-    def get_all(self) -> list[Incident]:
-        """
-        Return all incidents.
-        """
-
-        with database.session() as conn:
-
-            cursor = conn.cursor()
-
-            cursor.execute(
-                """
-                SELECT *
-                FROM incidents
-                ORDER BY id DESC
-                """
+            (
+                case["case_id"],
+                case["title"],
+                case["severity"],
+                case["description"],
+                "OPEN",
+                datetime.now().isoformat()
             )
-
-            rows = cursor.fetchall()
-
-
-            return [
-                self._convert(row)
-                for row in rows
-            ]
+        )
 
 
-    def get_by_id(self, incident_id: int):
-        """
-        Get single incident.
-        """
+def get_cases():
 
-        with database.session() as conn:
+    with database.session() as conn:
 
-            cursor = conn.cursor()
+        cursor = conn.cursor()
 
-            cursor.execute(
-                """
-                SELECT *
-                FROM incidents
-                WHERE id=?
-                """,
-                (incident_id,),
+        cursor.execute(
+            """
+            SELECT *
+            FROM cases
+            ORDER BY id DESC
+            """
+        )
+
+        return [
+            dict(row)
+            for row in cursor.fetchall()
+        ]
+
+
+
+def get_case(case_id):
+
+    with database.session() as conn:
+
+        cursor = conn.cursor()
+
+        cursor.execute(
+            """
+            SELECT *
+            FROM cases
+            WHERE case_id=?
+            """,
+            (case_id,)
+        )
+
+        row = cursor.fetchone()
+
+        return dict(row) if row else None
+
+
+
+def update_case_status(case_id, status):
+
+    with database.session() as conn:
+
+        cursor = conn.cursor()
+
+        cursor.execute(
+            """
+            UPDATE cases
+            SET status=?
+            WHERE case_id=?
+            """,
+            (
+                status,
+                case_id
             )
-
-            row = cursor.fetchone()
-
-
-            if row:
-
-                return self._convert(row)
-
-            return None
-
-
-    def update_status(
-        self,
-        incident_id: int,
-        status: str
-    ):
-        """
-        Update incident status.
-        """
-
-        with database.session() as conn:
-
-            cursor = conn.cursor()
-
-            cursor.execute(
-                """
-                UPDATE incidents
-
-                SET status=?
-
-                WHERE id=?
-                """,
-                (
-                    status,
-                    incident_id
-                )
-            )
-
-
-    def assign_analyst(
-        self,
-        incident_id: int,
-        analyst: str
-    ):
-        """
-        Assign analyst.
-        """
-
-        with database.session() as conn:
-
-            cursor = conn.cursor()
-
-            cursor.execute(
-                """
-                UPDATE incidents
-
-                SET analyst=?
-
-                WHERE id=?
-                """,
-                (
-                    analyst,
-                    incident_id
-                )
-            )
-
-
-    def add_notes(
-        self,
-        incident_id: int,
-        notes: str
-    ):
-        """
-        Add investigation notes.
-        """
-
-        with database.session() as conn:
-
-            cursor = conn.cursor()
-
-            cursor.execute(
-                """
-                UPDATE incidents
-
-                SET notes=?
-
-                WHERE id=?
-                """,
-                (
-                    notes,
-                    incident_id
-                )
-            )
-
-
-    def _convert(self, row):
-        """
-        Convert SQLite row into Incident object.
-        """
-
-        data = dict(row)
-
-        try:
-
-            data["actions"] = json.loads(
-                data.get("actions", "[]")
-            )
-
-        except:
-
-            data["actions"] = []
-
-
-        return Incident.from_dict(data)
-
-
-incident_repository = IncidentRepository()
+        )
