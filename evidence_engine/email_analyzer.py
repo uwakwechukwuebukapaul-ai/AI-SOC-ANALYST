@@ -1,311 +1,179 @@
 """
 Sentinel DNA
-Evidence Engine
+Evidence Engine - Email Analyzer
 
-Email Threat Evidence Analyzer
+Purpose:
+Extract security evidence from emails.
+Detect phishing indicators,
+suspicious domains and URLs.
 """
+
 
 import re
 from datetime import datetime
 
 
-class EmailAnalyzer:
-    """
-    Analyze email content and extract security evidence.
-    """
+
+SUSPICIOUS_KEYWORDS = [
+
+    "urgent",
+    "verify",
+    "password",
+    "login",
+    "account suspended",
+    "click here",
+    "security alert",
+    "confirm identity"
+
+]
 
 
-    def __init__(self):
+SUSPICIOUS_TLDS = [
 
-        self.suspicious_keywords = [
+    ".xyz",
+    ".ru",
+    ".top",
+    ".click",
+    ".zip"
 
-            "urgent",
-            "verify",
-            "password",
-            "login",
-            "account suspended",
-            "click here",
-            "reset password",
-            "security alert",
-            "confirm identity"
-
-        ]
+]
 
 
-        self.suspicious_domains = [
+def analyze_email(
+        subject,
+        sender,
+        body
+):
 
-            "login",
-            "secure",
-            "verify",
-            "security",
-            "alert",
-            "bank",
-            "micr0soft",
-            "g00gle"
+    score = 0
 
-        ]
+    evidence = []
 
-
-        self.suspicious_extensions = [
-
-            ".xyz",
-            ".top",
-            ".click",
-            ".zip",
-            ".ru"
-
-        ]
+    urls = []
 
 
-    def extract_urls(self, text):
-
-        """
-        Extract URLs from email body.
-        """
-
-        return re.findall(
-            r"https?://[^\s]+",
-            text
-        )
+    text = (
+        subject +
+        " " +
+        body
+    ).lower()
 
 
-    def analyze_sender(self, sender):
 
-        """
-        Analyze sender reputation.
-        """
+    # Keyword extraction
 
-        evidence = []
+    for keyword in SUSPICIOUS_KEYWORDS:
 
-        score = 0
+        if keyword in text:
+
+            score += 1
+
+            evidence.append({
+
+                "type":"keyword",
+
+                "value":keyword
+
+            })
 
 
-        if "@" not in sender:
 
-            return {
+    # Sender analysis
 
-                "score": 3,
-
-                "evidence": [
-                    "Invalid sender format"
-                ]
-
-            }
-
+    if "@" in sender:
 
         domain = sender.split("@")[1].lower()
 
 
-        for item in self.suspicious_domains:
+        for tld in SUSPICIOUS_TLDS:
 
-            if item in domain:
-
-                score += 2
-
-                evidence.append(
-
-                    f"Suspicious domain keyword: {domain}"
-
-                )
-
-                break
-
-
-
-        for extension in self.suspicious_extensions:
-
-            if domain.endswith(extension):
+            if domain.endswith(tld):
 
                 score += 2
 
-                evidence.append(
+                evidence.append({
 
-                    f"Suspicious domain extension: {extension}"
+                    "type":"domain",
 
-                )
+                    "value":domain
 
-                break
-
-
-        return {
-
-            "score": score,
-
-            "evidence": evidence
-
-        }
+                })
 
 
+    else:
 
-    def analyze_content(
-        self,
-        subject,
+        score += 2
+
+        evidence.append({
+
+            "type":"sender",
+
+            "value":"invalid email"
+
+        })
+
+
+
+    # URL extraction
+
+    urls = re.findall(
+
+        r"https?://[^\s]+",
+
         body
-    ):
 
-        """
-        Analyze email text.
-        """
+    )
 
-        score = 0
 
-        evidence = []
+    for url in urls:
 
+        score += 2
 
-        content = (
-            subject +
-            " " +
-            body
-        ).lower()
 
+        evidence.append({
 
-        for keyword in self.suspicious_keywords:
+            "type":"url",
 
-            if keyword in content:
+            "value":url
 
-                score += 1
+        })
 
-                evidence.append(
 
-                    f"Suspicious keyword detected: {keyword}"
 
-                )
+    if score >= 7:
 
+        risk="HIGH"
 
-        urls = self.extract_urls(body)
+    elif score >=4:
 
+        risk="MEDIUM"
 
-        for url in urls:
+    else:
 
-            score += 2
+        risk="LOW"
 
-            evidence.append(
 
-                f"URL detected: {url}"
 
-            )
+    return {
 
 
-            for extension in self.suspicious_extensions:
+        "timestamp":
+        datetime.now().isoformat(),
 
-                if extension in url:
 
-                    score += 2
+        "risk":
+        risk,
 
-                    evidence.append(
 
-                        f"Suspicious URL indicator: {extension}"
+        "score":
+        score,
 
-                    )
 
-                    break
+        "evidence":
+        evidence,
 
 
-        return {
+        "urls":
+        urls
 
-            "score": score,
-
-            "evidence": evidence,
-
-            "urls": urls
-
-        }
-
-
-
-    def calculate_risk(self, score):
-
-        """
-        Convert score into risk level.
-        """
-
-        if score >= 8:
-
-            return "HIGH"
-
-
-        elif score >= 4:
-
-            return "MEDIUM"
-
-
-        return "LOW"
-
-
-
-    def analyze(
-        self,
-        subject,
-        sender,
-        body
-    ):
-
-        """
-        Full email investigation.
-        """
-
-
-        sender_result = self.analyze_sender(
-            sender
-        )
-
-
-        content_result = self.analyze_content(
-            subject,
-            body
-        )
-
-
-        total_score = (
-
-            sender_result["score"]
-
-            +
-
-            content_result["score"]
-
-        )
-
-
-        return {
-
-            "timestamp":
-                str(datetime.now()),
-
-
-            "subject":
-                subject,
-
-
-            "sender":
-                sender,
-
-
-            "risk":
-                self.calculate_risk(
-                    total_score
-                ),
-
-
-            "score":
-                total_score,
-
-
-            "evidence":
-
-                sender_result["evidence"]
-
-                +
-
-                content_result["evidence"],
-
-
-            "urls":
-
-                content_result["urls"]
-
-        }
-
-
-
-email_analyzer = EmailAnalyzer()
+    }

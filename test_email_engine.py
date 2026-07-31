@@ -1,32 +1,16 @@
-from evidence_engine.email_analyzer import email_analyzer
+from evidence_engine.email_analyzer import analyze_email
 
 
-result = email_analyzer.analyze(
 
-    subject="URGENT: Verify your account",
+result = analyze_email(
 
-    sender="security@micr0soft-login.xyz",
+"URGENT: Verify your account",
 
-    body="""
-    Your account has been suspended.
-    Click here immediately:
-    https://micr0soft-login.xyz/verify
-    """
+"security@micr0soft-login.xyz",
+
+"Click here to verify your password https://micr0soft-login.xyz"
 
 )
 
 
-print("=" * 50)
-
-print("SENTINEL DNA EMAIL ANALYSIS")
-
-print("=" * 50)
-
-
-for key, value in result.items():
-
-    print(
-        f"\n{key.upper()}:"
-    )
-
-    print(value)
+print(result)
