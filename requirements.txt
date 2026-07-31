@@ -1,1 +1,13 @@
-# No external packages required
+Flask>=3.1.0
+Jinja2>=3.1.0
+Werkzeug>=3.1.0
+MarkupSafe>=3.0.0
+itsdangerous>=2.2.0
+click>=8.1.0
+blinker>=1.9.0
+python-dotenv>=1.0.0
+requests>=2.32.0
+urllib3>=2.5.0
+charset-normalizer>=3.4.0
+idna>=3.10
+certifi>=2026.7.22

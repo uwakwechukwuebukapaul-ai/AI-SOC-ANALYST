@@ -2,240 +2,135 @@
 
 {% block content %}
 
+<div class="container-fluid mt-4">
+
 <h1 class="mb-4">
-    🧬 Sentinel DNA SOC Dashboard
+🧬 Sentinel DNA SOC Dashboard
 </h1>
 
-
-<!-- STAT CARDS -->
-
-<div class="row g-4 mb-4">
-
+<div class="row mb-4">
 
 <div class="col-md-3">
 <div class="card bg-primary text-white">
 <div class="card-body">
-
 <h6>Total Cases</h6>
 <h2>{{ stats.total_cases }}</h2>
-
 </div>
 </div>
 </div>
-
-
 
 <div class="col-md-3">
 <div class="card bg-danger text-white">
 <div class="card-body">
-
 <h6>Critical Threats</h6>
 <h2>{{ stats.critical_cases }}</h2>
-
 </div>
 </div>
 </div>
-
-
 
 <div class="col-md-3">
 <div class="card bg-warning text-dark">
 <div class="card-body">
-
 <h6>Open Cases</h6>
 <h2>{{ stats.open_cases }}</h2>
-
 </div>
 </div>
 </div>
-
-
 
 <div class="col-md-3">
 <div class="card bg-success text-white">
 <div class="card-body">
-
 <h6>Closed Cases</h6>
 <h2>{{ stats.closed_cases }}</h2>
-
 </div>
 </div>
 </div>
 
-
 </div>
-
-
-
-<!-- AI OVERVIEW -->
-
 
 <div class="card mb-4">
 
 <div class="card-header">
-
 🧠 AI Risk Overview
-
 </div>
-
 
 <div class="card-body">
 
-
 <h3>
-
 Risk Level
-
 <span class="badge bg-danger">
-
 {{ analytics.risk.risk_level }}
-
 </span>
-
 </h3>
-
 
 <hr>
 
-
 <div class="row">
 
-
 <div class="col">
-
 <strong>Critical Cases</strong>
-
-<h4>
-{{ analytics.risk.critical_cases }}
-</h4>
-
+<h4>{{ analytics.risk.critical_cases }}</h4>
 </div>
-
-
 
 <div class="col">
-
 <strong>Total Incidents</strong>
-
-<h4>
-{{ analytics.risk.total_incidents }}
-</h4>
-
+<h4>{{ analytics.risk.total_incidents }}</h4>
 </div>
-
-
-</div>
-
 
 </div>
 
 </div>
 
-
-
-
-<!-- CHARTS -->
-
+</div>
 
 <div class="row">
-
 
 <div class="col-md-4">
-
 <div class="card">
-
 <div class="card-header">
 🔴 Severity Distribution
 </div>
-
-
 <div class="card-body">
-
 <canvas id="severityChart"></canvas>
-
 </div>
-
-
 </div>
-
 </div>
-
-
-
-
 
 <div class="col-md-4">
-
 <div class="card">
-
 <div class="card-header">
 📊 Threat Categories
 </div>
-
-
 <div class="card-body">
-
 <canvas id="threatChart"></canvas>
-
 </div>
-
-
 </div>
-
 </div>
-
-
-
-
 
 <div class="col-md-4">
-
 <div class="card">
-
 <div class="card-header">
 📈 Incident Timeline
 </div>
-
-
 <div class="card-body">
-
 <canvas id="timelineChart"></canvas>
-
 </div>
-
-
+</div>
 </div>
 
 </div>
-
-
-</div>
-
-
-
-
-
-<!-- CASE TABLE -->
-
 
 <div class="card mt-4">
 
-
 <div class="card-header">
-
 📋 Recent Investigations
-
 </div>
-
-
 
 <div class="card-body">
 
+<table class="table table-hover align-middle">
 
-<table class="table table-striped">
-
-
-<thead>
+<thead class="table-dark">
 
 <tr>
 
@@ -249,161 +144,78 @@ Risk Level
 
 </thead>
 
-
-
 <tbody>
-
-
 
 {% for case in stats.cases %}
 
-
-
 <tr>
-
-
 
 <td>
 
-<a href="/case/{{case.case_id}}" 
-class="btn btn-sm btn-outline-primary">
+<a
+href="{{ url_for('case_view', case_id=case.case_id) }}"
+class="btn btn-outline-primary btn-sm">
 
-{{case.case_id}}
+{{ case.case_id }}
 
 </a>
 
 </td>
 
-
-
-<td>
-
-{{case.title}}
-
-</td>
-
-
-
+<td>{{ case.title }}</td>
 
 <td>
 
+{% if case.severity=="CRITICAL" %}
+<span class="badge bg-danger">{{ case.severity }}</span>
 
-{% if case.severity == "CRITICAL" %}
+{% elif case.severity=="HIGH" %}
+<span class="badge bg-warning text-dark">{{ case.severity }}</span>
 
-<span class="badge bg-danger">
-
-{{case.severity}}
-
-</span>
-
-
-
-{% elif case.severity == "HIGH" %}
-
-
-<span class="badge bg-warning text-dark">
-
-{{case.severity}}
-
-</span>
-
-
+{% elif case.severity=="MEDIUM" %}
+<span class="badge bg-info">{{ case.severity }}</span>
 
 {% else %}
-
-
-<span class="badge bg-info">
-
-{{case.severity}}
-
-</span>
-
-
+<span class="badge bg-secondary">{{ case.severity }}</span>
 {% endif %}
 
-
-
 </td>
 
+<td>{{ case.status }}</td>
 
-
-
-<td>
-
-{{case.status}}
-
-</td>
-
-
-
-
-<td>
-
-{{case.created}}
-
-</td>
-
-
+<td>{{ case.created }}</td>
 
 </tr>
 
-
-
 {% endfor %}
-
-
 
 </tbody>
 
-
 </table>
 
+</div>
 
 </div>
 
-
 </div>
-
-
 
 {% endblock %}
 
-
-
-
 {% block scripts %}
-
 
 <script>
 
-const severityLabels =
-{{ severity_labels|tojson }};
+const severityLabels={{ severity_labels|tojson }};
+const severityValues={{ severity_values|tojson }};
 
-const severityValues =
-{{ severity_values|tojson }};
+const threatLabels={{ threat_labels|tojson }};
+const threatValues={{ threat_values|tojson }};
 
-
-
-const threatLabels =
-{{ threat_labels|tojson }};
-
-const threatValues =
-{{ threat_values|tojson }};
-
-
-
-const timelineLabels =
-{{ timeline_labels|tojson }};
-
-const timelineValues =
-{{ timeline_values|tojson }};
-
+const timelineLabels={{ timeline_labels|tojson }};
+const timelineValues={{ timeline_values|tojson }};
 
 </script>
 
-
-
 <script src="{{ url_for('static', filename='js/charts.js') }}"></script>
-
 
 {% endblock %}

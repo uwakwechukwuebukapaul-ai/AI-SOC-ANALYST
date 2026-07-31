@@ -1,355 +1,243 @@
 {% extends "base.html" %}
 
-
 {% block content %}
-
 
 <div class="container mt-4">
 
+<a href="/" class="btn btn-secondary mb-3">
+⬅ Back to Dashboard
+</a>
 
-<h1>
-🤖 AI SOC Investigation Report
-</h1>
-
-
-<hr>
-
-
-<div class="card mb-3">
+<div class="card shadow mb-4">
+<div class="card-header bg-dark text-white">
+<h3>🤖 AI SOC Investigation Report</h3>
+</div>
 
 <div class="card-body">
 
+<h4>{{ report.threat }}</h4>
 
-<h3>
-Incident #{{ report.id }}
-</h3>
-
-
-<h4>
-Threat:
-{{ report.threat }}
-</h4>
-
+<p><strong>Incident ID:</strong> {{ report.id }}</p>
 
 <p>
 <strong>Severity:</strong>
 
-<span class="badge bg-danger">
-
-{{ report.severity }}
-
-</span>
-
+{% if report.severity == "CRITICAL" %}
+<span class="badge bg-danger">{{ report.severity }}</span>
+{% elif report.severity == "HIGH" %}
+<span class="badge bg-warning text-dark">{{ report.severity }}</span>
+{% elif report.severity == "MEDIUM" %}
+<span class="badge bg-primary">{{ report.severity }}</span>
+{% else %}
+<span class="badge bg-secondary">{{ report.severity }}</span>
+{% endif %}
 </p>
 
+<p><strong>Status:</strong> {{ report.status }}</p>
 
+<p><strong>MITRE ATT&CK:</strong> {{ report.mitre }}</p>
 
-<p>
-<strong>Status:</strong>
-
-{{ report.status }}
-
-</p>
-
-
-
-<p>
-<strong>Risk Score:</strong>
-
-{{ report.risk_score }}
-
-</p>
-
-
-
-<p>
-<strong>MITRE ATT&CK:</strong>
-
-{{ report.mitre }}
-
-</p>
-
-
+<p><strong>Risk Score:</strong> {{ report.risk_score }}</p>
 
 </div>
-
 </div>
 
+<div class="card mb-4">
+<div class="card-header bg-info text-white">
+🧠 AI Analysis
+</div>
 
+<div class="card-body">
+{{ report.analysis }}
+</div>
+</div>
 
-
-
-<div class="row">
-
-
-<div class="col-md-6">
-
-
-<div class="card mb-3">
-
-
+<div class="card mb-4">
 <div class="card-header">
-🕒 Incident Timeline
+🕒 Timeline
 </div>
-
 
 <div class="card-body">
 
+<table class="table table-bordered">
 
-{% if report.timeline %}
+<thead>
+<tr>
+<th>Event</th>
+<th>Description</th>
+<th>Actor</th>
+<th>Time</th>
+</tr>
+</thead>
 
-<ul>
+<tbody>
 
 {% for item in report.timeline %}
 
-<li>
-{{ item }}
-</li>
+<tr>
+<td>{{ item.event_type }}</td>
+<td>{{ item.description }}</td>
+<td>{{ item.actor }}</td>
+<td>{{ item.created }}</td>
+</tr>
 
 {% endfor %}
 
-</ul>
+</tbody>
 
-
-{% else %}
-
-<p>
-No timeline events recorded
-</p>
-
-{% endif %}
-
+</table>
 
 </div>
-
-
 </div>
 
-
-</div>
-
-
-
-
-
-<div class="col-md-6">
-
-
-<div class="card mb-3">
-
-
+<div class="card mb-4">
 <div class="card-header">
-🔎 Evidence Collected
+🔎 Evidence
 </div>
-
 
 <div class="card-body">
 
+<table class="table table-striped">
 
-{% if report.evidence %}
+<thead>
+<tr>
+<th>Type</th>
+<th>Evidence</th>
+<th>SHA256</th>
+<th>Created</th>
+</tr>
+</thead>
 
-
-<ul>
+<tbody>
 
 {% for item in report.evidence %}
 
-<li>
-{{ item }}
-</li>
+<tr>
+
+<td>{{ item.type }}</td>
+
+<td>{{ item.data }}</td>
+
+<td><code>{{ item.sha256 }}</code></td>
+
+<td>{{ item.created }}</td>
+
+</tr>
 
 {% endfor %}
 
-</ul>
+</tbody>
 
-
-{% else %}
-
-<p>
-No evidence collected yet
-</p>
-
-{% endif %}
-
+</table>
 
 </div>
 
-
 </div>
 
-
-</div>
-
-
-</div>
-
-
-
-
-
-
-<div class="card mb-3">
-
+<div class="card mb-4">
 
 <div class="card-header">
-🧬 Indicators Of Compromise
-</div>
 
+🧬 Indicators of Compromise
+
+</div>
 
 <div class="card-body">
 
+<table class="table table-hover">
 
-{% if report.iocs %}
+<thead>
 
+<tr>
 
-<ul>
+<th>Type</th>
+<th>Value</th>
+<th>Created</th>
 
-{% for ioc in report.iocs %}
+</tr>
 
-<li>
+</thead>
 
-{{ ioc }}
+<tbody>
 
-</li>
+{% for item in report.iocs %}
+
+<tr>
+
+<td>{{ item.type }}</td>
+
+<td>{{ item.value }}</td>
+
+<td>{{ item.created }}</td>
+
+</tr>
 
 {% endfor %}
 
+</tbody>
 
-</ul>
-
-
-{% else %}
-
-<p>
-No IOC records available
-</p>
-
-{% endif %}
-
-
+</table>
 
 </div>
 
-
 </div>
 
-
-
-
-
-
-
-<div class="card mb-3">
-
+<div class="card mb-4">
 
 <div class="card-header">
-🤖 AI Analysis
-</div>
 
+👤 Analyst Notes
+
+</div>
 
 <div class="card-body">
 
+{% for note in report.notes %}
 
-{{ report.analysis }}
+<div class="alert alert-secondary">
 
+<strong>{{ note.created }}</strong>
+
+<hr>
+
+{{ note.note }}
 
 </div>
 
+{% endfor %}
 
 </div>
 
+</div>
 
-
-
-
-
-
-
-<div class="card mb-3">
-
+<div class="card mb-4">
 
 <div class="card-header">
+
 ⚡ Response Actions
-</div>
 
+</div>
 
 <div class="card-body">
 
-
-<h5>
-{{ report.response_status }}
-</h5>
-
-
-<ul>
-
+<ul class="list-group">
 
 {% for action in report.actions %}
 
-<li>
-{{ action }}
+<li class="list-group-item">
+
+✅ {{ action }}
+
 </li>
 
 {% endfor %}
 
-
 </ul>
 
+</div>
 
 </div>
 
-
 </div>
-
-
-
-
-
-
-
-<div class="card mb-3">
-
-
-<div class="card-header">
-👤 Analyst Review
-</div>
-
-
-<div class="card-body">
-
-
-<p>
-<strong>Assigned Analyst:</strong>
-{{ report.analyst }}
-</p>
-
-
-<p>
-<strong>Notes:</strong>
-{{ report.notes }}
-</p>
-
-
-
-</div>
-
-
-</div>
-
-
-
-
-
-
-
-<a href="/" class="btn btn-primary">
-
-⬅ Back to Dashboard
-
-</a>
-
-
-
-</div>
-
 
 {% endblock %}
