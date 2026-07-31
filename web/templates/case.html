@@ -17,7 +17,6 @@
     📌 Case Information
 </div>
 
-
 <div class="card-body">
 
 <p><strong>Case ID:</strong> {{ case.case_id }}</p>
@@ -35,13 +34,38 @@
 </p>
 
 
-<p><strong>Status:</strong> {{ case.status }}</p>
+<p>
+<strong>Status:</strong>
 
-<p><strong>Analyst:</strong> {{ case.analyst or "Unassigned" }}</p>
+<span class="badge bg-warning">
+{{ case.status }}
+</span>
 
-<p><strong>Created:</strong> {{ case.created }}</p>
+</p>
 
-<p><strong>Description:</strong> {{ case.description }}</p>
+
+<p>
+<strong>Analyst:</strong>
+
+{{ case.analyst or "Unassigned" }}
+
+</p>
+
+
+<p>
+<strong>Created:</strong>
+
+{{ case.created }}
+
+</p>
+
+
+<p>
+<strong>Description:</strong>
+
+{{ case.description }}
+
+</p>
 
 
 </div>
@@ -53,14 +77,181 @@
 
 
 <!-- ==============================
-     AI SUMMARY
+     SOC ANALYST CONTROL PANEL
 ================================ -->
+
 
 <div class="card mb-4">
 
+
 <div class="card-header">
-    🤖 AI Investigation Summary
+
+🧑‍💻 SOC Analyst Control Panel
+
 </div>
+
+
+
+<div class="card-body">
+
+
+
+<!-- ASSIGN ANALYST -->
+
+<h5>
+Assign Analyst
+</h5>
+
+
+<form method="POST"
+action="/case/{{ case.case_id }}/assign">
+
+
+<div class="input-group mb-3">
+
+
+<input
+type="text"
+class="form-control"
+name="analyst"
+placeholder="Enter analyst name"
+>
+
+
+<button
+class="btn btn-primary"
+type="submit">
+
+Assign
+
+</button>
+
+
+</div>
+
+
+</form>
+
+
+
+
+
+
+<!-- UPDATE STATUS -->
+
+
+<h5>
+Update Status
+</h5>
+
+
+<form method="POST"
+action="/case/{{ case.case_id }}/status">
+
+
+<select
+class="form-select mb-3"
+name="status">
+
+
+<option>
+OPEN
+</option>
+
+
+<option>
+INVESTIGATING
+</option>
+
+
+<option>
+CONTAINED
+</option>
+
+
+<option>
+CLOSED
+</option>
+
+
+</select>
+
+
+
+<button
+class="btn btn-warning"
+type="submit">
+
+Update Status
+
+</button>
+
+
+</form>
+
+
+
+
+
+
+
+<!-- ADD NOTE -->
+
+
+<h5>
+Add Investigation Note
+</h5>
+
+
+<form method="POST"
+action="/case/{{ case.case_id }}/note">
+
+
+<textarea
+class="form-control mb-3"
+name="note"
+rows="3"
+placeholder="Enter analyst note">
+</textarea>
+
+
+
+<button
+class="btn btn-success"
+type="submit">
+
+Save Note
+
+</button>
+
+
+</form>
+
+
+
+</div>
+
+</div>
+
+
+
+
+
+
+<!-- ==============================
+     AI SUMMARY
+================================ -->
+
+
+<div class="card mb-4">
+
+
+<div class="card-header">
+
+🤖 AI Investigation Summary
+
+</div>
+
 
 
 <div class="card-body">
@@ -75,27 +266,40 @@
 
 
 <p>
-<strong>Evidence Items:</strong>
+<strong>
+Evidence Items:
+</strong>
+
 {{ summary.evidence_count }}
+
 </p>
+
 
 
 <p>
-<strong>Timeline Events:</strong>
+<strong>
+Timeline Events:
+</strong>
+
 {{ summary.timeline_count }}
+
 </p>
 
 
+
 {% else %}
+
 
 <p>
 No AI summary available.
 </p>
 
+
 {% endif %}
 
 
 </div>
+
 
 </div>
 
@@ -113,7 +317,9 @@ No AI summary available.
 
 
 <div class="card-header">
-    🛡️ Threat Intelligence
+
+🛡️ Threat Intelligence
+
 </div>
 
 
@@ -121,39 +327,36 @@ No AI summary available.
 <div class="card-body">
 
 
+
 {% if threat %}
 
 
 <p>
-<strong>Threat Type:</strong>
+<strong>
+Threat Type:
+</strong>
 
-{{ threat.get('threat') 
-or threat.get('threat_type')
+{{ threat.get('threat_type')
+or threat.get('classification')
 or "Unknown" }}
 
 </p>
 
 
 
-<p>
-<strong>Confidence:</strong>
 
-{{ threat.get('confidence','0') }}
+<p>
+<strong>
+Confidence:
+</strong>
+
+{{ threat.get('confidence',"0%") }}
 
 </p>
 
-
-
-{% else %}
-
-
-<p>
-No threat classification available.
-</p>
 
 
 {% endif %}
-
 
 
 
@@ -181,16 +384,17 @@ AI Confidence:
 
 {{ confidence.get('confidence_score')
 or confidence.get('confidence')
-or "0" }}
+or "0" }}%
 
 </p>
-
 
 
 {% endif %}
 
 
+
 </div>
+
 
 </div>
 
@@ -209,8 +413,11 @@ or "0" }}
 
 
 <div class="card-header">
-    📂 Evidence
+
+📂 Evidence
+
 </div>
+
 
 
 <div class="card-body">
@@ -235,7 +442,6 @@ or "0" }}
 
 {{ item.data }}
 
-
 </li>
 
 
@@ -245,14 +451,12 @@ or "0" }}
 </ul>
 
 
-
 {% else %}
 
 
 <p>
 No evidence found.
 </p>
-
 
 
 {% endif %}
@@ -279,15 +483,14 @@ No evidence found.
 
 
 <div class="card-header">
-    🕒 Investigation Timeline
+
+🕒 Investigation Timeline
+
 </div>
 
 
 
 <div class="card-body">
-
-
-{% if timeline %}
 
 
 {% for event in timeline %}
@@ -322,13 +525,7 @@ Actor:
 </small>
 
 
-
 </div>
-
-
-
-{% endfor %}
-
 
 
 {% else %}
@@ -339,8 +536,8 @@ No timeline events.
 </p>
 
 
+{% endfor %}
 
-{% endif %}
 
 
 </div>
@@ -394,14 +591,12 @@ No timeline events.
 </ol>
 
 
-
 {% else %}
 
 
 <p>
 No recommendations available.
 </p>
-
 
 
 {% endif %}
@@ -438,19 +633,12 @@ No recommendations available.
 <div class="card-body">
 
 
-{% if notes %}
-
-
 {% for note in notes %}
 
 
 <p>
 {{ note.note }}
 </p>
-
-
-{% endfor %}
-
 
 
 {% else %}
@@ -461,14 +649,15 @@ No notes.
 </p>
 
 
+{% endfor %}
 
-{% endif %}
+
+
+</div>
 
 
 </div>
 
-
-</div>
 
 
 
@@ -479,6 +668,7 @@ No notes.
 ⬅ Back to Dashboard
 
 </a>
+
 
 
 {% endblock %}
