@@ -7,9 +7,6 @@ from database.connection import database
 
 
 def create_tables():
-    """
-    Create all Sentinel DNA database tables.
-    """
 
     with database.session() as conn:
 
@@ -59,7 +56,7 @@ def create_tables():
             created TEXT NOT NULL,
 
             FOREIGN KEY(case_id)
-                REFERENCES cases(case_id)
+            REFERENCES cases(case_id)
 
         )
         """)
@@ -79,12 +76,12 @@ def create_tables():
 
             data TEXT NOT NULL,
 
-            sha256 TEXT NOT NULL,
+            sha256 TEXT DEFAULT '',
 
             created TEXT NOT NULL,
 
             FOREIGN KEY(case_id)
-                REFERENCES cases(case_id)
+            REFERENCES cases(case_id)
 
         )
         """)
@@ -109,16 +106,40 @@ def create_tables():
             created TEXT NOT NULL,
 
             FOREIGN KEY(case_id)
-                REFERENCES cases(case_id)
+            REFERENCES cases(case_id)
+
+        )
+        """)
+
+        # =====================================
+        # IOCS
+        # =====================================
+
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS iocs (
+
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+            ioc_id TEXT UNIQUE NOT NULL,
+
+            case_id TEXT NOT NULL,
+
+            ioc_type TEXT NOT NULL,
+
+            value TEXT NOT NULL,
+
+            confidence TEXT DEFAULT 'MEDIUM',
+
+            reputation TEXT DEFAULT 'UNKNOWN',
+
+            source TEXT DEFAULT 'LOCAL',
+
+            created TEXT NOT NULL,
+
+            FOREIGN KEY(case_id)
+            REFERENCES cases(case_id)
 
         )
         """)
 
     return True
-
-
-if __name__ == "__main__":
-
-    create_tables()
-
-    print("✅ Sentinel DNA database tables created successfully.")
