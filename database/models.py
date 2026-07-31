@@ -1,16 +1,126 @@
 """
 Sentinel DNA
 Database Models
+
+Responsible for:
+- Database schema creation
+- Core data models
+- Incident representation
 """
+
+from datetime import datetime
 
 from database.connection import database
 
+
+
+# =====================================
+# INCIDENT MODEL
+# =====================================
+
+class Incident:
+
+    def __init__(
+            self,
+            incident_id,
+            title,
+            severity,
+            threat=None,
+            description="",
+            status="OPEN",
+            risk_score=0,
+            **kwargs
+    ):
+
+        self.incident_id = incident_id
+
+        self.title = title
+
+        self.severity = severity
+
+        self.threat = threat
+
+        self.description = description
+
+        self.status = status
+
+        self.risk_score = risk_score
+
+        self.created = datetime.now().isoformat()
+
+
+        # Future SOC fields support
+        for key, value in kwargs.items():
+
+            setattr(self, key, value)
+
+
+
+    def to_dict(self):
+
+        data = {
+
+            "incident_id": self.incident_id,
+
+            "title": self.title,
+
+            "severity": self.severity,
+
+            "threat": self.threat,
+
+            "description": self.description,
+
+            "status": self.status,
+
+            "risk_score": self.risk_score,
+
+            "created": self.created
+
+        }
+
+
+        # Include additional fields
+
+        for key, value in self.__dict__.items():
+
+            if key not in data:
+
+                data[key] = value
+
+
+        return data
+
+
+
+    def __repr__(self):
+
+        return (
+
+            f"<Incident "
+
+            f"{self.incident_id} | "
+
+            f"{self.severity} | "
+
+            f"Risk:{self.risk_score}>"
+
+        )
+
+
+
+
+
+# =====================================
+# DATABASE TABLE CREATION
+# =====================================
 
 def create_tables():
 
     with database.session() as conn:
 
         cursor = conn.cursor()
+
+
 
         # =====================================
         # CASES
@@ -38,6 +148,8 @@ def create_tables():
         )
         """)
 
+
+
         # =====================================
         # CASE NOTES
         # =====================================
@@ -60,6 +172,8 @@ def create_tables():
 
         )
         """)
+
+
 
         # =====================================
         # EVIDENCE
@@ -86,6 +200,8 @@ def create_tables():
         )
         """)
 
+
+
         # =====================================
         # TIMELINE
         # =====================================
@@ -110,6 +226,8 @@ def create_tables():
 
         )
         """)
+
+
 
         # =====================================
         # IOCS
@@ -142,4 +260,80 @@ def create_tables():
         )
         """)
 
+
+
+        # =====================================
+        # INCIDENTS
+        # =====================================
+
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS incidents (
+
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+            incident_id TEXT UNIQUE NOT NULL,
+
+            title TEXT NOT NULL,
+
+            severity TEXT NOT NULL,
+
+            threat TEXT DEFAULT '',
+
+            description TEXT DEFAULT '',
+
+            risk_score INTEGER DEFAULT 0,
+
+            status TEXT DEFAULT 'OPEN',
+
+            created TEXT NOT NULL
+
+        )
+        """)
+
+
+
     return True
+
+
+
+
+
+# =====================================
+# DIRECT TEST
+# =====================================
+
+if __name__ == "__main__":
+
+
+    print(
+        "🧬 SENTINEL DNA DATABASE MODELS"
+    )
+
+    print("=" * 50)
+
+
+
+    create_tables()
+
+
+
+    incident = Incident(
+
+        incident_id="INC-TEST001",
+
+        title="Phishing Attack",
+
+        severity="HIGH",
+
+        threat="Credential Theft",
+
+        description="Credential harvesting attempt detected",
+
+        risk_score=95
+
+    )
+
+
+    print(
+        incident.to_dict()
+    )

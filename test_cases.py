@@ -1,22 +1,44 @@
-from cases.case_manager import case_manager
+"""
+Sentinel DNA
+
+Case Management Test
+
+Tests:
+- Case creation
+- Evidence attachment
+- Timeline events
+"""
+
+
+from cases.case_manager import create_investigation
 
 from cases.evidence import add_evidence
 
-from cases.timeline import add_event
+from cases.timeline import add_timeline_event
 
 
 
-case = case_manager.create_case(
 
-    "Phishing Attack Investigation",
+# =====================================
+# CREATE INVESTIGATION
+# =====================================
 
-    "HIGH",
+case = create_investigation(
 
-    "Suspicious email campaign detected"
+    title="Phishing Attack Investigation",
+
+    severity="HIGH",
+
+    description="Suspicious email campaign detected"
 
 )
 
 
+
+
+# =====================================
+# ADD EVIDENCE
+# =====================================
 
 add_evidence(
 
@@ -30,21 +52,35 @@ add_evidence(
 
 
 
-add_event(
 
-    case,
+# =====================================
+# ADD TIMELINE EVENT
+# =====================================
 
-    "Email analyzed by evidence engine"
+add_timeline_event(
+
+    case["case_id"],
+
+    "ANALYSIS",
+
+    "Email analyzed by evidence engine",
+
+    "AI ENGINE"
 
 )
 
 
 
-print("="*50)
 
-print("SENTINEL DNA CASE")
+# =====================================
+# OUTPUT RESULT
+# =====================================
 
-print("="*50)
+print("=" * 50)
+
+print("🧬 SENTINEL DNA CASE")
+
+print("=" * 50)
 
 
 print(case)

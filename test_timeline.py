@@ -1,46 +1,72 @@
-from cases.timeline import add_timeline_event, get_timeline
+from cases.timeline import (
+    add_timeline_event,
+    get_timeline
+)
+
+from database.repository import create_case
 
 
-case = {
 
-    "case_id":
-        "INC-20260731-TEST"
-
+TEST_CASE = {
+    "case_id": "INC-20260731-TEST01",
+    "title": "Timeline Test Case",
+    "severity": "HIGH",
+    "description": "Testing timeline engine"
 }
 
 
 
-add_timeline_event(
+# Create parent case first
 
-    case,
+try:
 
-    "INVESTIGATION",
+    create_case(TEST_CASE)
 
-    "Analyst started investigation",
+except Exception:
 
-    "SOC ANALYST"
+    pass
+
+
+
+# Add timeline event
+
+event = add_timeline_event(
+
+    TEST_CASE["case_id"],
+
+    "ALERT",
+
+    "Suspicious phishing email detected",
+
+    "AI ENGINE"
 
 )
 
 
 
-add_timeline_event(
+print("=" * 50)
 
-    case,
+print("SENTINEL DNA TIMELINE TEST")
 
-    "CONTAINMENT",
+print("=" * 50)
 
-    "Suspicious URL blocked"
+
+print(event)
+
+
+
+timeline = get_timeline(
+
+    TEST_CASE["case_id"]
 
 )
 
 
+print("\nTIMELINE RECORDS")
 
-print("🧬 TIMELINE TEST")
-
-print("="*40)
+print("=" * 50)
 
 
-for item in get_timeline(case):
+for item in timeline:
 
     print(item)
