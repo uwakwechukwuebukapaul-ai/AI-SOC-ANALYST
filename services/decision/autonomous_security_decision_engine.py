@@ -1,128 +1,170 @@
 """
-Sentinel DNA
 Autonomous Security Decision Engine
 
-Purpose:
-Transforms security intelligence into autonomous SOC decisions.
+Sentinel DNA Decision Intelligence Layer
 
-Flow:
-
-Detection
-    ↓
-Reasoning
-    ↓
-Decision Engine
-    ↓
-Response Recommendation
+Responsibilities:
+- convert intelligence into security decisions
+- prioritize incidents
+- select response actions
+- determine escalation requirements
+- maintain decision history
 """
 
-
-from datetime import datetime
+from datetime import datetime, timezone
+import uuid
 
 
 class AutonomousSecurityDecisionEngine:
-    """
-    Autonomous decision-making layer for Sentinel DNA.
-    """
 
     def __init__(self):
         self.decisions = []
+        self.history = []
 
-    def evaluate_threat(self, threat_data):
-        """
-        Analyze threat information and generate security decisions.
-        """
+    def create_decision(
+        self,
+        incident_type,
+        risk_score,
+        confidence=0.85
+    ):
 
-        risk_score = threat_data.get("risk_score", 0)
-        threat_type = threat_data.get("threat_type", "unknown")
-        asset = threat_data.get("asset", "unknown")
-
-        if risk_score >= 90:
-            severity = "critical"
-            action = [
-                "isolate_asset",
-                "disable_compromised_account",
-                "create_incident",
-                "notify_security_team"
-            ]
-
-        elif risk_score >= 60:
-            severity = "high"
-            action = [
-                "create_incident",
-                "collect_more_evidence",
-                "notify_analyst"
-            ]
-
-        elif risk_score >= 30:
-            severity = "medium"
-            action = [
-                "monitor_activity",
-                "increase_logging"
-            ]
-
-        else:
-            severity = "low"
-            action = [
-                "continue_monitoring"
-            ]
+        decision_id = (
+            f"DEC-{uuid.uuid4().hex[:8].upper()}"
+        )
 
         decision = {
-            "threat_type": threat_type,
-            "asset": asset,
+            "id": decision_id,
+            "incident_type": incident_type,
             "risk_score": risk_score,
-            "severity": severity,
-            "recommended_actions": action,
-            "created_at": datetime.utcnow().isoformat()
+            "confidence": confidence,
+            "created_at": datetime.now(
+                timezone.utc
+            ).isoformat()
         }
 
         self.decisions.append(decision)
+        self.history.append(decision)
 
         return decision
 
+    def evaluate_risk_decision(
+        self,
+        risk_score
+    ):
 
-    def generate_response_priority(self, decision):
-        """
-        Assign response priority.
-        """
+        if risk_score >= 90:
+            action = "automatic_containment"
+            priority = "critical"
 
-        severity = decision.get("severity")
+        elif risk_score >= 70:
+            action = "incident_response"
+            priority = "high"
 
-        priorities = {
-            "critical": "immediate",
-            "high": "urgent",
-            "medium": "scheduled",
-            "low": "monitor"
+        elif risk_score >= 40:
+            action = "investigation_required"
+            priority = "medium"
+
+        else:
+            action = "monitor"
+            priority = "low"
+
+        result = {
+            "risk_score": risk_score,
+            "priority": priority,
+            "recommended_action": action
         }
 
-        return priorities.get(
-            severity,
-            "monitor"
+        self.history.append(result)
+
+        return result
+
+    def determine_incident_priority(
+        self,
+        impact,
+        likelihood
+    ):
+
+        score = (
+            impact * likelihood
         )
 
+        if score >= 80:
+            priority = "critical"
 
-    def should_auto_respond(self, decision):
-        """
-        Determine whether automated response is allowed.
-        """
+        elif score >= 50:
+            priority = "high"
 
-        return decision.get("severity") in [
-            "critical",
-            "high"
-        ]
+        elif score >= 25:
+            priority = "medium"
 
+        else:
+            priority = "low"
 
-    def get_decision_history(self):
-        """
-        Return all previous decisions.
-        """
+        result = {
+            "impact": impact,
+            "likelihood": likelihood,
+            "priority": priority
+        }
 
-        return self.decisions
+        self.history.append(result)
 
+        return result
 
-    def clear_history(self):
-        """
-        Clear stored decisions.
-        """
+    def select_response_action(
+        self,
+        threat_type
+    ):
 
-        self.decisions.clear()
+        actions = {
+
+            "malware":
+                "isolate_endpoint",
+
+            "credential_compromise":
+                "reset_credentials",
+
+            "data_exfiltration":
+                "block_network_access",
+
+            "phishing":
+                "quarantine_email"
+        }
+
+        result = {
+            "threat_type": threat_type,
+            "action":
+                actions.get(
+                    threat_type,
+                    "monitor_activity"
+                )
+        }
+
+        self.history.append(result)
+
+        return result
+
+    def requires_human_approval(
+        self,
+        action,
+        confidence
+    ):
+
+        requires_approval = (
+            action == "automatic_containment"
+            and confidence < 0.95
+        )
+
+        result = {
+            "action": action,
+            "confidence": confidence,
+            "human_approval_required":
+                requires_approval
+        }
+
+        self.history.append(result)
+
+        return result
+
+    def get_history(self):
+
+        return self.history

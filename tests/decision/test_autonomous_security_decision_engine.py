@@ -3,83 +3,85 @@ from services.decision.autonomous_security_decision_engine import (
 )
 
 
-def test_high_risk_decision():
+def test_create_decision():
 
     engine = AutonomousSecurityDecisionEngine()
 
-    result = engine.evaluate_threat({
-        "risk_score": 95,
-        "threat_type": "credential_theft",
-        "asset": "finance-laptop"
-    })
+    decision = engine.create_decision(
+        "malware",
+        95
+    )
 
-    assert result["severity"] == "critical"
-
+    assert decision["incident_type"] == "malware"
 
 
-def test_medium_risk_decision():
+def test_risk_based_decision():
 
     engine = AutonomousSecurityDecisionEngine()
 
-    result = engine.evaluate_threat({
-        "risk_score": 50,
-        "threat_type": "suspicious_activity"
-    })
+    result = engine.evaluate_risk_decision(
+        95
+    )
 
-    assert result["severity"] == "medium"
-
-
-
-def test_low_risk_decision():
-
-    engine = AutonomousSecurityDecisionEngine()
-
-    result = engine.evaluate_threat({
-        "risk_score": 10,
-        "threat_type": "unknown"
-    })
-
-    assert result["severity"] == "low"
+    assert result["priority"] == "critical"
+    assert (
+        result["recommended_action"]
+        ==
+        "automatic_containment"
+    )
 
 
-
-def test_response_priority():
+def test_incident_priority():
 
     engine = AutonomousSecurityDecisionEngine()
 
-    decision = engine.evaluate_threat({
-        "risk_score": 98,
-        "threat_type": "malware"
-    })
+    result = engine.determine_incident_priority(
+        10,
+        9
+    )
 
-    priority = engine.generate_response_priority(decision)
-
-    assert priority == "immediate"
+    assert result["priority"] == "critical"
 
 
-
-def test_auto_response_detection():
+def test_response_action_selection():
 
     engine = AutonomousSecurityDecisionEngine()
 
-    decision = engine.evaluate_threat({
-        "risk_score": 92,
-        "threat_type": "ransomware"
-    })
+    result = engine.select_response_action(
+        "malware"
+    )
 
-    assert engine.should_auto_respond(decision)
+    assert (
+        result["action"]
+        ==
+        "isolate_endpoint"
+    )
 
+
+def test_human_approval_requirement():
+
+    engine = AutonomousSecurityDecisionEngine()
+
+    result = engine.requires_human_approval(
+        "automatic_containment",
+        0.80
+    )
+
+    assert (
+        result["human_approval_required"]
+        is True
+    )
 
 
 def test_decision_history():
 
     engine = AutonomousSecurityDecisionEngine()
 
-    engine.evaluate_threat({
-        "risk_score": 80,
-        "threat_type": "phishing"
-    })
+    engine.create_decision(
+        "phishing",
+        60
+    )
 
-    history = engine.get_decision_history()
+    history = engine.get_history()
 
     assert len(history) == 1
