@@ -1,78 +1,82 @@
 from services.detection.autonomous_detection_engineering_engine import (
-    AutonomousDetectionEngineeringEngine
+    AutonomousDetectionEngineeringEngine,
 )
 
 
-def test_generate_detection_rule():
-
+def test_register_detection_rule():
     engine = AutonomousDetectionEngineeringEngine()
 
-    result = engine.generate_detection_rule(
-        "credential_dumping"
+    result = engine.register_detection_rule(
+        "DET-001",
+        "Suspicious PowerShell Execution",
+        "high",
+        "T1059.001",
     )
 
-    assert result["status"] == "generated"
-    assert result["severity"] == "high"
+    assert result["rule_id"] == "DET-001"
+    assert result["status"] == "active"
 
 
-def test_attack_mapping():
-
+def test_analyze_detection_rule():
     engine = AutonomousDetectionEngineeringEngine()
 
-    result = engine.map_attack_technique(
-        "phishing"
+    engine.register_detection_rule(
+        "DET-001",
+        "Malware Execution",
+        "critical",
+        "T1204",
     )
 
-    assert result["technique"] == "T1566"
+    result = engine.analyze_detection_rule("DET-001")
+
+    assert result["quality_score"] == 90
+    assert result["coverage"] == "high"
 
 
-def test_sigma_generation():
-
+def test_detection_gap_analysis():
     engine = AutonomousDetectionEngineeringEngine()
 
-    result = engine.generate_sigma_rule(
+    result = engine.identify_detection_gap(
+        "enterprise_network"
+    )
+
+    assert result["priority"] == "high"
+    assert "credential_access" in result["missing_coverage"]
+
+
+def test_optimize_detection_rule():
+    engine = AutonomousDetectionEngineeringEngine()
+
+    result = engine.optimize_detection_rule(
+        "DET-001"
+    )
+
+    assert result["confidence"] > 0.9
+    assert "reduce false positives" in result["improvements"]
+
+
+def test_generate_detection_strategy():
+    engine = AutonomousDetectionEngineeringEngine()
+
+    result = engine.generate_detection_strategy(
         "ransomware"
     )
 
-    assert result["status"] == "experimental"
-    assert "detection" in result
+    assert result["threat_type"] == "ransomware"
+    assert result["confidence"] > 0.9
 
 
-def test_detection_quality():
-
+def test_detection_history():
     engine = AutonomousDetectionEngineeringEngine()
 
-    rule = engine.generate_detection_rule(
-        "ransomware"
+    engine.register_detection_rule(
+        "DET-001",
+        "Test Rule",
+        "medium",
+        "T1059",
     )
 
-    result = engine.evaluate_detection_quality(
-        rule
-    )
+    history = engine.get_history()
 
-    assert result["quality_score"] >= 80
-
-
-def test_rule_history():
-
-    engine = AutonomousDetectionEngineeringEngine()
-
-    engine.generate_detection_rule(
-        "phishing"
-    )
-
-    assert len(engine.get_history()) == 1
-
-
-def test_clear_history():
-
-    engine = AutonomousDetectionEngineeringEngine()
-
-    engine.generate_detection_rule(
-        "malware"
-    )
-
-    result = engine.clear_history()
-
-    assert result["status"] == "cleared"
-    assert len(engine.get_history()) == 0
+    assert len(history) == 1
+    assert history[0]["action"] == "register_rule"
