@@ -1,130 +1,148 @@
 """
 Autonomous Security Governance Engine
 
-Sentinel DNA Governance Intelligence Layer
-
-Responsibilities:
-- define security policies
-- validate autonomous actions
-- manage risk acceptance
-- map controls to compliance frameworks
-- enforce analyst override controls
-- maintain governance history
+Provides governance intelligence for Sentinel DNA:
+- Security policy management
+- Compliance mapping
+- Audit tracking
+- AI decision explainability
+- Governance scoring
+- Risk acceptance tracking
 """
 
-from datetime import datetime, timezone
-import uuid
+from datetime import datetime, UTC
 
 
 class AutonomousSecurityGovernanceEngine:
-
     def __init__(self):
-        self.policies = []
+        self.policies = {}
+        self.audit_records = []
+        self.compliance_controls = {}
+        self.risk_acceptances = []
         self.history = []
 
-    def create_policy(
-        self,
-        name,
-        rule,
-        severity="medium"
-    ):
-
-        policy_id = (
-            f"POL-{uuid.uuid4().hex[:8].upper()}"
-        )
-
+    def register_policy(self, policy_id, name, category, requirements):
         policy = {
-            "id": policy_id,
+            "policy_id": policy_id,
             "name": name,
-            "rule": rule,
-            "severity": severity,
-            "created_at": datetime.now(
-                timezone.utc
-            ).isoformat()
+            "category": category,
+            "requirements": requirements,
+            "created_at": datetime.now(UTC).isoformat(),
         }
 
-        self.policies.append(policy)
-        self.history.append(policy)
+        self.policies[policy_id] = policy
+        self.history.append(
+            {
+                "action": "register_policy",
+                "policy_id": policy_id,
+                "timestamp": datetime.now(UTC).isoformat(),
+            }
+        )
 
         return policy
 
-    def validate_action_policy(
-        self,
-        action,
-        risk_score
-    ):
-
-        if risk_score >= 90:
-            decision = "requires_approval"
-
-        elif action == "automatic_containment":
-            decision = "allowed_with_monitoring"
-
-        else:
-            decision = "allowed"
-
-        result = {
-            "action": action,
-            "risk_score": risk_score,
-            "decision": decision
+    def map_compliance_control(self, framework, control_id, description):
+        control = {
+            "framework": framework,
+            "control_id": control_id,
+            "description": description,
+            "mapped_at": datetime.now(UTC).isoformat(),
         }
 
-        self.history.append(result)
+        self.compliance_controls[control_id] = control
+
+        self.history.append(
+            {
+                "action": "map_compliance_control",
+                "control_id": control_id,
+                "timestamp": datetime.now(UTC).isoformat(),
+            }
+        )
+
+        return control
+
+    def analyze_governance_state(self, security_state):
+        score = 100
+
+        if security_state.get("critical_findings", 0) > 0:
+            score -= 30
+
+        if security_state.get("missing_controls", 0) > 0:
+            score -= 20
+
+        result = {
+            "governance_score": max(score, 0),
+            "risk_level": (
+                "HIGH"
+                if score < 60
+                else "MEDIUM"
+                if score < 80
+                else "LOW"
+            ),
+            "timestamp": datetime.now(UTC).isoformat(),
+        }
+
+        self.history.append(
+            {
+                "action": "analyze_governance_state",
+                "result": result,
+            }
+        )
 
         return result
 
-    def create_risk_acceptance(
+    def generate_ai_explanation(
         self,
-        risk,
+        decision,
+        reasoning,
+        confidence
+    ):
+        explanation = {
+            "decision": decision,
+            "reasoning": reasoning,
+            "confidence": confidence,
+            "generated_at": datetime.now(UTC).isoformat(),
+        }
+
+        self.audit_records.append(explanation)
+
+        return explanation
+
+    def record_risk_acceptance(
+        self,
+        risk_id,
         owner,
         justification
     ):
-
         acceptance = {
-            "risk": risk,
+            "risk_id": risk_id,
             "owner": owner,
             "justification": justification,
-            "status": "pending_review"
+            "accepted_at": datetime.now(UTC).isoformat(),
         }
 
-        self.history.append(acceptance)
+        self.risk_acceptances.append(acceptance)
+
+        self.history.append(
+            {
+                "action": "risk_acceptance",
+                "risk_id": risk_id,
+            }
+        )
 
         return acceptance
 
-    def map_compliance_control(
-        self,
-        framework,
-        control
-    ):
-
-        mapping = {
-            "framework": framework,
-            "control": control,
-            "mapped": True
+    def generate_governance_report(self):
+        report = {
+            "policies": len(self.policies),
+            "controls": len(self.compliance_controls),
+            "audit_records": len(self.audit_records),
+            "risk_acceptances": len(self.risk_acceptances),
+            "history_events": len(self.history),
+            "generated_at": datetime.now(UTC).isoformat(),
         }
 
-        self.history.append(mapping)
-
-        return mapping
-
-    def override_control(
-        self,
-        analyst,
-        action,
-        reason
-    ):
-
-        override = {
-            "analyst": analyst,
-            "action": action,
-            "reason": reason,
-            "status": "override_applied"
-        }
-
-        self.history.append(override)
-
-        return override
+        return report
 
     def get_history(self):
-
         return self.history

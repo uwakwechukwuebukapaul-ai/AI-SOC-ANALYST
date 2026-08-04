@@ -1,94 +1,78 @@
 from services.governance.autonomous_security_governance_engine import (
-    AutonomousSecurityGovernanceEngine
+    AutonomousSecurityGovernanceEngine,
 )
 
 
-def test_create_policy():
-
+def test_register_policy():
     engine = AutonomousSecurityGovernanceEngine()
 
-    policy = engine.create_policy(
-        "Critical Containment Policy",
-        "Require approval before isolation",
-        "high"
+    result = engine.register_policy(
+        "POL-001",
+        "Access Control Policy",
+        "Identity",
+        ["MFA Required"],
     )
 
-    assert (
-        policy["name"]
-        ==
-        "Critical Containment Policy"
-    )
+    assert result["policy_id"] == "POL-001"
 
 
-def test_validate_action_policy():
-
-    engine = AutonomousSecurityGovernanceEngine()
-
-    result = engine.validate_action_policy(
-        "automatic_containment",
-        95
-    )
-
-    assert (
-        result["decision"]
-        ==
-        "requires_approval"
-    )
-
-
-def test_risk_acceptance():
-
-    engine = AutonomousSecurityGovernanceEngine()
-
-    result = engine.create_risk_acceptance(
-        "legacy vulnerability",
-        "security_manager",
-        "temporary exception"
-    )
-
-    assert (
-        result["status"]
-        ==
-        "pending_review"
-    )
-
-
-def test_compliance_mapping():
-
+def test_map_compliance_control():
     engine = AutonomousSecurityGovernanceEngine()
 
     result = engine.map_compliance_control(
-        "MITRE ATT&CK",
-        "T1059"
+        "NIST",
+        "AC-2",
+        "Account Management",
     )
 
-    assert result["mapped"] is True
+    assert result["framework"] == "NIST"
 
 
-def test_override_control():
-
+def test_analyze_governance_state():
     engine = AutonomousSecurityGovernanceEngine()
 
-    result = engine.override_control(
-        "analyst01",
-        "block_ip",
-        "business exception"
+    result = engine.analyze_governance_state(
+        {
+            "critical_findings": 1,
+            "missing_controls": 2,
+        }
     )
 
-    assert (
-        result["status"]
-        ==
-        "override_applied"
+    assert "governance_score" in result
+
+
+def test_generate_ai_explanation():
+    engine = AutonomousSecurityGovernanceEngine()
+
+    result = engine.generate_ai_explanation(
+        "Block malicious IP",
+        "IOC matched threat intelligence",
+        0.95,
     )
+
+    assert result["confidence"] == 0.95
+
+
+def test_record_risk_acceptance():
+    engine = AutonomousSecurityGovernanceEngine()
+
+    result = engine.record_risk_acceptance(
+        "RISK-001",
+        "Security Officer",
+        "Business exception approved",
+    )
+
+    assert result["risk_id"] == "RISK-001"
 
 
 def test_governance_history():
-
     engine = AutonomousSecurityGovernanceEngine()
 
-    engine.create_policy(
-        "Test Policy",
-        "monitor"
+    engine.register_policy(
+        "POL-002",
+        "Logging Policy",
+        "Monitoring",
+        ["Central Logging"],
     )
 
     history = engine.get_history()
