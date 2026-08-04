@@ -1,139 +1,132 @@
 """
-Sentinel DNA
 Autonomous Security Memory Engine
 
-Responsible for storing and recalling security intelligence,
-investigation knowledge, and learned SOC patterns.
+Sentinel DNA Long-Term Security Intelligence Memory Layer
+
+Capabilities:
+- Store security memories
+- Recall previous incidents
+- Learn threat patterns
+- Store analyst feedback
+- Calculate memory confidence
+- Track memory history
 """
 
-
-from datetime import datetime
+from datetime import datetime, timezone
 import uuid
 
 
 class AutonomousSecurityMemoryEngine:
 
     def __init__(self):
+        self.memories = []
 
-        self.memory_store = []
-        self.history = []
-
-
-    def store_memory(
-        self,
-        memory_type,
-        content,
-        severity="LOW",
-        source="SOC"
-    ):
+    def store_memory(self, category, data):
 
         memory = {
-
-            "memory_id": str(uuid.uuid4()),
-
-            "type": memory_type,
-
-            "content": content,
-
-            "severity": severity,
-
-            "source": source,
-
-            "created_at": datetime.utcnow().isoformat()
-
+            "id": f"MEM-{uuid.uuid4().hex[:8].upper()}",
+            "category": category,
+            "data": data,
+            "confidence": 0.5,
+            "created_at": datetime.now(
+                timezone.utc
+            ).isoformat()
         }
 
-
-        self.memory_store.append(memory)
-
-
-        self.history.append({
-
-            "action": "STORE_MEMORY",
-
-            "memory_id": memory["memory_id"]
-
-        })
-
+        self.memories.append(memory)
 
         return memory
 
-
-
-    def recall_memory(self, keyword):
+    def retrieve_memory(self, keyword):
 
         results = []
 
+        for memory in self.memories:
 
-        for memory in self.memory_store:
-
-            content = str(
-                memory["content"]
-            ).lower()
-
-
-            if keyword.lower() in content:
+            if keyword.lower() in str(
+                memory["data"]
+            ).lower():
 
                 results.append(memory)
 
-
         return results
 
-
-
-    def learn_pattern(
+    def learn_security_pattern(
         self,
         pattern,
-        confidence
+        context
     ):
 
-        memory = {
+        memory = self.store_memory(
+            "threat_pattern",
+            {
+                "pattern": pattern,
+                "context": context
+            }
+        )
 
-            "memory_id": str(uuid.uuid4()),
-
-            "type": "THREAT_PATTERN",
-
-            "pattern": pattern,
-
-            "confidence": confidence,
-
-            "created_at": datetime.utcnow().isoformat()
-
-        }
-
-
-        self.memory_store.append(memory)
-
-
-        self.history.append({
-
-            "action": "LEARN_PATTERN",
-
-            "pattern": pattern
-
-        })
-
+        memory["confidence"] = 0.9
 
         return memory
 
+    def remember_incident(
+        self,
+        incident_type,
+        resolution
+    ):
 
+        return self.store_memory(
+            "incident",
+            {
+                "type": incident_type,
+                "resolution": resolution
+            }
+        )
 
-    def get_memory_count(self):
+    def learn_from_feedback(
+        self,
+        analyst_action,
+        outcome
+    ):
 
-        return len(self.memory_store)
+        return self.store_memory(
+            "analyst_feedback",
+            {
+                "action": analyst_action,
+                "outcome": outcome
+            }
+        )
 
+    def calculate_memory_confidence(
+        self,
+        memory_id
+    ):
 
+        for memory in self.memories:
+
+            if memory["id"] == memory_id:
+
+                return {
+                    "confidence": memory["confidence"],
+                    "level":
+                        "high"
+                        if memory["confidence"] >= 0.8
+                        else "medium"
+                }
+
+        return {
+            "confidence": 0,
+            "level": "unknown"
+        }
 
     def get_history(self):
 
-        return self.history
-
-
+        return self.memories
 
     def clear_memory(self):
 
-        self.memory_store.clear()
+        self.memories.clear()
 
-        self.history.clear()
-
-        return True
+        return {
+            "status": "cleared"
+        }

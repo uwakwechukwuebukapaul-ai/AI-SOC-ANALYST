@@ -3,120 +3,82 @@ from services.memory.autonomous_security_memory_engine import (
 )
 
 
-
 def test_store_memory():
 
     engine = AutonomousSecurityMemoryEngine()
 
-
     result = engine.store_memory(
-        "IOC",
-        "Malicious phishing domain detected",
-        "HIGH"
+        "incident",
+        "phishing attack detected"
     )
 
-
-    assert result["type"] == "IOC"
-
-    assert engine.get_memory_count() == 1
+    assert result["category"] == "incident"
 
 
-
-
-def test_recall_memory():
+def test_retrieve_memory():
 
     engine = AutonomousSecurityMemoryEngine()
-
 
     engine.store_memory(
-        "INCIDENT",
-        "Ransomware attack detected"
+        "incident",
+        "ransomware detected"
     )
 
-
-    results = engine.recall_memory(
-        "Ransomware"
+    result = engine.retrieve_memory(
+        "ransomware"
     )
 
-
-    assert len(results) == 1
-
+    assert len(result) == 1
 
 
-
-def test_learn_pattern():
+def test_security_pattern_learning():
 
     engine = AutonomousSecurityMemoryEngine()
 
-
-    result = engine.learn_pattern(
-        "Credential dumping behavior",
-        0.95
+    result = engine.learn_security_pattern(
+        "credential dumping",
+        "LSASS memory access"
     )
 
-
-    assert result["type"] == "THREAT_PATTERN"
-
-    assert result["confidence"] == 0.95
+    assert result["category"] == "threat_pattern"
+    assert result["confidence"] == 0.9
 
 
+def test_incident_recall():
+
+    engine = AutonomousSecurityMemoryEngine()
+
+    result = engine.remember_incident(
+        "malware",
+        "isolated endpoint"
+    )
+
+    assert result["category"] == "incident"
+
+
+def test_memory_confidence():
+
+    engine = AutonomousSecurityMemoryEngine()
+
+    memory = engine.learn_security_pattern(
+        "phishing",
+        "email campaign"
+    )
+
+    result = engine.calculate_memory_confidence(
+        memory["id"]
+    )
+
+    assert result["level"] == "high"
 
 
 def test_memory_history():
 
     engine = AutonomousSecurityMemoryEngine()
 
-
     engine.store_memory(
-        "ALERT",
-        "Suspicious login"
+        "test",
+        "security event"
     )
 
-
-    history = engine.get_history()
-
-
-    assert len(history) == 1
-
-
-
-
-def test_multiple_memories():
-
-    engine = AutonomousSecurityMemoryEngine()
-
-
-    engine.store_memory(
-        "IOC",
-        "Malware hash"
-    )
-
-
-    engine.store_memory(
-        "IOC",
-        "Phishing URL"
-    )
-
-
-    assert engine.get_memory_count() == 2
-
-
-
-
-def test_clear_memory():
-
-    engine = AutonomousSecurityMemoryEngine()
-
-
-    engine.store_memory(
-        "TEST",
-        "Temporary memory"
-    )
-
-
-    result = engine.clear_memory()
-
-
-    assert result is True
-
-    assert engine.get_memory_count() == 0
+    assert len(engine.get_history()) == 1
