@@ -2,39 +2,30 @@
 Sentinel DNA
 Enterprise Investigation Audit Logger
 
-Provides centralized audit logging for investigation events.
+Provides immutable audit events for investigation lifecycle tracking.
 
 Author: Sentinel DNA
 """
 
 from __future__ import annotations
 
-import logging
 from dataclasses import dataclass, asdict
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
 
-LOGGER_NAME = "sentinel_dna.orchestrator.audit"
-
-
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s | %(levelname)s | %(message)s",
-)
-
-
-logger = logging.getLogger(LOGGER_NAME)
+def utc_now() -> datetime:
+    """
+    Returns timezone-aware UTC datetime.
+    """
+    return datetime.now(timezone.utc)
 
 
 @dataclass
 class AuditEvent:
     """
-    Represents a single audit event generated during an
-    investigation.
+    Represents a single investigation audit event.
     """
-
-    timestamp: str
 
     stage: str
 
@@ -46,77 +37,70 @@ class AuditEvent:
 
     case_id: Optional[int] = None
 
-    actor: str = "SYSTEM"
-
-    metadata: Optional[Dict[str, Any]] = None
+    timestamp: str = ""
 
 
 class AuditLogger:
     """
-    Centralized audit logger.
+    Enterprise audit event collector.
 
-    Stores audit events in memory for the current
-    investigation and writes them to the application log.
-
-    Future versions can persist these events to SQLite,
-    Elasticsearch, Splunk, Microsoft Sentinel,
-    or other SIEM platforms.
+    Future expansion:
+    - Database persistence
+    - SIEM forwarding
+    - Compliance reporting
+    - Immutable event storage
     """
 
     def __init__(self):
         self.events: List[AuditEvent] = []
 
+
     def log_event(
         self,
-        *,
         stage: str,
         event_type: str,
         message: str,
         investigation_id: Optional[str] = None,
         case_id: Optional[int] = None,
-        actor: str = "SYSTEM",
-        metadata: Optional[Dict[str, Any]] = None,
     ) -> AuditEvent:
+        """
+        Create and store an audit event.
+        """
 
         event = AuditEvent(
-            timestamp=datetime.utcnow().isoformat(),
             stage=stage,
             event_type=event_type,
             message=message,
             investigation_id=investigation_id,
             case_id=case_id,
-            actor=actor,
-            metadata=metadata or {},
+            timestamp=utc_now().isoformat(),
         )
 
         self.events.append(event)
 
-        logger.info(
-            "[%s] %s | %s",
-            event.stage,
-            event.event_type,
-            event.message,
-        )
-
         return event
+
 
     def get_events(self) -> List[Dict[str, Any]]:
         """
-        Return all audit events as dictionaries.
+        Return serialized audit events.
         """
-        return [asdict(event) for event in self.events]
+
+        return [
+            asdict(event)
+            for event in self.events
+        ]
+
 
     def clear(self) -> None:
         """
-        Clear the current audit session.
+        Clear audit history.
+
+        Mainly used for testing.
         """
+
         self.events.clear()
 
-    def count(self) -> int:
-        """
-        Return total number of audit events.
-        """
-        return len(self.events)
 
-
+# Global audit logger instance
 audit_logger = AuditLogger()
