@@ -1,152 +1,185 @@
-"""
-Sentinel DNA
-Autonomous Security Meta Intelligence Engine
-
-Purpose:
-- Coordinate autonomous security intelligence modules
-- Analyze global SOC state
-- Select optimal intelligence engine
-- Generate autonomous strategies
-- Maintain meta decision history
-"""
-
 from datetime import datetime, timezone
-from uuid import uuid4
 
 
 class AutonomousSecurityMetaIntelligenceEngine:
     """
-    Higher-level intelligence coordinator for Sentinel DNA.
+    Autonomous Security Meta Intelligence Engine
+
+    Responsible for:
+    - managing intelligence modules
+    - analyzing SOC ecosystem state
+    - selecting optimal intelligence engines
+    - generating autonomous strategies
+    - confidence estimation
     """
 
     def __init__(self):
         self.modules = {}
         self.history = []
 
-    def _create_id(self):
-        return f"META-{uuid4().hex[:8].upper()}"
 
-    def register_intelligence_module(self, name, module_data):
-        """
-        Register available intelligence engines.
-        """
-
+    def register_intelligence_module(self, name, capabilities):
         module = {
-            "id": self._create_id(),
             "name": name,
-            "status": module_data.get("status", "active"),
-            "capability": module_data.get(
-                "capability",
-                "security intelligence"
-            ),
-            "registered_at": datetime.now(
-                timezone.utc
-            ).isoformat()
+            "capabilities": capabilities,
+            "status": "active",
+            "registered_at": datetime.now(timezone.utc).isoformat()
         }
 
         self.modules[name] = module
-        self.history.append(module)
+
+        self.history.append({
+            "action": "register_module",
+            "module": name,
+            "timestamp": datetime.now(timezone.utc).isoformat()
+        })
 
         return module
 
-    def analyze_system_state(self, system_state):
-        """
-        Analyze overall Sentinel DNA operational state.
-        """
 
-        threats = system_state.get("threat_level", "low")
-        health = system_state.get("system_health", "healthy")
+    def analyze_system_state(self):
 
-        if threats == "critical":
-            priority = "investigation"
-        elif health != "healthy":
-            priority = "optimization"
-        else:
-            priority = "monitoring"
+        active_modules = [
+            name for name, module in self.modules.items()
+            if module["status"] == "active"
+        ]
 
-        result = {
-            "priority": priority,
-            "threat_level": threats,
-            "system_health": health,
-            "timestamp": datetime.now(
-                timezone.utc
-            ).isoformat()
+        state = {
+            "total_modules": len(self.modules),
+            "active_modules": active_modules,
+            "health": "optimal" if active_modules else "degraded",
+            "timestamp": datetime.now(timezone.utc).isoformat()
         }
 
-        self.history.append(result)
+        self.history.append({
+            "action": "system_analysis",
+            "result": state
+        })
+
+        return state
+
+
+    def select_optimal_engine(self, requirement):
+
+        for name, module in self.modules.items():
+
+            if requirement in module["capabilities"]:
+
+                result = {
+                    "selected_engine": name,
+                    "reason": "capability_match",
+                    "confidence": 0.95
+                }
+
+                self.history.append({
+                    "action": "engine_selection",
+                    "result": result
+                })
+
+                return result
+
+
+        result = {
+            "selected_engine": None,
+            "reason": "no_matching_engine",
+            "confidence": 0.20
+        }
+
+        self.history.append({
+            "action": "engine_selection",
+            "result": result
+        })
 
         return result
 
-    def select_optimal_engine(self, objective):
-        """
-        Select best intelligence engine.
-        """
 
-        mapping = {
-            "investigate": "investigation_engine",
-            "optimize": "optimization_engine",
-            "respond": "soar_engine",
-            "predict": "prediction_engine",
-            "simulate": "simulation_engine"
-        }
+    def generate_autonomous_strategy(self, threat_state):
 
-        selected = mapping.get(
-            objective,
-            "command_center"
+        severity = threat_state.get(
+            "severity",
+            "medium"
         )
 
+
+        if severity == "critical":
+
+            strategy = {
+                "priority": "immediate",
+                "actions": [
+                    "activate_response_engine",
+                    "isolate_assets",
+                    "start_investigation"
+                ]
+            }
+
+
+        elif severity == "high":
+
+            strategy = {
+                "priority": "urgent",
+                "actions": [
+                    "increase_monitoring",
+                    "collect_evidence"
+                ]
+            }
+
+
+        else:
+
+            strategy = {
+                "priority": "normal",
+                "actions": [
+                    "continue_monitoring"
+                ]
+            }
+
+
         result = {
-            "objective": objective,
-            "selected_engine": selected
+            "strategy": strategy,
+            "confidence": 0.90,
+            "timestamp": datetime.now(timezone.utc).isoformat()
         }
 
-        self.history.append(result)
+
+        self.history.append({
+            "action": "strategy_generation",
+            "result": result
+        })
 
         return result
 
-    def generate_autonomous_strategy(self, system_analysis):
-        """
-        Generate high-level autonomous strategy.
-        """
 
-        strategy = {
-            "strategy_id": self._create_id(),
-            "actions": [
-                "analyze current security posture",
-                "select appropriate intelligence module",
-                "execute improvement workflow"
-            ],
-            "priority": system_analysis.get(
-                "priority",
-                "monitoring"
-            ),
-            "created_at": datetime.now(
-                timezone.utc
-            ).isoformat()
+
+    def calculate_meta_decision_confidence(
+        self,
+        intelligence_score,
+        evidence_score
+    ):
+
+        confidence = (
+            intelligence_score +
+            evidence_score
+        ) / 2
+
+
+        result = {
+            "confidence": round(confidence,2),
+            "classification":
+                "high"
+                if confidence >= 0.8
+                else "medium"
         }
 
-        self.history.append(strategy)
 
-        return strategy
+        self.history.append({
+            "action": "confidence_calculation",
+            "result": result
+        })
 
-    def calculate_meta_decision_confidence(self, decision_data):
-        """
-        Calculate confidence score for meta decisions.
-        """
+        return result
 
-        confidence = 0.5
 
-        if decision_data.get("validated"):
-            confidence += 0.3
-
-        if decision_data.get("multiple_sources"):
-            confidence += 0.2
-
-        return min(confidence, 1.0)
 
     def get_history(self):
-        """
-        Return meta intelligence history.
-        """
 
         return self.history
