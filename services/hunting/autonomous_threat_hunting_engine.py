@@ -1,85 +1,92 @@
 """
-Sentinel DNA
 Autonomous Threat Hunting Engine
 
 Responsible for:
-- creating hunting hypotheses
-- generating hunting queries
-- analyzing hunting results
-- tracking threat discovery patterns
+- threat hypothesis generation
+- hunting query creation
+- IOC and behavior correlation
+- suspicious pattern discovery
+- hunting history tracking
+
+Future expansion:
+- MITRE ATT&CK technique mapping
+- Sigma/YARA query generation
+- LLM-powered hunt reasoning
+- SIEM telemetry integration
 """
+
+from datetime import datetime, timezone
 
 
 class AutonomousThreatHuntingEngine:
-
     def __init__(self):
-        self.hunts = []
-        self.results = []
         self.hunting_history = []
+        self.patterns = []
 
-    def create_hunting_hypothesis(self, title, description, technique):
+    def create_hypothesis(self, threat_data):
+        risk_score = threat_data.get("risk_score", 0)
+        behavior = threat_data.get("behavior", "unknown")
+
+        if risk_score >= 80:
+            priority = "critical"
+        elif risk_score >= 50:
+            priority = "high"
+        else:
+            priority = "low"
+
         hypothesis = {
-            "title": title,
-            "description": description,
-            "technique": technique,
-            "status": "active"
+            "behavior": behavior,
+            "risk_score": risk_score,
+            "priority": priority,
+            "hypothesis": f"Investigate {behavior} activity for possible compromise",
+            "created_at": datetime.now(timezone.utc).isoformat()
         }
 
-        self.hunts.append(hypothesis)
+        self.hunting_history.append(hypothesis)
 
         return hypothesis
 
-    def generate_query(self, hypothesis):
+    def generate_hunt_query(self, indicator):
         query = {
-            "technique": hypothesis["technique"],
-            "query": (
-                f"Search events related to "
-                f"{hypothesis['technique']}"
-            )
+            "indicator": indicator,
+            "query": f"search telemetry where indicator='{indicator}'",
+            "status": "generated",
+            "created_at": datetime.now(timezone.utc).isoformat()
         }
 
         return query
 
-    def analyze_hunting_result(self, data):
-        findings = []
+    def detect_pattern(self, events):
+        suspicious = []
 
-        if data.get("suspicious_process"):
-            findings.append("suspicious_process")
+        for event in events:
+            if event.get("severity") in ["high", "critical"]:
+                suspicious.append(event)
 
-        if data.get("unknown_network_connection"):
-            findings.append("unknown_network_connection")
-
-        if data.get("credential_activity"):
-            findings.append("credential_activity")
-
-        result = {
-            "threat_found": len(findings) > 0,
-            "findings": findings,
-            "confidence": len(findings) * 30
+        pattern = {
+            "matches": len(suspicious),
+            "events": suspicious,
+            "created_at": datetime.now(timezone.utc).isoformat()
         }
 
-        self.results.append(result)
+        self.patterns.append(pattern)
 
-        return result
+        return pattern
 
-    def record_hunt(self, hypothesis, outcome):
-        record = {
-            "hypothesis": hypothesis,
-            "outcome": outcome
+    def correlate_threat_intelligence(self, intelligence):
+        return {
+            "matched": True if intelligence else False,
+            "confidence": "high" if intelligence else "low",
+            "created_at": datetime.now(timezone.utc).isoformat()
         }
-
-        self.hunting_history.append(record)
-
-        return record
 
     def get_hunting_history(self):
-        return {
-            "hypotheses": self.hunts,
-            "results": self.results,
-            "history": self.hunting_history
-        }
+        return self.hunting_history
 
     def clear_history(self):
-        self.hunts.clear()
-        self.results.clear()
         self.hunting_history.clear()
+        self.patterns.clear()
+
+        return {
+            "status": "cleared"
+        }

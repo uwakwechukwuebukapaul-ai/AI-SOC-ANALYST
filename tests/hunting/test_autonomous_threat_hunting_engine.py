@@ -3,69 +3,70 @@ from services.hunting.autonomous_threat_hunting_engine import (
 )
 
 
-def test_create_hunting_hypothesis():
+def test_create_hypothesis():
     engine = AutonomousThreatHuntingEngine()
 
-    result = engine.create_hunting_hypothesis(
-        "Credential Theft Investigation",
-        "Search for credential dumping behavior",
-        "T1003"
+    result = engine.create_hypothesis({
+        "behavior": "credential_dumping",
+        "risk_score": 90
+    })
+
+    assert result["priority"] == "critical"
+
+
+def test_generate_hunt_query():
+    engine = AutonomousThreatHuntingEngine()
+
+    result = engine.generate_hunt_query(
+        "malicious-domain.com"
     )
 
-    assert result["technique"] == "T1003"
-    assert len(engine.hunts) == 1
+    assert result["status"] == "generated"
 
 
-def test_generate_query():
+def test_detect_pattern():
     engine = AutonomousThreatHuntingEngine()
 
-    hypothesis = {
-        "technique": "T1059"
-    }
-
-    result = engine.generate_query(hypothesis)
-
-    assert "T1059" in result["query"]
-
-
-def test_detect_threat_activity():
-    engine = AutonomousThreatHuntingEngine()
-
-    result = engine.analyze_hunting_result(
+    result = engine.detect_pattern([
         {
-            "suspicious_process": True,
-            "credential_activity": True
+            "event": "login anomaly",
+            "severity": "critical"
         }
-    )
+    ])
 
-    assert result["threat_found"] is True
-    assert len(result["findings"]) == 2
+    assert result["matches"] == 1
 
 
-def test_clean_environment():
+def test_threat_intelligence_correlation():
     engine = AutonomousThreatHuntingEngine()
 
-    result = engine.analyze_hunting_result({})
+    result = engine.correlate_threat_intelligence({
+        "ioc": "8.8.8.8"
+    })
 
-    assert result["threat_found"] is False
+    assert result["matched"] is True
 
 
-def test_record_hunt_history():
+def test_history_tracking():
     engine = AutonomousThreatHuntingEngine()
 
-    result = engine.record_hunt(
-        "Malware Persistence",
-        "No threat detected"
-    )
+    engine.create_hypothesis({
+        "behavior": "malware_execution",
+        "risk_score": 70
+    })
 
-    assert result["outcome"] == "No threat detected"
+    assert len(engine.get_hunting_history()) == 1
 
 
-def test_hunting_history():
+def test_clear_history():
     engine = AutonomousThreatHuntingEngine()
 
-    history = engine.get_hunting_history()
+    engine.create_hypothesis({
+        "behavior": "phishing",
+        "risk_score": 60
+    })
 
-    assert "hypotheses" in history
-    assert "results" in history
-    assert "history" in history
+    result = engine.clear_history()
+
+    assert result["status"] == "cleared"
+    assert len(engine.get_hunting_history()) == 0
