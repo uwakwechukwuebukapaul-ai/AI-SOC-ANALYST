@@ -1,80 +1,134 @@
 """
 Autonomous Security Evaluation Engine
 
-Evaluates security intelligence outputs,
-agent decisions, investigations, and response quality.
+Sentinel DNA Continuous Intelligence Evaluation Layer
+
+Responsibilities:
+- evaluate agent performance
+- measure detection accuracy
+- score decision quality
+- evaluate investigation quality
+- generate evaluation reports
+- maintain evaluation history
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 class AutonomousSecurityEvaluationEngine:
+
     def __init__(self):
-        self.evaluations = []
+        self.history = []
 
-    def evaluate_security_event(self, event):
-        risk_score = event.get("risk_score", 0)
-
-        if risk_score >= 80:
-            rating = "CRITICAL"
-        elif risk_score >= 50:
-            rating = "HIGH"
-        elif risk_score >= 20:
-            rating = "MEDIUM"
-        else:
-            rating = "LOW"
+    def evaluate_agent_performance(
+        self,
+        agent_name,
+        success_rate
+    ):
 
         result = {
-            "event": event,
-            "evaluation": rating,
-            "accuracy_score": self._calculate_accuracy(event),
-            "created_at": datetime.utcnow().isoformat()
+            "agent": agent_name,
+            "performance_score": success_rate,
+            "status": (
+                "excellent"
+                if success_rate >= 90
+                else "needs_improvement"
+            )
         }
 
-        self.evaluations.append(result)
+        self.history.append(result)
 
         return result
 
-    def _calculate_accuracy(self, event):
-        confidence = event.get("confidence", 0)
+    def detection_accuracy_score(
+        self,
+        detected,
+        total
+    ):
 
-        if confidence >= 90:
-            return "EXCELLENT"
-        elif confidence >= 70:
-            return "GOOD"
-        elif confidence >= 40:
-            return "FAIR"
+        score = 0
 
-        return "POOR"
-
-    def evaluate_agent_performance(self, agent):
-        score = agent.get("success_rate", 0)
-
-        if score >= 90:
-            status = "OPTIMAL"
-        elif score >= 70:
-            status = "STABLE"
-        else:
-            status = "NEEDS_IMPROVEMENT"
+        if total > 0:
+            score = round(
+                (detected / total) * 100,
+                2
+            )
 
         result = {
-            "agent": agent,
-            "performance": status,
-            "created_at": datetime.utcnow().isoformat()
+            "metric": "detection_accuracy",
+            "score": score
         }
 
-        self.evaluations.append(result)
+        self.history.append(result)
 
         return result
 
-    def generate_quality_report(self):
-        return {
-            "total_evaluations": len(self.evaluations),
-            "evaluations": self.evaluations
+    def decision_quality_score(
+        self,
+        correct_decisions,
+        total_decisions
+    ):
+
+        score = 0
+
+        if total_decisions > 0:
+            score = round(
+                (correct_decisions / total_decisions)
+                * 100,
+                2
+            )
+
+        result = {
+            "metric": "decision_quality",
+            "score": score
         }
+
+        self.history.append(result)
+
+        return result
+
+    def investigation_quality_score(
+        self,
+        evidence_quality,
+        reasoning_quality
+    ):
+
+        score = round(
+            (
+                evidence_quality
+                +
+                reasoning_quality
+            ) / 2,
+            2
+        )
+
+        result = {
+            "metric": "investigation_quality",
+            "score": score
+        }
+
+        self.history.append(result)
+
+        return result
+
+    def generate_evaluation_report(
+        self,
+        system_name,
+        metrics
+    ):
+
+        report = {
+            "system": system_name,
+            "metrics": metrics,
+            "generated_at": datetime.now(
+                timezone.utc
+            ).isoformat()
+        }
+
+        self.history.append(report)
+
+        return report
 
     def get_history(self):
-        return self.evaluations
 
-    def clear_history(self):
-        self.evaluations.clear()
+        return self.history
