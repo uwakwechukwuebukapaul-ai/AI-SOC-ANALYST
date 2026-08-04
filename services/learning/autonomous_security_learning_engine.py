@@ -1,139 +1,173 @@
 """
+Sentinel DNA
 Autonomous Security Learning Engine
 
-Sentinel DNA Continuous Improvement Layer
-
-Capabilities:
-- Learn from incidents
-- Analyze analyst feedback
-- Improve threat patterns
-- Optimize response strategies
-- Track learning history
-- Generate learning confidence
+Responsible for:
+- capturing security lessons
+- analyzing operational patterns
+- improving agent knowledge
+- generating learning recommendations
+- tracking learning evolution
 """
 
 from datetime import datetime, timezone
-import uuid
+from uuid import uuid4
 
 
 class AutonomousSecurityLearningEngine:
 
     def __init__(self):
-        self.learning_records = []
+        self.lessons = []
+        self.knowledge = {}
+        self.history = []
 
-    def learn_from_incident(
+
+    def _generate_id(self):
+        return f"LEARN-{uuid4().hex[:8].upper()}"
+
+
+    def record_security_lesson(
         self,
-        incident,
-        outcome
+        incident_type,
+        outcome,
+        lesson
     ):
-
         record = {
-            "id": f"LRN-{uuid.uuid4().hex[:8].upper()}",
-            "type": "incident_learning",
-            "incident": incident,
+            "lesson_id": self._generate_id(),
+            "incident_type": incident_type,
             "outcome": outcome,
-            "confidence": 0.8,
-            "created_at": datetime.now(
+            "lesson": lesson,
+            "timestamp": datetime.now(
                 timezone.utc
             ).isoformat()
         }
 
-        self.learning_records.append(record)
+        self.lessons.append(record)
+
+        self.history.append({
+            "action": "lesson_recorded",
+            "data": record
+        })
 
         return record
 
-    def analyze_feedback(
+
+    def analyze_learning_pattern(self):
+
+        patterns = {}
+
+        for lesson in self.lessons:
+            incident = lesson["incident_type"]
+
+            patterns[incident] = (
+                patterns.get(incident, 0) + 1
+            )
+
+        result = {
+            "patterns": patterns,
+            "total_lessons": len(self.lessons)
+        }
+
+        self.history.append({
+            "action": "pattern_analysis",
+            "data": result
+        })
+
+        return result
+
+
+    def update_agent_knowledge(
         self,
-        analyst_feedback
+        agent,
+        knowledge_update
     ):
 
-        record = {
-            "id": f"FDB-{uuid.uuid4().hex[:8].upper()}",
-            "type": "analyst_feedback",
-            "feedback": analyst_feedback,
-            "improvement": True,
-            "confidence": 0.9,
-            "created_at": datetime.now(
-                timezone.utc
-            ).isoformat()
+        if agent not in self.knowledge:
+            self.knowledge[agent] = []
+
+        self.knowledge[agent].append(
+            knowledge_update
+        )
+
+        result = {
+            "agent": agent,
+            "knowledge_count": len(
+                self.knowledge[agent]
+            )
         }
 
-        self.learning_records.append(record)
+        self.history.append({
+            "action": "knowledge_update",
+            "data": result
+        })
 
-        return record
+        return result
 
-    def improve_threat_pattern(
+
+    def generate_learning_recommendation(
         self,
-        pattern,
-        intelligence
+        pattern_data
     ):
 
-        record = {
-            "id": f"PAT-{uuid.uuid4().hex[:8].upper()}",
-            "type": "pattern_learning",
-            "pattern": pattern,
-            "intelligence": intelligence,
-            "confidence": 0.85,
-            "created_at": datetime.now(
-                timezone.utc
-            ).isoformat()
+        recommendations = []
+
+        if pattern_data.get(
+            "total_lessons",
+            0
+        ) > 0:
+
+            recommendations.append(
+                "Improve detection rules using historical lessons"
+            )
+
+            recommendations.append(
+                "Update autonomous response strategies"
+            )
+
+        result = {
+            "recommendations": recommendations,
+            "confidence": 0.9
         }
 
-        self.learning_records.append(record)
+        self.history.append({
+            "action": "recommendation_generated",
+            "data": result
+        })
 
-        return record
+        return result
 
-    def optimize_response(
-        self,
-        previous_response,
-        improved_response
-    ):
-
-        record = {
-            "id": f"OPT-{uuid.uuid4().hex[:8].upper()}",
-            "type": "response_optimization",
-            "previous": previous_response,
-            "improved": improved_response,
-            "confidence": 0.9,
-            "created_at": datetime.now(
-                timezone.utc
-            ).isoformat()
-        }
-
-        self.learning_records.append(record)
-
-        return record
 
     def calculate_learning_confidence(
         self,
-        learning_id
+        successful_cases,
+        total_cases
     ):
 
-        for record in self.learning_records:
+        if total_cases == 0:
+            return {
+                "confidence": 0
+            }
 
-            if record["id"] == learning_id:
+        confidence = (
+            successful_cases /
+            total_cases
+        )
 
-                return {
-                    "confidence": record["confidence"],
-                    "level":
-                        "high"
-                        if record["confidence"] >= 0.8
-                        else "medium"
-                }
-
-        return {
-            "confidence": 0,
-            "level": "unknown"
+        result = {
+            "confidence": round(
+                confidence,
+                2
+            )
         }
 
-    def get_learning_history(self):
+        self.history.append({
+            "action": "confidence_calculated",
+            "data": result
+        })
 
-        return self.learning_records
+        return result
 
-    def clear_history(self):
 
-        self.learning_records.clear()
+    def get_history(self):
 
-        return {
-            "status": "cleared"
-        }
+        return self.history
