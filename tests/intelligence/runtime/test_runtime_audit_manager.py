@@ -7,121 +7,92 @@ from services.intelligence.runtime.runtime_audit_manager import (
 )
 
 
-
-def test_manager_init():
-
-    manager = RuntimeAuditManager()
-
-    assert (
-        manager.size()
-        ==
-        0
-    )
-
-
-
 def test_record():
 
     manager = RuntimeAuditManager()
 
-
-    event_id = manager.record(
-        "task_execute",
-        "analyst",
+    manager.record(
+        "agent",
+        "runtime",
+        "started",
     )
 
-
-    assert (
-        event_id
-        is not None
-    )
-
-    assert (
-        manager.size()
-        ==
-        1
-    )
+    assert manager.count() == 1
 
 
-
-def test_get():
+def test_latest():
 
     manager = RuntimeAuditManager()
-
-
-    event_id = manager.record(
-        "login",
-        "user",
-    )
-
-
-    event = manager.get(
-        event_id
-    )
-
-
-    assert (
-        event["action"]
-        ==
-        "login"
-    )
-
-
-
-def test_query():
-
-    manager = RuntimeAuditManager()
-
 
     manager.record(
-        "scan",
-        "agent",
+        "admin",
+        "engine",
+        "restart",
     )
-
-
-    results = manager.query(
-        "agent"
-    )
-
 
     assert (
-        len(results)
-        ==
-        1
+        manager.latest()["action"]
+        == "restart"
     )
 
+
+def test_actor_filter():
+
+    manager = RuntimeAuditManager()
+
+    manager.record(
+        "agent1",
+        "engine",
+        "run",
+    )
+
+    manager.record(
+        "agent2",
+        "engine",
+        "run",
+    )
+
+    assert len(
+        manager.by_actor("agent1")
+    ) == 1
+
+
+def test_component_filter():
+
+    manager = RuntimeAuditManager()
+
+    manager.record(
+        "admin",
+        "database",
+        "backup",
+    )
+
+    assert len(
+        manager.by_component("database")
+    ) == 1
 
 
 def test_clear():
 
     manager = RuntimeAuditManager()
 
-
     manager.record(
-        "event",
-        "system",
+        "a",
+        "b",
+        "c",
     )
-
 
     manager.clear()
 
-
-    assert (
-        manager.size()
-        ==
-        0
-    )
-
+    assert manager.count() == 0
 
 
 def test_status():
 
     manager = RuntimeAuditManager()
 
-
     result = manager.status()
 
-
-    assert "events" in result
+    assert "count" in result
 
     assert "latest" in result
