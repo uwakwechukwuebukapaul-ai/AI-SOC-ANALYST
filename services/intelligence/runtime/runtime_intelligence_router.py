@@ -1,71 +1,71 @@
 """
 Sentinel DNA Runtime Intelligence Router
 
-Enterprise intelligence capability routing layer.
+Enterprise intelligence routing layer.
 
 Responsibilities:
 
-- register intelligence handlers
-- route requests
-- capability lookup
-- routing metrics
+- analyze task requirements
+- select capable agents
+- route intelligence execution
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Callable
+from typing import Any
+
+from .runtime_agent_orchestrator import (
+    RuntimeAgentOrchestrator,
+)
+
+from .task import (
+    Task,
+)
+
 
 
 @dataclass
 class RuntimeIntelligenceRouter:
     """
-    Intelligence capability router.
+    Intelligence routing engine.
     """
 
-    routes: dict[str, Callable] = field(
-        default_factory=dict
+    orchestrator: RuntimeAgentOrchestrator = field(
+        default_factory=RuntimeAgentOrchestrator
     )
 
-    routed: int = 0
+    routes: int = 0
 
 
-    def register(
+
+    def register_agent(
         self,
-        capability: str,
-        handler: Callable,
+        agent,
     ) -> None:
         """
-        Register capability handler.
+        Register intelligence agent.
         """
 
-        self.routes[capability] = handler
+        self.orchestrator.register_agent(
+            agent
+        )
 
 
 
     def route(
         self,
-        capability: str,
-        payload: dict[str, Any],
+        task: Task,
     ) -> Any:
         """
-        Route intelligence request.
+        Route task to intelligence agent.
         """
 
-        handler = self.routes.get(
-            capability
-        )
+        self.routes += 1
 
 
-        if handler is None:
-            return None
-
-
-        self.routed += 1
-
-
-        return handler(
-            payload
+        return self.orchestrator.execute(
+            task
         )
 
 
@@ -75,10 +75,16 @@ class RuntimeIntelligenceRouter:
         capability: str,
     ) -> bool:
         """
-        Check capability.
+        Check capability availability.
         """
 
-        return capability in self.routes
+        agents = (
+            self.orchestrator.manager.find_capability(
+                capability
+            )
+        )
+
+        return len(agents) > 0
 
 
 
@@ -87,9 +93,9 @@ class RuntimeIntelligenceRouter:
         Reset router.
         """
 
-        self.routes.clear()
+        self.orchestrator.clear()
 
-        self.routed = 0
+        self.routes = 0
 
 
 
@@ -99,11 +105,9 @@ class RuntimeIntelligenceRouter:
         """
 
         return {
-            "capabilities":
-                list(
-                    self.routes.keys()
-                ),
+            "routes":
+                self.routes,
 
-            "routed":
-                self.routed,
+            "agents":
+                self.orchestrator.status(),
         }
