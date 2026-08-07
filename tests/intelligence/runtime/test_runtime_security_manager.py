@@ -8,83 +8,36 @@ from services.intelligence.runtime.runtime_security_manager import (
 
 
 
-def test_manager_init():
+def test_init():
 
     manager = RuntimeSecurityManager()
 
     assert (
-        manager.identities
+        manager.permissions
         ==
         {}
     )
 
 
 
-def test_register_identity():
+def test_grant():
 
     manager = RuntimeSecurityManager()
 
 
-    manager.register_identity(
-        "analyst",
-        [
-            "execute",
-            "investigate",
-        ],
+    manager.grant(
+        "agent",
+        "execute",
     )
 
 
     assert (
-        "analyst"
-        in
-        manager.identities
+        manager.allowed(
+            "agent",
+            "execute",
+        )
+        is True
     )
-
-
-
-def test_authorize_allowed():
-
-    manager = RuntimeSecurityManager()
-
-
-    manager.register_identity(
-        "agent",
-        [
-            "scan",
-        ],
-    )
-
-
-    result = manager.authorize(
-        "agent",
-        "scan",
-    )
-
-
-    assert result is True
-
-
-
-def test_authorize_denied():
-
-    manager = RuntimeSecurityManager()
-
-
-    manager.register_identity(
-        "agent",
-        [
-            "scan",
-        ],
-    )
-
-
-    result = manager.authorize(
-        "agent",
-        "delete",
-    )
-
-
-    assert result is False
 
 
 
@@ -93,21 +46,66 @@ def test_revoke():
     manager = RuntimeSecurityManager()
 
 
-    manager.register_identity(
-        "user",
-        [],
+    manager.grant(
+        "agent",
+        "execute",
     )
 
 
     manager.revoke(
-        "user"
+        "agent",
+        "execute",
     )
 
 
     assert (
-        "user"
-        not in
-        manager.identities
+        manager.allowed(
+            "agent",
+            "execute",
+        )
+        is False
+    )
+
+
+
+def test_policy():
+
+    manager = RuntimeSecurityManager()
+
+
+    manager.set_policy(
+        "require_auth",
+        True,
+    )
+
+
+    assert (
+        manager.policy_enabled(
+            "require_auth"
+        )
+        is True
+    )
+
+
+
+def test_clear():
+
+    manager = RuntimeSecurityManager()
+
+
+    manager.grant(
+        "agent",
+        "run",
+    )
+
+
+    manager.clear()
+
+
+    assert (
+        manager.permissions
+        ==
+        {}
     )
 
 
@@ -120,6 +118,6 @@ def test_status():
     result = manager.status()
 
 
-    assert "identities" in result
+    assert "permissions" in result
 
-    assert "registered" in result
+    assert "policies" in result
