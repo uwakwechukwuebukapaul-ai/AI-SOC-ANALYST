@@ -7,129 +7,88 @@ from services.intelligence.runtime.runtime_health_monitor import (
 )
 
 
-
 def test_init():
 
     monitor = RuntimeHealthMonitor()
 
-    assert (
-        monitor.failure_count()
-        ==
-        0
-    )
-
+    assert monitor.count() == 0
 
 
 def test_register():
 
     monitor = RuntimeHealthMonitor()
 
+    monitor.register("database")
 
-    monitor.register(
-        "ai_engine",
-    )
-
-
-    assert (
-        monitor.healthy(
-            "ai_engine"
-        )
-        is True
-    )
-
+    assert monitor.count() == 1
 
 
 def test_update():
 
     monitor = RuntimeHealthMonitor()
 
-
-    monitor.register(
-        "database",
-    )
-
+    monitor.register("database")
 
     monitor.update(
         "database",
-        "offline",
+        "degraded",
     )
-
 
     assert (
-        monitor.healthy(
-            "database"
-        )
-        is False
+        monitor.get("database")["status"]
+        == "degraded"
     )
 
 
-
-def test_failure():
+def test_get():
 
     monitor = RuntimeHealthMonitor()
 
-
-    monitor.record_failure(
-        "agent",
-        "timeout",
-    )
-
+    monitor.register("engine")
 
     assert (
-        monitor.failure_count()
-        ==
-        1
+        monitor.get("engine")["status"]
+        == "healthy"
     )
 
 
-
-def test_ready():
+def test_overall_health():
 
     monitor = RuntimeHealthMonitor()
 
+    monitor.register("engine")
 
-    monitor.register(
-        "runtime",
+    monitor.register("database")
+
+    assert monitor.healthy() is True
+
+    monitor.update(
+        "database",
+        "failed",
     )
 
-
-    assert (
-        monitor.ready()
-        is True
-    )
-
+    assert monitor.healthy() is False
 
 
 def test_clear():
 
     monitor = RuntimeHealthMonitor()
 
-
-    monitor.register(
-        "test",
-    )
-
+    monitor.register("test")
 
     monitor.clear()
 
-
-    assert (
-        monitor.ready()
-        is True
-    )
-
+    assert monitor.count() == 0
 
 
 def test_status():
 
     monitor = RuntimeHealthMonitor()
 
-
     result = monitor.status()
 
+    assert "healthy" in result
 
     assert "components" in result
 
-    assert "failures" in result
-
-    assert "ready" in result
+    assert "count" in result

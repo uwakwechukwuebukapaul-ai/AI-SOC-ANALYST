@@ -1,13 +1,13 @@
 """
 Sentinel DNA Runtime Health Monitor
 
-Enterprise runtime reliability layer.
+Enterprise runtime health monitoring layer.
 
 Responsibilities:
 
 - monitor component health
-- record failures
-- expose readiness status
+- detect degraded services
+- calculate runtime readiness
 """
 
 from __future__ import annotations
@@ -16,134 +16,81 @@ from dataclasses import dataclass, field
 from typing import Any
 
 
-
 @dataclass
 class RuntimeHealthMonitor:
     """
     Runtime health controller.
     """
 
-    components: dict[str, str] = field(
+    components: dict[str, dict[str, Any]] = field(
         default_factory=dict
     )
 
-    failures: list[dict[str, Any]] = field(
-        default_factory=list
-    )
-
-
-
     def register(
         self,
-        name: str,
-        status: str = "healthy",
+        component: str,
     ) -> None:
         """
-        Register component health.
+        Register runtime component.
         """
 
-        self.components[name] = status
-
-
+        self.components[component] = {
+            "status": "healthy"
+        }
 
     def update(
         self,
-        name: str,
+        component: str,
         status: str,
     ) -> None:
         """
-        Update component status.
+        Update component health.
         """
 
-        self.components[name] = status
+        if component in self.components:
+            self.components[component]["status"] = status
 
-
-
-    def healthy(
-        self,
-        name: str,
-    ) -> bool:
-        """
-        Check component health.
-        """
-
-        return (
-            self.components.get(name)
-            ==
-            "healthy"
-        )
-
-
-
-    def record_failure(
+    def get(
         self,
         component: str,
-        error: str,
-    ) -> None:
+    ) -> dict[str, Any] | None:
         """
-        Record runtime failure.
+        Retrieve component status.
         """
 
-        self.failures.append(
-            {
-                "component":
-                    component,
+        return self.components.get(component)
 
-                "error":
-                    error,
-            }
-        )
-
-
-
-    def ready(
-        self,
-    ) -> bool:
+    def healthy(self) -> bool:
         """
-        Check platform readiness.
+        Overall runtime health.
         """
 
         return all(
-            status == "healthy"
-            for status in self.components.values()
+            component["status"] == "healthy"
+            for component in self.components.values()
         )
 
-
-
-    def failure_count(self) -> int:
+    def count(self) -> int:
         """
-        Return failure count.
+        Number of monitored components.
         """
 
-        return len(
-            self.failures
-        )
-
-
+        return len(self.components)
 
     def clear(self) -> None:
         """
-        Reset health state.
+        Reset monitor.
         """
 
         self.components.clear()
 
-        self.failures.clear()
-
-
-
     def status(self) -> dict[str, Any]:
         """
-        Health status.
+        Runtime health summary.
         """
 
         return {
-            "components":
-                self.components,
-
-            "failures":
-                self.failures,
-
-            "ready":
-                self.ready(),
+            "healthy": self.healthy(),
+            "components": self.components,
+            "count": self.count(),
         }
