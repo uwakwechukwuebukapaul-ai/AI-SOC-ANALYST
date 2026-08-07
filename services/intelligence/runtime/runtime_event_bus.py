@@ -5,17 +5,16 @@ Enterprise internal event communication layer.
 
 Responsibilities:
 
-- event publishing
-- subscriber registration
-- event dispatching
-- event history tracking
+- publish runtime events
+- subscribe handlers
+- dispatch events
+- manage event history
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass, field
 from typing import Any, Callable
-from datetime import datetime, timezone
 
 
 @dataclass
@@ -28,7 +27,7 @@ class RuntimeEventBus:
         default_factory=dict
     )
 
-    history: list[dict[str, Any]] = field(
+    events: list[dict[str, Any]] = field(
         default_factory=list
     )
 
@@ -55,31 +54,20 @@ class RuntimeEventBus:
         self,
         event_type: str,
         payload: dict[str, Any],
-    ) -> int:
+    ) -> None:
         """
         Publish runtime event.
         """
 
         event = {
-            "type":
-                event_type,
-
-            "payload":
-                payload,
-
-            "timestamp":
-                datetime.now(
-                    timezone.utc
-                ).isoformat(),
+            "type": event_type,
+            "payload": payload,
         }
 
 
-        self.history.append(
+        self.events.append(
             event
         )
-
-
-        delivered = 0
 
 
         for handler in self.subscribers.get(
@@ -89,11 +77,6 @@ class RuntimeEventBus:
             handler(
                 payload
             )
-
-            delivered += 1
-
-
-        return delivered
 
 
 
@@ -116,12 +99,12 @@ class RuntimeEventBus:
 
     def clear(self) -> None:
         """
-        Clear events.
+        Reset event bus.
         """
 
         self.subscribers.clear()
 
-        self.history.clear()
+        self.events.clear()
 
 
 
@@ -132,12 +115,11 @@ class RuntimeEventBus:
 
         return {
             "events":
-                len(
-                    self.history
-                ),
+                len(self.events),
 
-            "event_types":
-                list(
-                    self.subscribers.keys()
+            "subscriptions":
+                sum(
+                    len(items)
+                    for items in self.subscribers.values()
                 ),
         }

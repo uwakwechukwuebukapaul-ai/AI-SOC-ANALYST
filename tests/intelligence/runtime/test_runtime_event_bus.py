@@ -8,14 +8,14 @@ from services.intelligence.runtime.runtime_event_bus import (
 
 
 
-def test_bus_init():
+def test_init():
 
     bus = RuntimeEventBus()
 
     assert (
-        bus.history
+        len(bus.events)
         ==
-        []
+        0
     )
 
 
@@ -25,12 +25,9 @@ def test_subscribe():
     bus = RuntimeEventBus()
 
 
-    handler = lambda payload: None
-
-
     bus.subscribe(
         "alert",
-        handler,
+        lambda data: data,
     )
 
 
@@ -46,48 +43,36 @@ def test_subscribe():
 
 def test_publish():
 
-    bus = RuntimeEventBus()
-
-
     received = []
 
 
-    def handler(payload):
-
-        received.append(
-            payload
-        )
+    bus = RuntimeEventBus()
 
 
     bus.subscribe(
-        "incident",
-        handler,
+        "alert",
+        lambda data: received.append(data),
     )
 
 
-    result = bus.publish(
-        "incident",
+    bus.publish(
+        "alert",
         {
-            "id": 1
+            "severity":
+                "high"
         },
     )
 
 
     assert (
-        result
+        received[0]["severity"]
         ==
-        1
-    )
-
-    assert (
-        received[0]["id"]
-        ==
-        1
+        "high"
     )
 
 
 
-def test_history():
+def test_event_history():
 
     bus = RuntimeEventBus()
 
@@ -99,9 +84,7 @@ def test_history():
 
 
     assert (
-        len(
-            bus.history
-        )
+        len(bus.events)
         ==
         1
     )
@@ -114,7 +97,7 @@ def test_clear():
 
 
     bus.publish(
-        "event",
+        "test",
         {},
     )
 
@@ -123,9 +106,7 @@ def test_clear():
 
 
     assert (
-        len(
-            bus.history
-        )
+        len(bus.events)
         ==
         0
     )
@@ -142,4 +123,4 @@ def test_status():
 
     assert "events" in result
 
-    assert "event_types" in result
+    assert "subscriptions" in result
