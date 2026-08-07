@@ -6,35 +6,45 @@ from services.intelligence.runtime.runtime_execution_manager import (
     RuntimeExecutionManager,
 )
 
+from services.intelligence.runtime.task import (
+    Task,
+)
 
 
-def test_manager_init():
 
-    manager = RuntimeExecutionManager()
+def create_task():
 
-    assert (
-        manager.executions
-        ==
-        0
+    return Task(
+        capability="analysis",
+        payload={
+            "test":
+                True
+        },
     )
 
 
 
-def test_register():
+def test_init():
+
+    manager = RuntimeExecutionManager()
+
+    assert (
+        manager.running
+        is False
+    )
+
+
+
+def test_start():
 
     manager = RuntimeExecutionManager()
 
 
-    manager.register(
-        "analysis",
-        lambda data: data,
-    )
+    manager.start()
 
 
     assert (
-        manager.pipeline.dispatcher.exists(
-            "analysis"
-        )
+        manager.running
         is True
     )
 
@@ -45,46 +55,43 @@ def test_submit():
     manager = RuntimeExecutionManager()
 
 
-    manager.submit(
-        "test",
-        {},
-    )
+    manager.start()
 
 
-    assert (
-        manager.pending()
-        ==
-        1
-    )
-
-
-
-def test_execute():
-
-    manager = RuntimeExecutionManager()
-
-
-    manager.register(
-        "test",
+    manager.workers.executor.register(
+        "analysis",
         lambda data: {
-            "success":
+            "done":
                 True
         },
     )
 
 
-    manager.submit(
-        "test",
-        {},
+    result = manager.submit(
+        create_task()
     )
 
 
-    result = manager.execute()
+    assert (
+        result["done"]
+        is True
+    )
+
+
+
+def test_stop():
+
+    manager = RuntimeExecutionManager()
+
+
+    manager.start()
+
+    manager.stop()
 
 
     assert (
-        result["success"]
-        is True
+        manager.running
+        is False
     )
 
 
@@ -94,17 +101,13 @@ def test_clear():
     manager = RuntimeExecutionManager()
 
 
-    manager.submit(
-        "task",
-        {},
-    )
-
+    manager.start()
 
     manager.clear()
 
 
     assert (
-        manager.pending()
+        manager.metrics.executions
         ==
         0
     )
@@ -119,6 +122,8 @@ def test_status():
     result = manager.status()
 
 
-    assert "executions" in result
+    assert "running" in result
 
-    assert "pending" in result
+    assert "workers" in result
+
+    assert "metrics" in result

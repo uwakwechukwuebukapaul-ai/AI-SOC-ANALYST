@@ -5,10 +5,10 @@ Enterprise execution control layer.
 
 Responsibilities:
 
-- manage runtime execution
-- submit jobs
-- execute pipeline
+- manage task execution
+- coordinate workers
 - track execution metrics
+- expose runtime execution status
 """
 
 from __future__ import annotations
@@ -16,7 +16,16 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
-from .runtime_pipeline import RuntimePipeline
+from .task import Task
+
+from .runtime_worker_pool import (
+    RuntimeWorkerPool,
+)
+
+from .runtime_metrics_collector import (
+    RuntimeMetricsCollector,
+)
+
 
 
 @dataclass
@@ -25,95 +34,101 @@ class RuntimeExecutionManager:
     Runtime execution coordinator.
     """
 
-    pipeline: RuntimePipeline = field(
-        default_factory=RuntimePipeline
+    workers: RuntimeWorkerPool = field(
+        default_factory=RuntimeWorkerPool
     )
 
-    executions: int = 0
+    metrics: RuntimeMetricsCollector = field(
+        default_factory=RuntimeMetricsCollector
+    )
+
+    running: bool = False
 
 
-    def register(
+
+    def start(
         self,
-        capability: str,
-        handler,
+        workers: int = 1,
     ) -> None:
         """
-        Register execution capability.
+        Start execution manager.
         """
 
-        self.pipeline.register_handler(
-            capability,
-            handler,
+        self.workers.start_workers(
+            workers
         )
+
+        self.running = True
+
+
+
+    def stop(self) -> None:
+        """
+        Stop execution manager.
+        """
+
+        self.workers.stop_workers()
+
+        self.running = False
 
 
 
     def submit(
         self,
-        capability: str,
-        payload: dict[str, Any],
-    ) -> None:
+        task: Task,
+    ) -> Any:
         """
-        Submit execution request.
+        Submit execution task.
         """
 
-        self.pipeline.submit(
-            capability,
-            payload,
+        if not self.running:
+            return None
+
+
+        result = self.workers.submit(
+            task
         )
 
 
-
-    def execute(self) -> Any:
-        """
-        Execute next runtime job.
-        """
-
-        result = self.pipeline.process()
-
-
         if result is not None:
-            self.executions += 1
+            self.metrics.record_execution(
+                task.capability
+            )
+
+        else:
+            self.metrics.record_failure(
+                task.capability,
+                "execution_failed",
+            )
 
 
         return result
 
 
 
-    def pending(
-        self,
-    ) -> int:
-        """
-        Pending execution count.
-        """
-
-        return self.pipeline.size()
-
-
-
     def clear(self) -> None:
         """
-        Reset execution manager.
+        Reset manager.
         """
 
-        self.pipeline.clear()
+        self.workers.clear()
 
-        self.executions = 0
+        self.metrics.clear()
 
 
 
     def status(self) -> dict[str, Any]:
         """
-        Runtime execution status.
+        Execution status.
         """
 
         return {
-            "executions":
-                self.executions,
+            "running":
+                self.running,
 
-            "pending":
-                self.pending(),
+            "workers":
+                self.workers.status(),
 
-            "pipeline":
-                self.pipeline.status(),
+            "metrics":
+                self.metrics.status(),
         }
