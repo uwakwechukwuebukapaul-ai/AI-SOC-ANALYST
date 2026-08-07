@@ -1,13 +1,16 @@
 """
 Sentinel DNA Runtime Agent Orchestrator
 
-Enterprise multi-agent coordination layer.
+Enterprise agent execution coordinator.
 
 Responsibilities:
 
-- coordinate AI agents
-- route intelligence tasks
-- track orchestration activity
+- register runtime agents
+- register lightweight capability agents
+- execute agent tasks
+- route capability execution
+- maintain execution count
+- expose runtime status
 """
 
 from __future__ import annotations
@@ -15,24 +18,13 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
-from .runtime_agent_manager import (
-    RuntimeAgentManager,
-)
-
-from .runtime_agent_runtime import (
-    RuntimeAgentRuntime,
-)
-
-from .task import (
-    Task,
-)
-
+from .runtime_agent_manager import RuntimeAgentManager
 
 
 @dataclass
 class RuntimeAgentOrchestrator:
     """
-    Multi-agent orchestration engine.
+    Coordinates runtime agent execution.
     """
 
     manager: RuntimeAgentManager = field(
@@ -42,54 +34,145 @@ class RuntimeAgentOrchestrator:
     executions: int = 0
 
 
+    @property
+    def scheduler(self):
+        """
+        Backward compatibility layer.
+
+        Older runtime components expect:
+
+        orchestrator.scheduler.agents
+        """
+
+        return self.manager
+
 
     def register_agent(
         self,
-        agent: RuntimeAgentRuntime,
+        agent: Any,
+        capabilities: list[str] | None = None,
     ) -> None:
         """
-        Register AI agent.
+        Register runtime agent.
+
+        Supports:
+
+        - full runtime agents
+        - lightweight gateway agents
         """
+
+        if isinstance(agent, str):
+
+            agent = SimpleRuntimeAgent(
+                name=agent,
+                capabilities=capabilities or [],
+            )
 
         self.manager.register(
             agent
         )
 
 
-
     def execute(
         self,
-        task: Task,
+        task: Any,
     ) -> Any:
         """
-        Delegate task to agent.
+        Execute runtime task.
         """
 
-        result = self.manager.execute(
+        agents = self.manager.find_capability(
+            task.capability
+        )
+
+        if not agents:
+
+            return {
+                "success": False,
+                "error": (
+                    f"No agent supports "
+                    f"{task.capability}"
+                ),
+            }
+
+
+        agent = agents[0]
+
+
+        result = agent.execute(
             task
         )
 
 
-        if result is not None:
-            self.executions += 1
+        self.executions += 1
 
 
         return result
 
 
-
-    def agent_count(self) -> int:
+    def submit(
+        self,
+        capability: str,
+        request: dict[str, Any],
+    ) -> str | None:
         """
-        Return number of agents.
+        Submit capability request.
+
+        Routing layer only.
+
+        Returns selected agent identity.
+
+        Execution is handled by execute().
+        """
+
+        agents = self.manager.find_capability(
+            capability
+        )
+
+
+        if not agents:
+
+            return None
+
+
+        agent = agents[0]
+
+
+        return self.manager._agent_name(
+            agent
+        )
+
+
+    def has_capability(
+        self,
+        capability: str,
+    ) -> bool:
+        """
+        Check capability availability.
+        """
+
+        return bool(
+            self.manager.find_capability(
+                capability
+            )
+        )
+
+
+    def agent_count(
+        self,
+    ) -> int:
+        """
+        Return registered agent count.
         """
 
         return self.manager.count()
 
 
-
-    def clear(self) -> None:
+    def clear(
+        self,
+    ) -> None:
         """
-        Reset orchestrator.
+        Clear runtime state.
         """
 
         self.manager.clear()
@@ -97,16 +180,62 @@ class RuntimeAgentOrchestrator:
         self.executions = 0
 
 
-
-    def status(self) -> dict[str, Any]:
+    def count(
+        self,
+    ) -> int:
         """
-        Return orchestrator status.
+        Return execution count.
+        """
+
+        return self.executions
+
+
+    def status(
+        self,
+    ) -> dict[str, Any]:
+        """
+        Runtime status.
+        """
+
+        manager_status = self.manager.status()
+
+
+        return {
+            "agents": manager_status.get(
+                "agents",
+                0,
+            ),
+
+            "executions": self.executions,
+
+            "manager": manager_status,
+        }
+
+
+
+@dataclass
+class SimpleRuntimeAgent:
+    """
+    Lightweight capability agent.
+
+    Used by gateway registration.
+    """
+
+    name: str
+
+    capabilities: list[str]
+
+
+    def execute(
+        self,
+        task: Any,
+    ) -> dict[str, Any]:
+        """
+        Execute lightweight task.
         """
 
         return {
-            "agents":
-                self.manager.status(),
-
-            "executions":
-                self.executions,
+            "success": True,
+            "capability": task.capability,
+            "request": task.payload,
         }
