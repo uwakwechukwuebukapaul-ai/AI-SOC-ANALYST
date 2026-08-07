@@ -1,7 +1,14 @@
 """
 Sentinel DNA Runtime Configuration
 
-Central runtime configuration layer.
+Central configuration service for Intelligence Runtime Framework.
+
+Responsibilities:
+
+- Runtime settings management
+- Configuration overrides
+- Environment profiles
+- Runtime configuration snapshots
 """
 
 from __future__ import annotations
@@ -13,66 +20,85 @@ from typing import Any
 @dataclass
 class RuntimeConfig:
     """
-    Enterprise runtime configuration.
+    Enterprise runtime configuration container.
     """
+
+    environment: str = "development"
 
     max_workers: int = 4
 
-    max_queue_size: int = 1000
+    task_timeout: int = 300
 
-    retry_enabled: bool = True
+    auto_start: bool = False
 
-    max_retries: int = 3
+    debug: bool = False
 
-    execution_timeout: int = 300
-
-    telemetry_enabled: bool = True
-
-    audit_enabled: bool = True
-
-    metadata: dict[str, Any] = field(
+    settings: dict[str, Any] = field(
         default_factory=dict
     )
 
 
-    def update(
+    def set(
         self,
         key: str,
         value: Any,
     ) -> None:
         """
-        Update configuration value.
+        Update runtime configuration.
         """
 
-        if hasattr(self, key):
-            setattr(
-                self,
-                key,
-                value,
-            )
-
-        else:
-            self.metadata[key] = value
+        self.settings[key] = value
 
 
 
     def get(
         self,
         key: str,
-        default=None,
-    ):
+        default: Any = None,
+    ) -> Any:
         """
         Retrieve configuration value.
         """
 
-        return getattr(
-            self,
+        return self.settings.get(
             key,
-            self.metadata.get(
-                key,
-                default
-            ),
+            default,
         )
+
+
+
+    def update(
+        self,
+        values: dict[str, Any],
+    ) -> None:
+        """
+        Bulk update configuration.
+        """
+
+        self.settings.update(
+            values
+        )
+
+
+
+    def reset(self) -> None:
+        """
+        Reset custom settings.
+        """
+
+        self.settings.clear()
+
+
+
+    def profile(
+        self,
+        environment: str,
+    ) -> None:
+        """
+        Change runtime profile.
+        """
+
+        self.environment = environment
 
 
 
@@ -82,12 +108,10 @@ class RuntimeConfig:
         """
 
         return {
+            "environment": self.environment,
             "max_workers": self.max_workers,
-            "max_queue_size": self.max_queue_size,
-            "retry_enabled": self.retry_enabled,
-            "max_retries": self.max_retries,
-            "execution_timeout": self.execution_timeout,
-            "telemetry_enabled": self.telemetry_enabled,
-            "audit_enabled": self.audit_enabled,
-            "metadata": self.metadata,
+            "task_timeout": self.task_timeout,
+            "auto_start": self.auto_start,
+            "debug": self.debug,
+            "settings": self.settings,
         }
