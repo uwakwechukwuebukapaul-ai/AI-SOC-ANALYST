@@ -1,100 +1,117 @@
+"""
+Runtime Pipeline Tests
+"""
+
 from services.intelligence.runtime.runtime_pipeline import (
-    PipelineStage,
     RuntimePipeline,
-    RuntimePipelineManager,
 )
 
-
-
-def test_pipeline_stage():
-
-    stage = PipelineStage(
-        name="normalize",
-        handler=lambda x: x + 1,
-    )
-
-    assert stage.execute(1) == 2
+from services.intelligence.runtime.task import Task
 
 
 
-def test_pipeline_execute():
+def create_task():
 
-    pipeline = RuntimePipeline(
-        name="test_pipeline"
+    return Task(
+        capability="analysis",
+        payload={
+            "value": 10
+        }
     )
 
 
-    pipeline.add_stage(
-        PipelineStage(
-            name="stage1",
-            handler=lambda x: x + 1,
-        )
+
+def test_pipeline_init():
+
+    pipeline = RuntimePipeline()
+
+    assert (
+        pipeline.size()
+        ==
+        0
     )
 
 
-    result = pipeline.execute(5)
 
+def test_submit():
 
-    assert result == 6
+    pipeline = RuntimePipeline()
 
+    pipeline.submit(
+        create_task()
+    )
 
-
-def test_register_pipeline():
-
-    manager = RuntimePipelineManager()
-
-
-    pipeline = RuntimePipeline(
-        name="analysis"
+    assert (
+        pipeline.size()
+        ==
+        1
     )
 
 
-    manager.register(
-        pipeline
+
+def test_register_handler():
+
+    pipeline = RuntimePipeline()
+
+    pipeline.register_handler(
+        "analysis",
+        lambda task: "completed"
+    )
+
+    assert (
+        "analysis"
+        in
+        pipeline.dispatcher.handlers
     )
 
 
-    assert "analysis" in manager.pipelines
 
+def test_execute():
 
+    pipeline = RuntimePipeline()
 
-def test_execute_pipeline():
-
-    manager = RuntimePipelineManager()
-
-
-    pipeline = RuntimePipeline(
-        name="test"
+    pipeline.register_handler(
+        "analysis",
+        lambda task: "completed"
     )
 
 
-    pipeline.add_stage(
-        PipelineStage(
-            name="step",
-            handler=lambda x: x * 2,
-        )
+    result = pipeline.execute(
+        create_task()
     )
 
 
-    manager.register(
-        pipeline
+    assert (
+        result.success
+        is True
     )
 
 
-    result = manager.execute(
-        "test",
-        5,
+
+def test_clear():
+
+    pipeline = RuntimePipeline()
+
+    pipeline.submit(
+        create_task()
+    )
+
+    pipeline.clear()
+
+    assert (
+        pipeline.size()
+        ==
+        0
     )
 
 
-    assert result == 10
 
+def test_status():
 
+    pipeline = RuntimePipeline()
 
-def test_to_dict():
+    result = pipeline.status()
 
-    manager = RuntimePipelineManager()
+    assert "tasks" in result
 
-    data = manager.to_dict()
-
-    assert "pipelines" in data
+    assert "dispatcher" in result

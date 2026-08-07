@@ -1,7 +1,16 @@
 """
 Sentinel DNA Runtime Pipeline
 
-Pipeline execution framework for intelligence workflows.
+Enterprise execution pipeline coordinator.
+
+Connects:
+Task
+ ↓
+Dispatcher
+ ↓
+Execution
+ ↓
+Result
 """
 
 from __future__ import annotations
@@ -9,168 +18,105 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any, Callable
 
-
-@dataclass
-class PipelineStage:
-    """
-    Individual pipeline execution stage.
-    """
-
-    name: str
-
-    handler: Callable
-
-    enabled: bool = True
-
-
-    def execute(
-        self,
-        data: Any,
-    ) -> Any:
-        """
-        Execute stage.
-        """
-
-        if not self.enabled:
-            return data
-
-        return self.handler(data)
-
+from .task import Task
+from .execution_result import ExecutionResult
+from .runtime_dispatcher import RuntimeDispatcher
 
 
 @dataclass
 class RuntimePipeline:
     """
     Runtime execution pipeline.
+
+    Responsibilities:
+    - task submission
+    - capability routing
+    - execution tracking
+    - pipeline state reporting
     """
 
-    name: str
+    dispatcher: RuntimeDispatcher = field(
+        default_factory=RuntimeDispatcher
+    )
 
-    stages: list[PipelineStage] = field(
+    submitted_tasks: list[Task] = field(
         default_factory=list
     )
 
 
-    def add_stage(
+    def submit(
         self,
-        stage: PipelineStage,
+        task: Task,
     ) -> None:
         """
-        Add execution stage.
+        Add task to pipeline.
         """
 
-        self.stages.append(stage)
+        self.submitted_tasks.append(
+            task
+        )
 
 
 
-    def execute(
+    def register_handler(
         self,
-        data: Any,
-    ) -> Any:
+        capability: str,
+        handler: Callable,
+    ) -> None:
         """
-        Execute pipeline stages.
+        Register execution capability.
         """
 
-        result = data
-
-
-        for stage in self.stages:
-
-            result = stage.execute(
-                result
-            )
-
-
-        return result
-
-
-
-    def clear(self):
-
-        self.stages.clear()
-
-
-
-    def to_dict(self):
-
-        return {
-            "name": self.name,
-            "stages": [
-                {
-                    "name": stage.name,
-                    "enabled": stage.enabled,
-                }
-                for stage in self.stages
-            ],
-        }
-
-
-
-class RuntimePipelineManager:
-    """
-    Pipeline registry.
-    """
-
-    def __init__(self):
-
-        self.pipelines: dict[
-            str,
-            RuntimePipeline
-        ] = {}
-
-
-
-    def register(
-        self,
-        pipeline: RuntimePipeline,
-    ):
-
-        self.pipelines[pipeline.name] = pipeline
-
-
-
-    def remove(
-        self,
-        name: str,
-    ):
-
-        self.pipelines.pop(
-            name,
-            None,
+        self.dispatcher.register_handler(
+            capability,
+            handler,
         )
 
 
 
     def execute(
         self,
-        name: str,
-        data: Any,
-    ):
+        task: Task,
+    ) -> ExecutionResult:
+        """
+        Execute pipeline task.
+        """
 
-        pipeline = self.pipelines.get(name)
-
-
-        if not pipeline:
-            return None
-
-
-        return pipeline.execute(
-            data
+        return self.dispatcher.dispatch(
+            task
         )
 
 
 
-    def clear(self):
+    def size(self) -> int:
+        """
+        Number of submitted tasks.
+        """
 
-        self.pipelines.clear()
+        return len(
+            self.submitted_tasks
+        )
 
 
 
-    def to_dict(self):
+    def clear(self) -> None:
+        """
+        Clear pipeline queue.
+        """
+
+        self.submitted_tasks.clear()
+
+
+
+    def status(self) -> dict[str, Any]:
+        """
+        Pipeline state.
+        """
 
         return {
-            "pipelines": [
-                pipeline.to_dict()
-                for pipeline in self.pipelines.values()
-            ]
+            "tasks":
+                self.size(),
+
+            "dispatcher":
+                self.dispatcher.status(),
         }
