@@ -81,6 +81,9 @@ class AutonomousAgentCoordinator:
         }
 
     def system_status(self):
+        """
+        Internal status provider.
+        """
 
         return {
             "agents": len(self.agents),
@@ -88,6 +91,19 @@ class AutonomousAgentCoordinator:
             "workflows": len(self.workflow_history),
             "status": "operational"
         }
+
+    def get_system_status(self):
+        """
+        Public integration API.
+
+        Used by:
+        - integration tests
+        - health monitoring
+        - platform bootstrap
+        - orchestration services
+        """
+
+        return self.system_status()
 
     def clear_history(self):
 
