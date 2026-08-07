@@ -15,8 +15,9 @@ class IntelligenceCoordinator:
     """
     Coordinates independent intelligence providers.
 
-    Providers are registered by capability name and invoked
-    against the same investigation payload.
+    Providers can either be executed directly through
+    ``analyze`` or pre-executed results can be supplied
+    through ``analyze_results``.
     """
 
     def __init__(
@@ -84,7 +85,10 @@ class IntelligenceCoordinator:
         self,
         investigation: dict[str, Any],
     ) -> dict[str, Any]:
-        if not isinstance(investigation, dict):
+        if not isinstance(
+            investigation,
+            dict,
+        ):
             raise TypeError(
                 "Investigation must be a dictionary."
             )
@@ -94,10 +98,17 @@ class IntelligenceCoordinator:
             dict[str, Any],
         ] = {}
 
-        for name, provider in self._providers.items():
-            result = provider(investigation)
+        for name, provider in (
+            self._providers.items()
+        ):
+            result = provider(
+                investigation
+            )
 
-            if not isinstance(result, dict):
+            if not isinstance(
+                result,
+                dict,
+            ):
                 raise TypeError(
                     f"Provider '{name}' must "
                     "return a dictionary."
@@ -105,9 +116,59 @@ class IntelligenceCoordinator:
 
             intelligence[name] = result
 
-        correlation = self.correlator.correlate(
+        return self.analyze_results(
             investigation,
             intelligence,
+        )
+
+    def analyze_results(
+        self,
+        investigation: dict[str, Any],
+        intelligence: dict[
+            str,
+            dict[str, Any],
+        ],
+    ) -> dict[str, Any]:
+        """
+        Analyze already-executed intelligence results.
+
+        This is the critical boundary between runtime
+        execution and intelligence reasoning.
+        """
+
+        if not isinstance(
+            investigation,
+            dict,
+        ):
+            raise TypeError(
+                "Investigation must be a dictionary."
+            )
+
+        if not isinstance(
+            intelligence,
+            dict,
+        ):
+            raise TypeError(
+                "Intelligence must be a dictionary."
+            )
+
+        for name, result in (
+            intelligence.items()
+        ):
+            if not isinstance(
+                result,
+                dict,
+            ):
+                raise TypeError(
+                    f"Intelligence result "
+                    f"'{name}' must be a dictionary."
+                )
+
+        correlation = (
+            self.correlator.correlate(
+                investigation,
+                intelligence,
+            )
         )
 
         confidence = (

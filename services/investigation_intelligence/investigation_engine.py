@@ -16,8 +16,9 @@ class InvestigationEngine:
     High-level entry point for unified investigation
     intelligence.
 
-    This engine intentionally remains independent from
-    individual intelligence-service implementations.
+    The engine supports both direct provider execution
+    and analysis of intelligence results that were already
+    executed by the Investigation Runtime.
     """
 
     def __init__(
@@ -43,13 +44,43 @@ class InvestigationEngine:
         self,
         investigation: dict[str, Any],
     ) -> dict[str, Any]:
-        if not isinstance(investigation, dict):
+        if not isinstance(
+            investigation,
+            dict,
+        ):
             raise TypeError(
                 "Investigation must be a dictionary."
             )
 
         result = self.coordinator.analyze(
             investigation
+        )
+
+        return {
+            "type": "investigation_intelligence",
+            "status": "completed",
+            "investigation": investigation,
+            **result,
+        }
+
+    def analyze_results(
+        self,
+        investigation: dict[str, Any],
+        intelligence: dict[
+            str,
+            dict[str, Any],
+        ],
+    ) -> dict[str, Any]:
+        """
+        Analyze intelligence results produced by the
+        Investigation Runtime.
+        """
+
+        result = (
+            self.coordinator.analyze_results(
+                investigation,
+                intelligence,
+            )
         )
 
         return {
