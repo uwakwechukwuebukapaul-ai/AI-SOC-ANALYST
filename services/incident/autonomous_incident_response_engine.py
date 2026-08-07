@@ -10,7 +10,7 @@ Responsible for:
 - Post incident learning signals
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 class AutonomousIncidentResponseEngine:
@@ -26,7 +26,7 @@ class AutonomousIncidentResponseEngine:
             "category": incident_data.get("category", "unknown"),
             "severity": self.calculate_severity(incident_data),
             "status": "open",
-            "created_at": datetime.utcnow().isoformat()
+            "created_at": datetime.now(timezone.utc).isoformat()
         }
 
         self.incidents.append(incident)

@@ -11,7 +11,7 @@ Responsibilities:
 - Track orchestration history
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 class AutonomousSecurityAgentOrchestrator:
@@ -29,7 +29,7 @@ class AutonomousSecurityAgentOrchestrator:
             "capability": capability,
             "priority": priority,
             "status": "available",
-            "registered_at": datetime.utcnow().isoformat()
+            "registered_at": datetime.now(timezone.utc).isoformat()
         }
 
         self.agents[agent_id] = agent
@@ -67,7 +67,7 @@ class AutonomousSecurityAgentOrchestrator:
             "required_capability": required_capability,
             "assigned_agent": agent["agent_id"] if agent else None,
             "status": "assigned" if agent else "pending",
-            "created_at": datetime.utcnow().isoformat()
+            "created_at": datetime.now(timezone.utc).isoformat()
         }
 
         self.missions.append(mission)
@@ -82,7 +82,7 @@ class AutonomousSecurityAgentOrchestrator:
             if mission["mission_id"] == mission_id:
 
                 mission["status"] = "completed"
-                mission["completed_at"] = datetime.utcnow().isoformat()
+                mission["completed_at"] = datetime.now(timezone.utc).isoformat()
 
                 return mission
 
@@ -102,7 +102,7 @@ class AutonomousSecurityAgentOrchestrator:
                     if a["status"] == "available"
                 ]
             ),
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat()
         }
 
     def generate_strategy(self, objective):
@@ -115,7 +115,7 @@ class AutonomousSecurityAgentOrchestrator:
                 "coordinate response actions",
                 "evaluate outcome"
             ],
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat()
         }
 
     def orchestration_history(self):

@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 class AutonomousAgentCoordinator:
@@ -13,7 +13,7 @@ class AutonomousAgentCoordinator:
             "agent_id": agent_id,
             "agent_type": agent_type,
             "status": "registered",
-            "created_at": datetime.utcnow().isoformat()
+            "created_at": datetime.now(timezone.utc).isoformat()
         }
 
         self.agents[agent_id] = agent
@@ -34,7 +34,7 @@ class AutonomousAgentCoordinator:
             "agent_id": agent_id,
             "task": task,
             "status": "assigned",
-            "created_at": datetime.utcnow().isoformat()
+            "created_at": datetime.now(timezone.utc).isoformat()
         }
 
         self.tasks.append(assignment)
@@ -47,7 +47,7 @@ class AutonomousAgentCoordinator:
             "workflow": workflow,
             "steps": [],
             "status": "completed",
-            "created_at": datetime.utcnow().isoformat()
+            "created_at": datetime.now(timezone.utc).isoformat()
         }
 
         for step in workflow:

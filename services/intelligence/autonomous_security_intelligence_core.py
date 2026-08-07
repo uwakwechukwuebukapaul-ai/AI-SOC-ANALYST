@@ -13,7 +13,7 @@ Responsibilities:
 """
 
 
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 class AutonomousSecurityIntelligenceCore:
@@ -29,7 +29,7 @@ class AutonomousSecurityIntelligenceCore:
             "name": name,
             "category": category,
             "status": "active",
-            "registered_at": datetime.utcnow().isoformat()
+            "registered_at": datetime.now(timezone.utc).isoformat()
         }
 
         self.components[component_id] = component
@@ -55,7 +55,7 @@ class AutonomousSecurityIntelligenceCore:
             "event": event,
             "risk_score": risk_score,
             "risk_level": self._risk_level(risk_score),
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat()
         }
 
         return analysis
@@ -79,7 +79,7 @@ class AutonomousSecurityIntelligenceCore:
             "confidence": self._confidence(
                 analysis["risk_score"]
             ),
-            "created_at": datetime.utcnow().isoformat()
+            "created_at": datetime.now(timezone.utc).isoformat()
         }
 
         self.decisions.append(decision)
@@ -103,7 +103,7 @@ class AutonomousSecurityIntelligenceCore:
                 "security_agent"
             ),
             "action": action,
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat()
         }
 
         return assignment
@@ -126,7 +126,7 @@ class AutonomousSecurityIntelligenceCore:
             "decision": decision,
             "assignment": assignment,
             "status": "completed",
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat()
         }
 
         self.cycles.append(cycle)
@@ -138,7 +138,7 @@ class AutonomousSecurityIntelligenceCore:
         record = {
             "cycle_id": cycle_id,
             "feedback": feedback,
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat()
         }
 
         return record

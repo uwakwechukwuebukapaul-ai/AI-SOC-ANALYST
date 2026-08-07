@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 class AutonomousSecurityCommandCenterEngine:
@@ -20,7 +20,7 @@ class AutonomousSecurityCommandCenterEngine:
             "type": engine_type,
             "capabilities": capabilities,
             "status": "active",
-            "registered_at": datetime.utcnow().isoformat()
+            "registered_at": datetime.now(timezone.utc).isoformat()
         }
 
         self.engines[engine_name] = engine
@@ -29,7 +29,7 @@ class AutonomousSecurityCommandCenterEngine:
             {
                 "action": "register_engine",
                 "engine": engine_name,
-                "timestamp": datetime.utcnow().isoformat()
+                "timestamp": datetime.now(timezone.utc).isoformat()
             }
         )
 
@@ -54,14 +54,14 @@ class AutonomousSecurityCommandCenterEngine:
             "risk_score": risk_score,
             "active_incidents": active_incidents,
             "identified_threats": threats,
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat()
         }
 
         self.command_history.append(
             {
                 "action": "security_analysis",
                 "result": analysis,
-                "timestamp": datetime.utcnow().isoformat()
+                "timestamp": datetime.now(timezone.utc).isoformat()
             }
         )
 
@@ -73,7 +73,7 @@ class AutonomousSecurityCommandCenterEngine:
             "target_engine": target_engine,
             "objective": objective,
             "status": "initiated",
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat()
         }
 
         self.command_history.append(
@@ -119,7 +119,7 @@ class AutonomousSecurityCommandCenterEngine:
                 ["collect additional intelligence"]
             ),
             "confidence": 0.92,
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat()
         }
 
         self.command_history.append(

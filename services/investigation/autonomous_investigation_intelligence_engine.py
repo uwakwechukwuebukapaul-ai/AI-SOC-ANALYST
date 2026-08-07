@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 class AutonomousInvestigationIntelligenceEngine:
@@ -23,7 +23,7 @@ class AutonomousInvestigationIntelligenceEngine:
             "alert_type": alert_type,
             "severity": severity,
             "status": "active",
-            "created_at": datetime.utcnow().isoformat()
+            "created_at": datetime.now(timezone.utc).isoformat()
         }
 
         self.investigations.append(investigation)

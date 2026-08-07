@@ -7,7 +7,7 @@ defense readiness, and autonomous improvement recommendations.
 Part of Sentinel DNA autonomous intelligence layer.
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 class AutonomousSecurityDigitalTwinEngine:
@@ -22,7 +22,7 @@ class AutonomousSecurityDigitalTwinEngine:
             "asset_id": asset_id,
             "asset_type": asset_type,
             "criticality": criticality,
-            "created_at": datetime.utcnow().isoformat()
+            "created_at": datetime.now(timezone.utc).isoformat()
         }
 
         self.assets[asset_id] = asset
@@ -44,7 +44,7 @@ class AutonomousSecurityDigitalTwinEngine:
             "scenario_id": scenario_id,
             "technique": technique,
             "severity": severity,
-            "created_at": datetime.utcnow().isoformat()
+            "created_at": datetime.now(timezone.utc).isoformat()
         }
 
         self.attack_scenarios[scenario_id] = scenario
@@ -72,7 +72,7 @@ class AutonomousSecurityDigitalTwinEngine:
                 scenario
             ),
             "status": "completed",
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat()
         }
 
         self.simulations.append(simulation)
@@ -108,7 +108,7 @@ class AutonomousSecurityDigitalTwinEngine:
                 "Strengthen critical asset protection"
             ],
             "confidence": 0.92,
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat()
         }
 
         self.history.append({

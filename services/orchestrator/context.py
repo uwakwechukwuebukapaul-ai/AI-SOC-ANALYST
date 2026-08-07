@@ -17,7 +17,7 @@ def utc_now() -> datetime:
     """
     Returns timezone-aware UTC datetime.
 
-    Replaces deprecated datetime.utcnow().
+    Replaces deprecated datetime.now(timezone.utc).
     """
     return datetime.now(timezone.utc)
 

@@ -12,7 +12,7 @@ Responsibilities:
 - Maintain supervisor history
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 class AutonomousSecurityAgentSupervisor:
@@ -30,7 +30,7 @@ class AutonomousSecurityAgentSupervisor:
             "role": role,
             "status": "healthy",
             "confidence": 1.0,
-            "registered_at": datetime.utcnow().isoformat()
+            "registered_at": datetime.now(timezone.utc).isoformat()
         }
 
         self.agents[agent_id] = agent
@@ -38,7 +38,7 @@ class AutonomousSecurityAgentSupervisor:
         self.history.append({
             "event": "agent_registered",
             "agent_id": agent_id,
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat()
         })
 
         return agent
@@ -61,7 +61,7 @@ class AutonomousSecurityAgentSupervisor:
             "agent_id": agent_id,
             "status": status,
             "confidence": confidence,
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat()
         }
 
         self.events.append(event)
@@ -92,7 +92,7 @@ class AutonomousSecurityAgentSupervisor:
             "agent_id": agent_id,
             "health_score": health_score,
             "condition": condition,
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat()
         }
 
     def detect_failures(self):
@@ -130,7 +130,7 @@ class AutonomousSecurityAgentSupervisor:
         recovery = {
             "agent_id": agent_id,
             "action": action,
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat()
         }
 
         self.history.append(recovery)
@@ -149,7 +149,7 @@ class AutonomousSecurityAgentSupervisor:
                 ]
             ),
             "events": len(self.events),
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat()
         }
 
     def supervisor_history(self):

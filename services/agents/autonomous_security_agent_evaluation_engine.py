@@ -12,7 +12,7 @@ Responsibilities:
 - Maintain evaluation history
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 class AutonomousSecurityAgentEvaluationEngine:
@@ -32,7 +32,7 @@ class AutonomousSecurityAgentEvaluationEngine:
             "successful_missions": 0,
             "accuracy": 0,
             "confidence": 0,
-            "registered_at": datetime.utcnow().isoformat()
+            "registered_at": datetime.now(timezone.utc).isoformat()
         }
 
         self.agents[agent_id] = agent
@@ -40,7 +40,7 @@ class AutonomousSecurityAgentEvaluationEngine:
         self.history.append({
             "event": "agent_registered",
             "agent_id": agent_id,
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat()
         })
 
         return agent
@@ -74,7 +74,7 @@ class AutonomousSecurityAgentEvaluationEngine:
             "success": success,
             "accuracy": accuracy,
             "confidence": confidence,
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat()
         }
 
         self.evaluations.append(evaluation)
@@ -144,7 +144,7 @@ class AutonomousSecurityAgentEvaluationEngine:
             "agent_id": agent_id,
             "quality": quality,
             "score": score,
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat()
         }
 
     def generate_improvement_recommendation(self, agent_id):
@@ -168,7 +168,7 @@ class AutonomousSecurityAgentEvaluationEngine:
         result = {
             "agent_id": agent_id,
             "recommendation": recommendation,
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat()
         }
 
         self.history.append(result)

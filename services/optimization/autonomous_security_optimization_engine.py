@@ -3,6 +3,7 @@ Sentinel DNA
 Autonomous Security Optimization Intelligence Engine
 
 Purpose:
+
 - Analyze evaluation feedback
 - Identify weak security capabilities
 - Generate optimization recommendations
@@ -10,8 +11,7 @@ Purpose:
 - Maintain optimization history
 """
 
-
-from datetime import datetime
+from datetime import datetime, timezone
 from uuid import uuid4
 
 
@@ -48,7 +48,7 @@ class AutonomousSecurityOptimizationEngine:
                 "weaknesses",
                 []
             ),
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat()
         }
 
         self.optimization_history.append(analysis)
@@ -128,7 +128,7 @@ class AutonomousSecurityOptimizationEngine:
                 "increase agent intelligence"
             ],
             "source": optimization_data,
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat()
         }
 
         self.optimization_history.append(plan)

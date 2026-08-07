@@ -12,7 +12,7 @@ Responsibilities:
 - Provide runtime visibility
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 class AutonomousSecurityAgentRuntime:
@@ -27,7 +27,7 @@ class AutonomousSecurityAgentRuntime:
             "name": name,
             "capability": capability,
             "status": "active",
-            "registered_at": datetime.utcnow().isoformat()
+            "registered_at": datetime.now(timezone.utc).isoformat()
         }
 
         self.agents[agent_id] = agent
@@ -52,7 +52,7 @@ class AutonomousSecurityAgentRuntime:
             "mission": mission,
             "target": target,
             "result": "completed",
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat()
         }
 
         self.execution_history.append(execution)
@@ -74,7 +74,7 @@ class AutonomousSecurityAgentRuntime:
             "status": agent["status"],
             "capability": agent["capability"],
             "health": "healthy",
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat()
         }
 
     def coordinate_agents(self, mission):
@@ -85,7 +85,7 @@ class AutonomousSecurityAgentRuntime:
             "mission": mission,
             "agents_assigned": active_agents,
             "coordination_status": "initiated",
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat()
         }
 
         return coordination
@@ -96,7 +96,7 @@ class AutonomousSecurityAgentRuntime:
             "total_agents": len(self.agents),
             "executions": len(self.execution_history),
             "agents": self.agents,
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat()
         }
 
     def history(self):

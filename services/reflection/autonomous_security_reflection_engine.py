@@ -10,7 +10,7 @@ Responsible for:
 """
 
 
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 class AutonomousSecurityReflectionEngine:
@@ -34,7 +34,7 @@ class AutonomousSecurityReflectionEngine:
             "incident": incident,
             "analysis": improvement,
             "confidence": score,
-            "created_at": datetime.utcnow().isoformat()
+            "created_at": datetime.now(timezone.utc).isoformat()
         }
 
         self.reflections.append(reflection)
@@ -55,7 +55,7 @@ class AutonomousSecurityReflectionEngine:
             "response": response,
             "insight": insight,
             "confidence": score,
-            "created_at": datetime.utcnow().isoformat()
+            "created_at": datetime.now(timezone.utc).isoformat()
         }
 
         self.reflections.append(reflection)
@@ -70,7 +70,7 @@ class AutonomousSecurityReflectionEngine:
                 "Optimize automated response actions",
                 "Increase intelligence correlation"
             ],
-            "created_at": datetime.utcnow().isoformat()
+            "created_at": datetime.now(timezone.utc).isoformat()
         }
 
         self.reflections.append(plan)
