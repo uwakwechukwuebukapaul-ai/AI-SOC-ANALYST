@@ -1,7 +1,14 @@
 """
 Sentinel DNA Runtime Dispatcher
 
-Routes scheduled tasks to execution workers.
+Enterprise runtime execution router.
+
+Responsibilities:
+
+- register handlers
+- dispatch messages
+- route capabilities
+- execution tracking
 """
 
 from __future__ import annotations
@@ -9,52 +16,27 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any, Callable
 
-from .task import Task
-from .execution_result import ExecutionResult
-from .worker import RuntimeWorker
-
 
 @dataclass
 class RuntimeDispatcher:
     """
-    Enterprise task dispatch layer.
-
-    Responsible for:
-    - worker registration
-    - task routing
-    - execution delegation
-    - dispatcher state reporting
+    Runtime message dispatcher.
     """
-
-    workers: dict[str, RuntimeWorker] = field(
-        default_factory=dict
-    )
 
     handlers: dict[str, Callable] = field(
         default_factory=dict
     )
 
-
-    def register_worker(
-        self,
-        worker_id: str,
-        worker: RuntimeWorker,
-    ) -> None:
-        """
-        Register runtime worker.
-        """
-
-        self.workers[worker_id] = worker
+    dispatched: int = 0
 
 
-
-    def register_handler(
+    def register(
         self,
         capability: str,
         handler: Callable,
     ) -> None:
         """
-        Register capability handler.
+        Register execution handler.
         """
 
         self.handlers[capability] = handler
@@ -63,52 +45,51 @@ class RuntimeDispatcher:
 
     def dispatch(
         self,
-        task: Task,
-    ) -> ExecutionResult:
+        capability: str,
+        payload: dict[str, Any],
+    ) -> Any:
         """
-        Dispatch task based on capability.
+        Dispatch message.
         """
 
         handler = self.handlers.get(
-            task.capability
+            capability
         )
 
         if handler is None:
-
-            return ExecutionResult.failure(
-                f"No handler for capability: {task.capability}"
+            raise ValueError(
+                f"No handler registered for {capability}"
             )
 
 
-        try:
+        self.dispatched += 1
 
-            result = handler(
-                task
-            )
-
-            return ExecutionResult.ok(
-                data={
-                    "result": result
-                }
-            )
-
-
-        except Exception as exc:
-
-            return ExecutionResult.failure(
-                str(exc)
-            )
-
-
-
-    def worker_count(self) -> int:
-        """
-        Return registered workers.
-        """
-
-        return len(
-            self.workers
+        return handler(
+            payload
         )
+
+
+
+    def exists(
+        self,
+        capability: str,
+    ) -> bool:
+        """
+        Check capability.
+        """
+
+        return capability in self.handlers
+
+
+
+    def clear(self) -> None:
+        """
+        Clear handlers.
+        """
+
+        self.handlers.clear()
+
+        self.dispatched = 0
 
 
 
@@ -118,11 +99,11 @@ class RuntimeDispatcher:
         """
 
         return {
-            "workers":
-                self.worker_count(),
-
             "handlers":
-                len(
-                    self.handlers
+                list(
+                    self.handlers.keys()
                 ),
+
+            "dispatched":
+                self.dispatched,
         }

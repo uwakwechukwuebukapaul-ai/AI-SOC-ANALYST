@@ -6,19 +6,6 @@ from services.intelligence.runtime.runtime_dispatcher import (
     RuntimeDispatcher,
 )
 
-from services.intelligence.runtime.task import Task
-
-
-
-def create_task():
-
-    return Task(
-        capability="test.capability",
-        payload={
-            "message": "hello"
-        }
-    )
-
 
 
 def test_dispatcher_init():
@@ -26,67 +13,113 @@ def test_dispatcher_init():
     dispatcher = RuntimeDispatcher()
 
     assert (
-        dispatcher.worker_count()
+        dispatcher.dispatched
         ==
         0
     )
 
 
 
-def test_register_handler():
+def test_register():
 
     dispatcher = RuntimeDispatcher()
 
 
-    dispatcher.register_handler(
-        "test.capability",
-        lambda task: "success"
+    handler = lambda data: data
+
+
+    dispatcher.register(
+        "analysis",
+        handler,
     )
 
 
     assert (
-        "test.capability"
-        in
-        dispatcher.handlers
-    )
-
-
-
-def test_dispatch_success():
-
-    dispatcher = RuntimeDispatcher()
-
-
-    dispatcher.register_handler(
-        "test.capability",
-        lambda task: "done"
-    )
-
-
-    result = dispatcher.dispatch(
-        create_task()
-    )
-
-
-    assert (
-        result.success
+        dispatcher.exists(
+            "analysis"
+        )
         is True
     )
 
 
 
-def test_dispatch_failure():
+def test_dispatch():
 
     dispatcher = RuntimeDispatcher()
 
 
+    def handler(data):
+        return {
+            "result":
+                data["value"]
+        }
+
+
+    dispatcher.register(
+        "test",
+        handler,
+    )
+
+
     result = dispatcher.dispatch(
-        create_task()
+        "test",
+        {
+            "value": 10
+        },
     )
 
 
     assert (
-        result.success
+        result["result"]
+        ==
+        10
+    )
+
+
+
+def test_counter():
+
+    dispatcher = RuntimeDispatcher()
+
+
+    dispatcher.register(
+        "task",
+        lambda x: x,
+    )
+
+
+    dispatcher.dispatch(
+        "task",
+        {},
+    )
+
+
+    assert (
+        dispatcher.dispatched
+        ==
+        1
+    )
+
+
+
+def test_clear():
+
+    dispatcher = RuntimeDispatcher()
+
+
+    dispatcher.register(
+        "test",
+        lambda x: x,
+    )
+
+
+    dispatcher.clear()
+
+
+    assert (
+        dispatcher.exists(
+            "test"
+        )
         is False
     )
 
@@ -96,9 +129,10 @@ def test_status():
 
     dispatcher = RuntimeDispatcher()
 
+
     result = dispatcher.status()
 
 
-    assert "workers" in result
-
     assert "handlers" in result
+
+    assert "dispatched" in result
