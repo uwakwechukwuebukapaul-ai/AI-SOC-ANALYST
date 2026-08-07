@@ -1,25 +1,22 @@
 """
 Sentinel DNA Runtime Pipeline
 
-Enterprise execution pipeline coordinator.
+Enterprise runtime processing pipeline.
 
-Connects:
-Task
- ↓
-Dispatcher
- ↓
-Execution
- ↓
-Result
+Responsibilities:
+
+- accept runtime tasks
+- process queued work
+- dispatch capabilities
+- track execution results
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Callable
+from typing import Any
 
-from .task import Task
-from .execution_result import ExecutionResult
+from .runtime_message_queue import RuntimeMessageQueue
 from .runtime_dispatcher import RuntimeDispatcher
 
 
@@ -27,96 +24,115 @@ from .runtime_dispatcher import RuntimeDispatcher
 class RuntimePipeline:
     """
     Runtime execution pipeline.
-
-    Responsibilities:
-    - task submission
-    - capability routing
-    - execution tracking
-    - pipeline state reporting
     """
+
+    queue: RuntimeMessageQueue = field(
+        default_factory=RuntimeMessageQueue
+    )
 
     dispatcher: RuntimeDispatcher = field(
         default_factory=RuntimeDispatcher
     )
 
-    submitted_tasks: list[Task] = field(
-        default_factory=list
-    )
-
-
-    def submit(
-        self,
-        task: Task,
-    ) -> None:
-        """
-        Add task to pipeline.
-        """
-
-        self.submitted_tasks.append(
-            task
-        )
-
+    processed: int = 0
 
 
     def register_handler(
         self,
         capability: str,
-        handler: Callable,
+        handler,
     ) -> None:
         """
         Register execution capability.
         """
 
-        self.dispatcher.register_handler(
+        self.dispatcher.register(
             capability,
             handler,
         )
 
 
 
-    def execute(
+    def submit(
         self,
-        task: Task,
-    ) -> ExecutionResult:
+        capability: str,
+        payload: dict[str, Any],
+    ) -> None:
         """
-        Execute pipeline task.
+        Submit runtime task.
         """
 
-        return self.dispatcher.dispatch(
-            task
+        self.queue.enqueue(
+            {
+                "capability":
+                    capability,
+
+                "payload":
+                    payload,
+            }
         )
+
+
+
+    def process(self) -> Any:
+        """
+        Process next queued task.
+        """
+
+        message = self.queue.dequeue()
+
+
+        if message is None:
+            return None
+
+
+        result = self.dispatcher.dispatch(
+            message["capability"],
+            message["payload"],
+        )
+
+
+        self.processed += 1
+
+
+        return result
 
 
 
     def size(self) -> int:
         """
-        Number of submitted tasks.
+        Queue size.
         """
 
-        return len(
-            self.submitted_tasks
-        )
+        return self.queue.size()
 
 
 
     def clear(self) -> None:
         """
-        Clear pipeline queue.
+        Reset pipeline.
         """
 
-        self.submitted_tasks.clear()
+        self.queue.clear()
+
+        self.processed = 0
 
 
 
     def status(self) -> dict[str, Any]:
         """
-        Pipeline state.
+        Pipeline status.
         """
 
         return {
-            "tasks":
-                self.size(),
+            "queued":
+                self.queue.size(),
 
-            "dispatcher":
-                self.dispatcher.status(),
+            "processed":
+                self.processed,
+
+            "handlers":
+                len(
+                    self.dispatcher.handlers
+                ),
         }

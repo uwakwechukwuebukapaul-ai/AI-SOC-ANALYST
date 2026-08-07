@@ -6,19 +6,6 @@ from services.intelligence.runtime.runtime_pipeline import (
     RuntimePipeline,
 )
 
-from services.intelligence.runtime.task import Task
-
-
-
-def create_task():
-
-    return Task(
-        capability="analysis",
-        payload={
-            "value": 10
-        }
-    )
-
 
 
 def test_pipeline_init():
@@ -26,9 +13,29 @@ def test_pipeline_init():
     pipeline = RuntimePipeline()
 
     assert (
-        pipeline.size()
+        pipeline.processed
         ==
         0
+    )
+
+
+
+def test_register_handler():
+
+    pipeline = RuntimePipeline()
+
+
+    pipeline.register_handler(
+        "analysis",
+        lambda data: data,
+    )
+
+
+    assert (
+        pipeline.dispatcher.exists(
+            "analysis"
+        )
+        is True
     )
 
 
@@ -37,9 +44,14 @@ def test_submit():
 
     pipeline = RuntimePipeline()
 
+
     pipeline.submit(
-        create_task()
+        "test",
+        {
+            "value": 1
+        },
     )
+
 
     assert (
         pipeline.size()
@@ -49,41 +61,35 @@ def test_submit():
 
 
 
-def test_register_handler():
+def test_process():
 
     pipeline = RuntimePipeline()
 
-    pipeline.register_handler(
-        "analysis",
-        lambda task: "completed"
-    )
-
-    assert (
-        "analysis"
-        in
-        pipeline.dispatcher.handlers
-    )
-
-
-
-def test_execute():
-
-    pipeline = RuntimePipeline()
 
     pipeline.register_handler(
-        "analysis",
-        lambda task: "completed"
+        "test",
+        lambda data: {
+            "output":
+                data["value"]
+        },
     )
 
 
-    result = pipeline.execute(
-        create_task()
+    pipeline.submit(
+        "test",
+        {
+            "value": 5
+        },
     )
+
+
+    result = pipeline.process()
 
 
     assert (
-        result.success
-        is True
+        result["output"]
+        ==
+        5
     )
 
 
@@ -92,11 +98,15 @@ def test_clear():
 
     pipeline = RuntimePipeline()
 
+
     pipeline.submit(
-        create_task()
+        "task",
+        {},
     )
 
+
     pipeline.clear()
+
 
     assert (
         pipeline.size()
@@ -110,8 +120,10 @@ def test_status():
 
     pipeline = RuntimePipeline()
 
+
     result = pipeline.status()
 
-    assert "tasks" in result
 
-    assert "dispatcher" in result
+    assert "queued" in result
+
+    assert "processed" in result
