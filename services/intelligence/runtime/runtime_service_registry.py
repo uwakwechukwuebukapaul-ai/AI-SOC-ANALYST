@@ -1,14 +1,7 @@
 """
 Sentinel DNA Runtime Service Registry
 
-Enterprise service discovery layer.
-
-Responsibilities:
-
-- register runtime services
-- discover services
-- manage service metadata
-- expose registry state
+Enterprise runtime service discovery layer.
 """
 
 from __future__ import annotations
@@ -23,107 +16,86 @@ class RuntimeServiceRegistry:
     Runtime service registry.
     """
 
-    services: dict[str, dict[str, Any]] = field(
+    services: dict[str, Any] = field(
         default_factory=dict
     )
-
 
     def register(
         self,
         name: str,
         service: Any,
-        metadata: dict[str, Any] | None = None,
     ) -> None:
         """
-        Register runtime service.
+        Register a service.
         """
 
-        self.services[name] = {
-            "service": service,
-            "metadata": metadata or {},
-        }
+        self.services[name] = service
 
-
-
-    def get(
+    def resolve(
         self,
         name: str,
     ) -> Any | None:
         """
-        Retrieve service.
+        Resolve a registered service.
         """
 
-        entry = self.services.get(
-            name
-        )
-
-
-        if entry is None:
-            return None
-
-
-        return entry["service"]
-
-
+        return self.services.get(name)
 
     def exists(
         self,
         name: str,
     ) -> bool:
         """
-        Check service availability.
+        Check service existence.
         """
 
         return name in self.services
 
-
-
-    def unregister(
+    def remove(
         self,
         name: str,
     ) -> None:
         """
-        Remove service.
+        Remove a service.
         """
 
-        self.services.pop(
-            name,
-            None,
-        )
+        self.services.pop(name, None)
 
-
-
-    def clear(self) -> None:
+    def list_services(
+        self,
+    ) -> list[str]:
         """
-        Reset registry.
+        Return registered service names.
         """
 
-        self.services.clear()
+        return sorted(self.services.keys())
 
-
-
-    def count(self) -> int:
+    def count(
+        self,
+    ) -> int:
         """
         Return service count.
         """
 
-        return len(
-            self.services
-        )
+        return len(self.services)
 
-
-
-    def status(self) -> dict[str, Any]:
+    def clear(
+        self,
+    ) -> None:
         """
-        Registry status.
+        Clear all services.
+        """
+
+        self.services.clear()
+
+    def status(
+        self,
+    ) -> dict[str, Any]:
+        """
+        Runtime registry status.
         """
 
         return {
-            "services":
-                list(
-                    self.services.keys()
-                ),
-
-            "count":
-                self.count(),
+            "count": self.count(),
+            "services": self.list_services(),
         }
