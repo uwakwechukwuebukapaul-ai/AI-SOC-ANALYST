@@ -1,13 +1,13 @@
 """
 Sentinel DNA Runtime Controller
 
-High-level control plane for the Intelligence Runtime Framework.
+High-level control plane for the Intelligence Runtime.
 
 Responsible for:
-- Runtime startup
-- Runtime shutdown
-- Component coordination
+- Runtime lifecycle
+- Task submission
 - Runtime state management
+- Orchestrator coordination
 """
 
 from __future__ import annotations
@@ -16,82 +16,59 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from .orchestrator import RuntimeOrchestrator
-from .execution_pipeline import ExecutionPipeline
+from .task import Task
 
 
 @dataclass
 class RuntimeController:
     """
-    Runtime control plane.
+    Enterprise runtime control plane.
     """
 
     orchestrator: RuntimeOrchestrator = field(
         default_factory=RuntimeOrchestrator
     )
 
-    pipeline: ExecutionPipeline = field(
-        default_factory=ExecutionPipeline
-    )
-
-    active: bool = False
+    running: bool = False
 
 
     def start(self) -> None:
         """
-        Start runtime system.
+        Start runtime.
         """
 
+        self.running = True
+
         self.orchestrator.start()
-
-        self.active = True
-
 
 
     def stop(self) -> None:
         """
-        Stop runtime system.
+        Stop runtime.
         """
+
+        self.running = False
 
         self.orchestrator.stop()
 
-        self.active = False
 
-
-
-    def restart(self) -> None:
-        """
-        Restart runtime.
-        """
-
-        self.stop()
-
-        self.start()
-
-
-
-    def execute_pipeline(
+    def submit(
         self,
-        payload: Any,
-    ) -> Any:
+        task: Task,
+    ) -> None:
         """
-        Execute payload through pipeline.
+        Submit runtime task.
         """
 
-        return self.pipeline.execute(
-            payload
-        )
+        self.orchestrator.submit(task)
 
 
-
-    def status(self) -> dict:
+    def status(self) -> dict[str, Any]:
         """
         Runtime controller status.
         """
 
         return {
-            "active": self.active,
-            "orchestrator":
-                self.orchestrator.status(),
-            "pipeline":
-                self.pipeline.status(),
+            "running": self.running,
+            "orchestrator": self.orchestrator.status(),
         }

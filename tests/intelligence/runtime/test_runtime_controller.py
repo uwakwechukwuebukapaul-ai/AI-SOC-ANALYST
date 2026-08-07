@@ -1,18 +1,15 @@
-"""
-Tests for Runtime Controller
-"""
-
 from services.intelligence.runtime.runtime_controller import (
     RuntimeController,
 )
 
+from services.intelligence.runtime.task import Task
 
 
 def test_controller_init():
 
     controller = RuntimeController()
 
-    assert controller.active is False
+    assert controller.running is False
 
 
 
@@ -22,7 +19,7 @@ def test_start():
 
     controller.start()
 
-    assert controller.active is True
+    assert controller.running is True
 
 
 
@@ -34,38 +31,24 @@ def test_stop():
 
     controller.stop()
 
-    assert controller.active is False
+    assert controller.running is False
 
 
 
-def test_restart():
-
-    controller = RuntimeController()
-
-    controller.start()
-
-    controller.restart()
-
-    assert controller.active is True
-
-
-
-def test_pipeline_execute():
+def test_submit():
 
     controller = RuntimeController()
 
-
-    controller.pipeline.add_stage(
-        lambda x: x + 1
+    task = Task(
+        capability="analysis",
+        payload={
+            "event": "test"
+        }
     )
 
+    controller.submit(task)
 
-    result = controller.execute_pipeline(
-        5
-    )
-
-
-    assert result == 6
+    assert controller.orchestrator.engine.queue.size() == 1
 
 
 
@@ -75,8 +58,5 @@ def test_status():
 
     status = controller.status()
 
-    assert "active" in status
-
+    assert "running" in status
     assert "orchestrator" in status
-
-    assert "pipeline" in status
