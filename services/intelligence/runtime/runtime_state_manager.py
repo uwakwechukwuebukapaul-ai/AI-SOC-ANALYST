@@ -1,13 +1,13 @@
 """
 Sentinel DNA Runtime State Manager
 
-Enterprise runtime state management layer.
+Enterprise runtime state layer.
 
 Responsibilities:
 
-- store runtime state
-- update execution state
-- retrieve operational context
+- store runtime states
+- retrieve execution context
+- update component state
 """
 
 from __future__ import annotations
@@ -16,101 +16,82 @@ from dataclasses import dataclass, field
 from typing import Any
 
 
-
 @dataclass
 class RuntimeStateManager:
     """
     Runtime state controller.
     """
 
-    states: dict[str, Any] = field(
+    states: dict[str, dict[str, Any]] = field(
         default_factory=dict
     )
 
 
-
-    def set(
+    def create(
         self,
-        key: str,
-        value: Any,
+        state_id: str,
+        state: dict[str, Any],
     ) -> None:
         """
-        Store state.
+        Create runtime state.
         """
 
-        self.states[key] = value
+        self.states[state_id] = state
 
 
 
     def get(
         self,
-        key: str,
-        default: Any = None,
-    ) -> Any:
+        state_id: str,
+    ) -> dict[str, Any] | None:
         """
         Retrieve state.
         """
 
         return self.states.get(
-            key,
-            default,
+            state_id
         )
 
 
 
     def update(
         self,
-        key: str,
-        values: dict[str, Any],
+        state_id: str,
+        updates: dict[str, Any],
     ) -> None:
         """
-        Update dictionary state.
+        Update existing state.
         """
 
-        current = self.states.get(
-            key,
-            {},
-        )
-
-
-        if not isinstance(
-            current,
-            dict,
-        ):
-            current = {}
-
-
-        current.update(
-            values
-        )
-
-
-        self.states[key] = current
+        if state_id in self.states:
+            self.states[state_id].update(
+                updates
+            )
 
 
 
     def exists(
         self,
-        key: str,
+        state_id: str,
     ) -> bool:
         """
         Check state existence.
         """
 
-        return key in self.states
+        return state_id in self.states
 
 
 
     def remove(
         self,
-        key: str,
+        state_id: str,
     ) -> None:
         """
         Remove state.
         """
 
         self.states.pop(
-            key,
+            state_id,
             None,
         )
 

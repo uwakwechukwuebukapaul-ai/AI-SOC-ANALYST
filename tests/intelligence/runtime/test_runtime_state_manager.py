@@ -20,53 +20,35 @@ def test_init():
 
 
 
-def test_set_get():
+def test_create():
 
     manager = RuntimeStateManager()
 
 
-    manager.set(
-        "case_001",
+    manager.create(
+        "agent_state",
         {
             "status":
-                "investigating"
+                "running"
         },
     )
 
 
-    result = manager.get(
-        "case_001"
-    )
-
-
     assert (
-        result["status"]
-        ==
-        "investigating"
+        manager.exists(
+            "agent_state"
+        )
+        is True
     )
 
 
 
-def test_default():
+def test_get():
 
     manager = RuntimeStateManager()
 
 
-    result = manager.get(
-        "missing"
-    )
-
-
-    assert result is None
-
-
-
-def test_update():
-
-    manager = RuntimeStateManager()
-
-
-    manager.set(
+    manager.create(
         "workflow",
         {
             "step":
@@ -75,21 +57,48 @@ def test_update():
     )
 
 
-    manager.update(
-        "workflow",
+    result = manager.get(
+        "workflow"
+    )
+
+
+    assert (
+        result["step"]
+        ==
+        1
+    )
+
+
+
+def test_update():
+
+    manager = RuntimeStateManager()
+
+
+    manager.create(
+        "case",
         {
-            "step":
-                2
+            "status":
+                "open"
+        },
+    )
+
+
+    manager.update(
+        "case",
+        {
+            "status":
+                "closed"
         },
     )
 
 
     assert (
         manager.get(
-            "workflow"
-        )["step"]
+            "case"
+        )["status"]
         ==
-        2
+        "closed"
     )
 
 
@@ -99,20 +108,20 @@ def test_remove():
     manager = RuntimeStateManager()
 
 
-    manager.set(
-        "temp",
-        True,
+    manager.create(
+        "test",
+        {},
     )
 
 
     manager.remove(
-        "temp"
+        "test"
     )
 
 
     assert (
         manager.exists(
-            "temp"
+            "test"
         )
         is False
     )
@@ -124,9 +133,9 @@ def test_clear():
     manager = RuntimeStateManager()
 
 
-    manager.set(
+    manager.create(
         "test",
-        True,
+        {},
     )
 
 
