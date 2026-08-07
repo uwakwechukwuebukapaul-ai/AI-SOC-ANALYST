@@ -1,0 +1,80 @@
+from services.intelligence.runtime.event_processor import (
+    EventProcessor
+)
+
+
+
+def test_processor_init():
+
+    processor = EventProcessor()
+
+    assert processor.handlers == {}
+
+    assert processor.history == []
+
+
+
+def test_register_event():
+
+    processor = EventProcessor()
+
+    def handler(data):
+        return data
+
+
+    processor.register(
+        "test",
+        handler,
+    )
+
+
+    assert "test" in processor.handlers
+
+
+
+def test_emit_event():
+
+    processor = EventProcessor()
+
+
+    processor.register(
+        "hello",
+        lambda x: x + 1
+    )
+
+
+    result = processor.emit(
+        "hello",
+        5,
+    )
+
+
+    assert result[0] == 6
+
+
+
+def test_event_history():
+
+    processor = EventProcessor()
+
+
+    processor.emit(
+        "system_start"
+    )
+
+
+    assert processor.event_count() == 1
+
+
+
+def test_to_dict():
+
+    processor = EventProcessor()
+
+
+    data = processor.to_dict()
+
+
+    assert "handlers" in data
+
+    assert "events" in data
