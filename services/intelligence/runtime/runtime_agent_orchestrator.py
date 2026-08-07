@@ -5,10 +5,9 @@ Enterprise multi-agent coordination layer.
 
 Responsibilities:
 
-- manage agent execution
-- route tasks to agents
-- coordinate scheduling
-- track assignments
+- coordinate AI agents
+- route intelligence tasks
+- track orchestration activity
 """
 
 from __future__ import annotations
@@ -16,77 +15,84 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
-from .runtime_agent_scheduler import RuntimeAgentScheduler
+from .runtime_agent_manager import (
+    RuntimeAgentManager,
+)
+
+from .runtime_agent_runtime import (
+    RuntimeAgentRuntime,
+)
+
+from .task import (
+    Task,
+)
+
 
 
 @dataclass
 class RuntimeAgentOrchestrator:
     """
-    Multi-agent orchestration service.
+    Multi-agent orchestration engine.
     """
 
-    scheduler: RuntimeAgentScheduler = field(
-        default_factory=RuntimeAgentScheduler
+    manager: RuntimeAgentManager = field(
+        default_factory=RuntimeAgentManager
     )
 
     executions: int = 0
 
 
+
     def register_agent(
         self,
-        agent_id: str,
-        capabilities: list[str],
+        agent: RuntimeAgentRuntime,
     ) -> None:
         """
         Register AI agent.
         """
 
-        self.scheduler.register_agent(
-            agent_id,
-            capabilities,
+        self.manager.register(
+            agent
         )
 
 
-    def submit(
+
+    def execute(
         self,
-        capability: str,
-        task: dict[str, Any],
-    ) -> str | None:
+        task: Task,
+    ) -> Any:
         """
-        Route task to agent.
+        Delegate task to agent.
         """
 
-        agent = self.scheduler.schedule(
-            capability,
-            task,
+        result = self.manager.execute(
+            task
         )
 
-        if agent:
+
+        if result is not None:
             self.executions += 1
 
-        return agent
+
+        return result
 
 
 
     def agent_count(self) -> int:
         """
-        Return registered agent count.
+        Return number of agents.
         """
 
-        return len(
-            self.scheduler.agents
-        )
+        return self.manager.count()
 
 
 
     def clear(self) -> None:
         """
-        Reset orchestration state.
+        Reset orchestrator.
         """
 
-        self.scheduler.agents.clear()
-
-        self.scheduler.assignments.clear()
+        self.manager.clear()
 
         self.executions = 0
 
@@ -94,16 +100,13 @@ class RuntimeAgentOrchestrator:
 
     def status(self) -> dict[str, Any]:
         """
-        Orchestrator status.
+        Return orchestrator status.
         """
 
         return {
             "agents":
-                self.agent_count(),
+                self.manager.status(),
 
             "executions":
                 self.executions,
-
-            "scheduler":
-                self.scheduler.status(),
         }

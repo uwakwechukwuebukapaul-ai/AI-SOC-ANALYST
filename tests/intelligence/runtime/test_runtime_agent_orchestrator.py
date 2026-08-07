@@ -6,6 +6,40 @@ from services.intelligence.runtime.runtime_agent_orchestrator import (
     RuntimeAgentOrchestrator,
 )
 
+from services.intelligence.runtime.runtime_agent_runtime import (
+    RuntimeAgentRuntime,
+)
+
+from services.intelligence.runtime.task import (
+    Task,
+)
+
+
+
+def create_agent():
+
+    agent = RuntimeAgentRuntime(
+        "analysis_agent"
+    )
+
+    agent.add_capability(
+        "analysis"
+    )
+
+    return agent
+
+
+
+def create_task():
+
+    return Task(
+        capability="analysis",
+        payload={
+            "test":
+                True
+        },
+    )
+
 
 
 def test_init():
@@ -13,7 +47,7 @@ def test_init():
     orchestrator = RuntimeAgentOrchestrator()
 
     assert (
-        orchestrator.executions
+        orchestrator.agent_count()
         ==
         0
     )
@@ -26,10 +60,7 @@ def test_register_agent():
 
 
     orchestrator.register_agent(
-        "investigation_agent",
-        [
-            "investigate",
-        ],
+        create_agent()
     )
 
 
@@ -41,47 +72,46 @@ def test_register_agent():
 
 
 
-def test_submit():
+def test_execute():
 
     orchestrator = RuntimeAgentOrchestrator()
 
 
-    orchestrator.register_agent(
-        "intel_agent",
-        [
-            "ioc_lookup",
-        ],
+    agent = create_agent()
+
+
+    agent.gateway.access.grant(
+        "analysis_agent",
+        "execute",
     )
 
 
-    result = orchestrator.submit(
-        "ioc_lookup",
-        {
-            "ioc": "example.com"
+    agent.gateway.execution.start()
+
+
+    agent.gateway.execution.workers.executor.register(
+        "analysis",
+        lambda data: {
+            "done":
+                True
         },
     )
 
 
+    orchestrator.register_agent(
+        agent
+    )
+
+
+    result = orchestrator.execute(
+        create_task()
+    )
+
+
     assert (
-        result
-        ==
-        "intel_agent"
+        result["done"]
+        is True
     )
-
-
-
-def test_missing_agent():
-
-    orchestrator = RuntimeAgentOrchestrator()
-
-
-    result = orchestrator.submit(
-        "unknown",
-        {},
-    )
-
-
-    assert result is None
 
 
 
@@ -91,8 +121,7 @@ def test_clear():
 
 
     orchestrator.register_agent(
-        "agent",
-        [],
+        create_agent()
     )
 
 
