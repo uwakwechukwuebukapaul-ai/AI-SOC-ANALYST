@@ -26,17 +26,33 @@ def test_register():
 
 
     manager.register(
-        "virustotal",
-        {
-            "type":
-                "threat_intel"
-        },
+        "threat_intel",
+        "intelligence",
     )
 
 
     assert (
-        manager.active(
-            "virustotal"
+        manager.count()
+        ==
+        1
+    )
+
+
+
+def test_enabled():
+
+    manager = RuntimePluginManager()
+
+
+    manager.register(
+        "connector",
+        "integration",
+    )
+
+
+    assert (
+        manager.enabled(
+            "connector"
         )
         is True
     )
@@ -49,19 +65,19 @@ def test_disable():
 
 
     manager.register(
-        "connector",
-        {},
+        "scanner",
+        "security",
     )
 
 
     manager.disable(
-        "connector"
+        "scanner"
     )
 
 
     assert (
-        manager.active(
-            "connector"
+        manager.enabled(
+            "scanner"
         )
         is False
     )
@@ -74,23 +90,20 @@ def test_enable():
 
 
     manager.register(
-        "connector",
-        {},
+        "engine",
+        "ai",
+        False,
     )
 
-
-    manager.disable(
-        "connector"
-    )
 
     manager.enable(
-        "connector"
+        "engine"
     )
 
 
     assert (
-        manager.active(
-            "connector"
+        manager.enabled(
+            "engine"
         )
         is True
     )
@@ -104,7 +117,7 @@ def test_remove():
 
     manager.register(
         "test",
-        {},
+        "module",
     )
 
 
@@ -114,10 +127,10 @@ def test_remove():
 
 
     assert (
-        manager.active(
+        manager.get(
             "test"
         )
-        is False
+        is None
     )
 
 
@@ -129,7 +142,7 @@ def test_clear():
 
     manager.register(
         "test",
-        {},
+        "module",
     )
 
 

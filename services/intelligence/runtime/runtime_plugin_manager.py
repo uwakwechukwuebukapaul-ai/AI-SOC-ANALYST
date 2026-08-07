@@ -1,13 +1,13 @@
 """
 Sentinel DNA Runtime Plugin Manager
 
-Enterprise extension management layer.
+Enterprise runtime extension layer.
 
 Responsibilities:
 
-- register runtime plugins
+- register plugins
 - manage plugin lifecycle
-- expose plugin capabilities
+- expose available extensions
 """
 
 from __future__ import annotations
@@ -20,7 +20,7 @@ from typing import Any
 @dataclass
 class RuntimePluginManager:
     """
-    Runtime plugin registry.
+    Runtime plugin controller.
     """
 
     plugins: dict[str, dict[str, Any]] = field(
@@ -32,18 +32,19 @@ class RuntimePluginManager:
     def register(
         self,
         name: str,
-        plugin: dict[str, Any],
+        plugin_type: str,
+        enabled: bool = True,
     ) -> None:
         """
-        Register plugin.
+        Register runtime plugin.
         """
 
         self.plugins[name] = {
-            "enabled":
-                True,
+            "type":
+                plugin_type,
 
-            "plugin":
-                plugin,
+            "enabled":
+                enabled,
         }
 
 
@@ -74,7 +75,7 @@ class RuntimePluginManager:
 
 
 
-    def active(
+    def enabled(
         self,
         name: str,
     ) -> bool:
@@ -92,6 +93,20 @@ class RuntimePluginManager:
 
 
         return plugin["enabled"]
+
+
+
+    def get(
+        self,
+        name: str,
+    ) -> dict[str, Any] | None:
+        """
+        Retrieve plugin.
+        """
+
+        return self.plugins.get(
+            name
+        )
 
 
 
