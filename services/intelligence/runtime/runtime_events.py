@@ -1,15 +1,20 @@
 """
 Sentinel DNA Runtime Events
 
-Internal runtime event management layer.
+Enterprise event streaming layer.
+
+Handles:
+- event publishing
+- subscriptions
+- event history
+- runtime communication
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
 from typing import Any, Callable
-import uuid
+from datetime import datetime, timezone
 
 
 @dataclass
@@ -18,126 +23,116 @@ class RuntimeEvent:
     Runtime event object.
     """
 
-    event_type: str
+    name: str
 
-    payload: dict[str, Any] = field(
-        default_factory=dict
-    )
-
-    event_id: str = field(
-        default_factory=lambda: str(uuid.uuid4())
-    )
+    payload: Any
 
     created_at: datetime = field(
-        default_factory=lambda: datetime.now(
-            timezone.utc
-        )
+        default_factory=lambda:
+        datetime.now(timezone.utc)
     )
 
 
-    def to_dict(self) -> dict[str, Any]:
-        return {
-            "event_id": self.event_id,
-            "event_type": self.event_type,
-            "payload": self.payload,
-            "created_at": self.created_at.isoformat(),
-        }
-
-
-
-class RuntimeEventManager:
+class RuntimeEventBus:
     """
-    Enterprise runtime event dispatcher.
+    Enterprise runtime event bus.
     """
 
     def __init__(self):
-
-        self.events: list[RuntimeEvent] = []
 
         self.listeners: dict[
             str,
             list[Callable]
         ] = {}
 
+        self.history: list[
+            RuntimeEvent
+        ] = []
+
+
+
+    def subscribe(
+        self,
+        event_name: str,
+        callback: Callable,
+    ) -> None:
+        """
+        Subscribe to event.
+        """
+
+        self.listeners.setdefault(
+            event_name,
+            []
+        ).append(
+            callback
+        )
+
 
 
     def publish(
         self,
-        event_type: str,
-        payload: dict[str, Any] | None = None,
+        event_name: str,
+        payload: Any = None,
     ) -> RuntimeEvent:
         """
         Publish runtime event.
         """
 
         event = RuntimeEvent(
-            event_type=event_type,
-            payload=payload or {},
+            name=event_name,
+            payload=payload,
         )
 
-        self.events.append(event)
+        self.history.append(
+            event
+        )
 
 
-        for listener in self.listeners.get(
-            event_type,
-            [],
+        for callback in self.listeners.get(
+            event_name,
+            []
         ):
-            listener(event)
+            callback(
+                event
+            )
 
 
         return event
 
 
 
-    def subscribe(
+    def get_history(
         self,
-        event_type: str,
-        callback: Callable,
-    ) -> None:
+    ) -> list[RuntimeEvent]:
         """
-        Subscribe listener.
+        Return event history.
         """
 
-        if event_type not in self.listeners:
-            self.listeners[event_type] = []
-
-
-        self.listeners[event_type].append(
-            callback
-        )
+        return self.history
 
 
 
     def clear(self) -> None:
         """
-        Remove events.
+        Clear events.
         """
 
-        self.events.clear()
+        self.history.clear()
 
 
 
-    def count(self) -> int:
+    def status(self) -> dict:
         """
-        Event count.
-        """
-
-        return len(self.events)
-
-
-
-    def to_dict(self) -> dict[str, Any]:
-        """
-        Export events.
+        Runtime event status.
         """
 
         return {
-            "events": [
-                event.to_dict()
-                for event in self.events
-            ],
-            "count": len(self.events),
-            "listeners": list(
-                self.listeners.keys()
-            ),
+            "events":
+                len(self.history),
+
+            "subscriptions":
+                sum(
+                    len(x)
+                    for x in self.listeners.values()
+                ),
         }

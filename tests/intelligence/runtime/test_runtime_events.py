@@ -1,58 +1,63 @@
 from services.intelligence.runtime.runtime_events import (
-    RuntimeEventManager,
+    RuntimeEventBus,
 )
 
 
 
-def test_event_manager_init():
+def test_event_bus_init():
 
-    manager = RuntimeEventManager()
+    bus = RuntimeEventBus()
 
-    assert manager.count() == 0
+    assert len(
+        bus.history
+    ) == 0
 
 
 
 def test_publish():
 
-    manager = RuntimeEventManager()
+    bus = RuntimeEventBus()
 
-    event = manager.publish(
-        "task_completed",
+
+    event = bus.publish(
+        "task.created",
         {
-            "task": "analysis"
+            "id": 1
         }
     )
 
-    assert event.event_type == "task_completed"
 
-    assert manager.count() == 1
+    assert event.name == "task.created"
+
+    assert len(
+        bus.history
+    ) == 1
 
 
 
 def test_subscribe():
 
-    manager = RuntimeEventManager()
+    bus = RuntimeEventBus()
 
     received = []
 
 
     def handler(event):
 
-        received.append(event)
+        received.append(
+            event
+        )
 
 
-
-    manager.subscribe(
+    bus.subscribe(
         "alert",
         handler,
     )
 
 
-    manager.publish(
+    bus.publish(
         "alert",
-        {
-            "severity": "high"
-        }
+        "test"
     )
 
 
@@ -60,25 +65,50 @@ def test_subscribe():
 
 
 
-def test_clear():
+def test_history():
 
-    manager = RuntimeEventManager()
+    bus = RuntimeEventBus()
 
-    manager.publish(
-        "test"
+
+    bus.publish(
+        "event"
     )
 
-    manager.clear()
 
-    assert manager.count() == 0
-
+    history = bus.get_history()
 
 
-def test_to_dict():
+    assert len(history) == 1
 
-    manager = RuntimeEventManager()
 
-    data = manager.to_dict()
 
-    assert "events" in data
-    assert "listeners" in data
+def test_clear():
+
+    bus = RuntimeEventBus()
+
+
+    bus.publish(
+        "event"
+    )
+
+
+    bus.clear()
+
+
+    assert len(
+        bus.history
+    ) == 0
+
+
+
+def test_status():
+
+    bus = RuntimeEventBus()
+
+
+    status = bus.status()
+
+
+    assert "events" in status
+
+    assert "subscriptions" in status
