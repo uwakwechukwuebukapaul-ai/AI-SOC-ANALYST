@@ -3,70 +3,86 @@ Sentinel DNA Runtime Intelligence Router
 
 Enterprise intelligence routing layer.
 
-Responsibilities:
+Supports:
 
-- analyze task requirements
-- select capable agents
-- route intelligence execution
+- agent based routing
+- capability based routing
+- handler execution
+- legacy pipeline compatibility
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, Callable
+
+from .task import Task
 
 from .runtime_agent_orchestrator import (
     RuntimeAgentOrchestrator,
 )
 
-from .task import (
-    Task,
-)
-
-
 
 @dataclass
 class RuntimeIntelligenceRouter:
     """
-    Intelligence routing engine.
+    Routes intelligence execution requests.
     """
 
     orchestrator: RuntimeAgentOrchestrator = field(
         default_factory=RuntimeAgentOrchestrator
     )
 
-    routes: int = 0
+    handlers: dict[str, Callable] = field(
+        default_factory=dict
+    )
 
+    routes: int = 0
 
 
     def register_agent(
         self,
-        agent,
+        agent: Any,
     ) -> None:
         """
-        Register intelligence agent.
+        Register runtime agent.
         """
 
         self.orchestrator.register_agent(
             agent
         )
 
-
-
-    def route(
-        self,
-        task: Task,
-    ) -> Any:
-        """
-        Route task to intelligence agent.
-        """
-
         self.routes += 1
 
 
-        return self.orchestrator.execute(
-            task
-        )
+
+    def register(
+        self,
+        capability,
+        handler=None,
+    ) -> None:
+        """
+        Register capability route.
+
+        Supports:
+
+        register(agent)
+
+        register(capability, handler)
+        """
+
+        if handler is None:
+
+            self.register_agent(
+                capability
+            )
+
+            return
+
+
+        self.handlers[capability] = handler
+
+        self.routes += 1
 
 
 
@@ -78,20 +94,83 @@ class RuntimeIntelligenceRouter:
         Check capability availability.
         """
 
-        agents = (
-            self.orchestrator.manager.find_capability(
-                capability
-            )
+        if capability in self.handlers:
+            return True
+
+
+        return self.orchestrator.has_capability(
+            capability
         )
 
-        return len(agents) > 0
 
 
-
-    def clear(self) -> None:
+    def route(
+        self,
+        capability_or_task,
+        payload=None,
+    ) -> Any:
         """
-        Reset router.
+        Route intelligence execution.
+
+        Supports:
+
+        route(Task)
+
+        route(
+            capability,
+            payload
+        )
         """
+
+        if isinstance(
+            capability_or_task,
+            Task,
+        ):
+
+            return self.orchestrator.execute(
+                capability_or_task
+            )
+
+
+        capability = capability_or_task
+
+
+        handler = self.handlers.get(
+            capability
+        )
+
+
+        if handler:
+
+            self.routes += 1
+
+            return handler(
+                payload
+            )
+
+
+        if self.orchestrator.has_capability(
+            capability
+        ):
+
+            return self.orchestrator.submit(
+                capability,
+                payload or {},
+            )
+
+
+        return None
+
+
+
+    def clear(
+        self,
+    ) -> None:
+        """
+        Clear routing state.
+        """
+
+        self.handlers.clear()
 
         self.orchestrator.clear()
 
@@ -99,15 +178,23 @@ class RuntimeIntelligenceRouter:
 
 
 
-    def status(self) -> dict[str, Any]:
+    def status(
+        self,
+    ) -> dict[str, Any]:
         """
         Router status.
         """
 
         return {
-            "routes":
-                self.routes,
+            "routes": self.routes,
+
+            "handlers": list(
+                self.handlers.keys()
+            ),
 
             "agents":
+                self.orchestrator.agent_count(),
+
+            "orchestrator":
                 self.orchestrator.status(),
         }
