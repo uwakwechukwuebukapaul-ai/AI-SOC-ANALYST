@@ -13,7 +13,7 @@ def test_init():
     bus = RuntimeEventBus()
 
     assert (
-        len(bus.events)
+        bus.count()
         ==
         0
     )
@@ -26,67 +26,73 @@ def test_subscribe():
 
 
     bus.subscribe(
-        "alert",
-        lambda data: data,
+        "threat_detected",
+        lambda data: True,
     )
 
 
     assert (
-        bus.subscriber_count(
-            "alert"
+        bus.exists(
+            "threat_detected"
         )
-        ==
-        1
+        is True
     )
 
 
 
 def test_publish():
 
-    received = []
-
-
     bus = RuntimeEventBus()
 
 
     bus.subscribe(
-        "alert",
-        lambda data: received.append(data),
-    )
-
-
-    bus.publish(
-        "alert",
-        {
-            "severity":
-                "high"
+        "incident",
+        lambda data: {
+            "handled":
+                True
         },
     )
 
 
-    assert (
-        received[0]["severity"]
-        ==
-        "high"
-    )
-
-
-
-def test_event_history():
-
-    bus = RuntimeEventBus()
-
-
-    bus.publish(
-        "test",
+    result = bus.publish(
+        "incident",
         {},
     )
 
 
     assert (
-        len(bus.events)
+        result[0]["handled"]
+        is True
+    )
+
+
+
+def test_multiple_handlers():
+
+    bus = RuntimeEventBus()
+
+
+    bus.subscribe(
+        "event",
+        lambda data: 1,
+    )
+
+    bus.subscribe(
+        "event",
+        lambda data: 2,
+    )
+
+
+    result = bus.publish(
+        "event",
+        {},
+    )
+
+
+    assert (
+        len(result)
         ==
-        1
+        2
     )
 
 
@@ -96,9 +102,9 @@ def test_clear():
     bus = RuntimeEventBus()
 
 
-    bus.publish(
+    bus.subscribe(
         "test",
-        {},
+        lambda x: True,
     )
 
 
@@ -106,9 +112,10 @@ def test_clear():
 
 
     assert (
-        len(bus.events)
-        ==
-        0
+        bus.exists(
+            "test"
+        )
+        is False
     )
 
 

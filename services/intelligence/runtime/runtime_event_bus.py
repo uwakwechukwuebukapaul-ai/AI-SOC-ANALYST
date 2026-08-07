@@ -6,15 +6,15 @@ Enterprise internal event communication layer.
 Responsibilities:
 
 - publish runtime events
-- subscribe handlers
-- dispatch events
-- manage event history
+- subscribe event handlers
+- dispatch security workflows
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass, field
 from typing import Any, Callable
+
 
 
 @dataclass
@@ -27,24 +27,24 @@ class RuntimeEventBus:
         default_factory=dict
     )
 
-    events: list[dict[str, Any]] = field(
-        default_factory=list
-    )
+    events: int = 0
+
 
 
     def subscribe(
         self,
-        event_type: str,
+        event: str,
         handler: Callable,
     ) -> None:
         """
-        Register event subscriber.
+        Register event listener.
         """
 
-        if event_type not in self.subscribers:
-            self.subscribers[event_type] = []
+        if event not in self.subscribers:
+            self.subscribers[event] = []
 
-        self.subscribers[event_type].append(
+
+        self.subscribers[event].append(
             handler
         )
 
@@ -52,48 +52,53 @@ class RuntimeEventBus:
 
     def publish(
         self,
-        event_type: str,
+        event: str,
         payload: dict[str, Any],
-    ) -> None:
+    ) -> list[Any]:
         """
         Publish runtime event.
         """
 
-        event = {
-            "type": event_type,
-            "payload": payload,
-        }
+        self.events += 1
 
 
-        self.events.append(
-            event
-        )
+        results = []
 
 
-        for handler in self.subscribers.get(
-            event_type,
+        handlers = self.subscribers.get(
+            event,
             [],
-        ):
-            handler(
-                payload
-            )
-
-
-
-    def subscriber_count(
-        self,
-        event_type: str,
-    ) -> int:
-        """
-        Return subscriber count.
-        """
-
-        return len(
-            self.subscribers.get(
-                event_type,
-                [],
-            )
         )
+
+
+        for handler in handlers:
+            results.append(
+                handler(payload)
+            )
+
+
+        return results
+
+
+
+    def exists(
+        self,
+        event: str,
+    ) -> bool:
+        """
+        Check event subscription.
+        """
+
+        return event in self.subscribers
+
+
+
+    def count(self) -> int:
+        """
+        Return event count.
+        """
+
+        return self.events
 
 
 
@@ -104,7 +109,7 @@ class RuntimeEventBus:
 
         self.subscribers.clear()
 
-        self.events.clear()
+        self.events = 0
 
 
 
@@ -115,11 +120,10 @@ class RuntimeEventBus:
 
         return {
             "events":
-                len(self.events),
+                self.events,
 
             "subscriptions":
-                sum(
-                    len(items)
-                    for items in self.subscribers.values()
+                list(
+                    self.subscribers.keys()
                 ),
         }
