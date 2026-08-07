@@ -8,31 +8,31 @@ from services.intelligence.runtime.runtime_configuration_manager import (
 
 
 
-def test_manager_init():
+def test_init():
 
-    manager = RuntimeConfigurationManager()
+    config = RuntimeConfigurationManager()
 
     assert (
-        manager.configuration
+        config.settings
         ==
         {}
     )
 
 
 
-def test_set():
+def test_set_get():
 
-    manager = RuntimeConfigurationManager()
+    config = RuntimeConfigurationManager()
 
 
-    manager.set(
+    config.set(
         "environment",
         "production",
     )
 
 
     assert (
-        manager.get(
+        config.get(
             "environment"
         )
         ==
@@ -41,90 +41,79 @@ def test_set():
 
 
 
-def test_exists():
+def test_default():
 
-    manager = RuntimeConfigurationManager()
+    config = RuntimeConfigurationManager()
 
 
-    manager.set(
-        "mode",
-        "secure",
+    assert (
+        config.get(
+            "missing"
+        )
+        is None
+    )
+
+
+
+def test_enable_feature():
+
+    config = RuntimeConfigurationManager()
+
+
+    config.enable_feature(
+        "ai_investigation"
     )
 
 
     assert (
-        manager.exists(
-            "mode"
+        config.feature_enabled(
+            "ai_investigation"
         )
         is True
     )
 
 
 
-def test_remove():
+def test_disable_feature():
 
-    manager = RuntimeConfigurationManager()
+    config = RuntimeConfigurationManager()
 
 
-    manager.set(
-        "debug",
-        True,
+    config.enable_feature(
+        "automation"
     )
 
 
-    manager.remove(
-        "debug"
+    config.disable_feature(
+        "automation"
     )
 
 
     assert (
-        manager.exists(
-            "debug"
+        config.feature_enabled(
+            "automation"
         )
         is False
     )
 
 
 
-def test_update():
-
-    manager = RuntimeConfigurationManager()
-
-
-    manager.update(
-        {
-            "workers": 5,
-            "timeout": 30,
-        }
-    )
-
-
-    assert (
-        manager.get(
-            "workers"
-        )
-        ==
-        5
-    )
-
-
-
 def test_clear():
 
-    manager = RuntimeConfigurationManager()
+    config = RuntimeConfigurationManager()
 
 
-    manager.set(
-        "key",
-        "value",
+    config.set(
+        "mode",
+        "test",
     )
 
 
-    manager.clear()
+    config.clear()
 
 
     assert (
-        manager.configuration
+        config.settings
         ==
         {}
     )
@@ -133,12 +122,12 @@ def test_clear():
 
 def test_status():
 
-    manager = RuntimeConfigurationManager()
+    config = RuntimeConfigurationManager()
 
 
-    result = manager.status()
+    result = config.status()
 
 
-    assert "count" in result
+    assert "settings" in result
 
-    assert "configuration" in result
+    assert "features" in result

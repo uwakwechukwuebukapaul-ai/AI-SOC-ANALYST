@@ -1,14 +1,13 @@
 """
 Sentinel DNA Runtime Configuration Manager
 
-Central runtime configuration service.
+Enterprise runtime configuration layer.
 
 Responsibilities:
 
-- configuration storage
-- configuration updates
-- configuration retrieval
-- runtime configuration reporting
+- store runtime configuration
+- manage feature flags
+- provide configuration lookup
 """
 
 from __future__ import annotations
@@ -20,10 +19,14 @@ from typing import Any
 @dataclass
 class RuntimeConfigurationManager:
     """
-    Enterprise runtime configuration manager.
+    Runtime configuration service.
     """
 
-    configuration: dict[str, Any] = field(
+    settings: dict[str, Any] = field(
+        default_factory=dict
+    )
+
+    features: dict[str, bool] = field(
         default_factory=dict
     )
 
@@ -34,10 +37,10 @@ class RuntimeConfigurationManager:
         value: Any,
     ) -> None:
         """
-        Set configuration value.
+        Store runtime setting.
         """
 
-        self.configuration[key] = value
+        self.settings[key] = value
 
 
 
@@ -47,63 +50,63 @@ class RuntimeConfigurationManager:
         default: Any = None,
     ) -> Any:
         """
-        Retrieve configuration value.
+        Retrieve runtime setting.
         """
 
-        return self.configuration.get(
+        return self.settings.get(
             key,
             default,
         )
 
 
 
-    def exists(
+    def enable_feature(
         self,
-        key: str,
-    ) -> bool:
-        """
-        Check configuration existence.
-        """
-
-        return key in self.configuration
-
-
-
-    def remove(
-        self,
-        key: str,
+        name: str,
     ) -> None:
         """
-        Remove configuration.
+        Enable runtime feature.
         """
 
-        self.configuration.pop(
-            key,
-            None,
+        self.features[name] = True
+
+
+
+    def disable_feature(
+        self,
+        name: str,
+    ) -> None:
+        """
+        Disable runtime feature.
+        """
+
+        self.features[name] = False
+
+
+
+    def feature_enabled(
+        self,
+        name: str,
+    ) -> bool:
+        """
+        Check feature state.
+        """
+
+        return self.features.get(
+            name,
+            False,
         )
 
 
 
     def clear(self) -> None:
         """
-        Clear configuration.
+        Reset configuration.
         """
 
-        self.configuration.clear()
+        self.settings.clear()
 
-
-
-    def update(
-        self,
-        values: dict[str, Any],
-    ) -> None:
-        """
-        Bulk configuration update.
-        """
-
-        self.configuration.update(
-            values
-        )
+        self.features.clear()
 
 
 
@@ -113,11 +116,9 @@ class RuntimeConfigurationManager:
         """
 
         return {
-            "count":
-                len(
-                    self.configuration
-                ),
+            "settings":
+                self.settings,
 
-            "configuration":
-                self.configuration,
+            "features":
+                self.features,
         }
