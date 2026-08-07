@@ -1,4 +1,7 @@
-from services.intelligence.runtime.runtime_state import RuntimeState
+from services.intelligence.runtime.runtime_state import (
+    RuntimeState,
+)
+
 
 
 def test_state_init():
@@ -9,58 +12,58 @@ def test_state_init():
 
 
 
-def test_start():
+def test_update_status():
 
     state = RuntimeState()
 
-    state.start()
+    state.update_status(
+        "running"
+    )
 
     assert state.status == "running"
 
 
 
-def test_stop():
+def test_worker_state():
 
     state = RuntimeState()
 
-    state.stop()
-
-    assert state.status == "stopped"
-
-
-
-def test_worker_registration():
-
-    state = RuntimeState()
-
-    state.register_worker(
+    state.set_worker_state(
         "worker-1",
-        "idle"
+        "active",
     )
 
-    assert state.workers["worker-1"] == "idle"
+    assert (
+        state.get_worker_state("worker-1")
+        ==
+        "active"
+    )
 
 
 
-def test_success_failure():
-
-    state = RuntimeState()
-
-    state.record_success()
-
-    state.record_failure()
-
-    assert state.executions == 2
-    assert state.successful == 1
-    assert state.failed == 1
-
-
-
-def test_snapshot():
+def test_task_state():
 
     state = RuntimeState()
 
-    data = state.snapshot()
+    state.set_task_state(
+        "task-1",
+        "completed",
+    )
 
-    assert "status" in data
-    assert "workers" in data
+    assert (
+        state.get_task_state("task-1")
+        ==
+        "completed"
+    )
+
+
+
+def test_to_dict():
+
+    state = RuntimeState()
+
+    result = state.to_dict()
+
+    assert "status" in result
+    assert "workers" in result
+    assert "tasks" in result

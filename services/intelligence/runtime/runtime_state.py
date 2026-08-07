@@ -1,28 +1,20 @@
 """
-Sentinel DNA Runtime State
+Sentinel DNA Runtime State Manager
 
-Central runtime state tracking layer.
-
-Responsible for:
-
-- Runtime lifecycle state
-- Worker state tracking
-- Execution counters
-- Health state
-- Runtime snapshots
+Tracks runtime lifecycle and execution state.
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any
 from datetime import datetime, timezone
+from typing import Any
 
 
 @dataclass
 class RuntimeState:
     """
-    Enterprise runtime state manager.
+    Runtime state container.
     """
 
     status: str = "initialized"
@@ -31,54 +23,33 @@ class RuntimeState:
         default_factory=dict
     )
 
-    executions: int = 0
-
-    successful: int = 0
-
-    failed: int = 0
+    tasks: dict[str, str] = field(
+        default_factory=dict
+    )
 
     metadata: dict[str, Any] = field(
         default_factory=dict
     )
 
-    created_at: datetime = field(
-        default_factory=lambda:
-        datetime.now(timezone.utc)
+    updated_at: datetime = field(
+        default_factory=lambda: datetime.now(timezone.utc)
     )
 
 
-    def start(self) -> None:
-        """
-        Mark runtime active.
-        """
-
-        self.status = "running"
-
-
-
-    def stop(self) -> None:
-        """
-        Mark runtime stopped.
-        """
-
-        self.status = "stopped"
-
-
-
-    def register_worker(
+    def update_status(
         self,
-        worker_id: str,
-        state: str = "idle",
+        status: str,
     ) -> None:
         """
-        Register worker state.
+        Update runtime status.
         """
 
-        self.workers[worker_id] = state
+        self.status = status
+        self._touch()
 
 
 
-    def update_worker(
+    def set_worker_state(
         self,
         worker_id: str,
         state: str,
@@ -88,48 +59,65 @@ class RuntimeState:
         """
 
         self.workers[worker_id] = state
+        self._touch()
 
 
 
-    def record_success(self) -> None:
+    def set_task_state(
+        self,
+        task_id: str,
+        state: str,
+    ) -> None:
         """
-        Record successful execution.
-        """
-
-        self.executions += 1
-        self.successful += 1
-
-
-
-    def record_failure(self) -> None:
-        """
-        Record failed execution.
+        Update task state.
         """
 
-        self.executions += 1
-        self.failed += 1
+        self.tasks[task_id] = state
+        self._touch()
 
 
 
-    def snapshot(self) -> dict[str, Any]:
-        """
-        Runtime state snapshot.
-        """
+    def get_worker_state(
+        self,
+        worker_id: str,
+        default=None,
+    ):
 
-        return {
-            "status": self.status,
-            "workers": self.workers,
-            "executions": self.executions,
-            "successful": self.successful,
-            "failed": self.failed,
-            "metadata": self.metadata,
-        }
+        return self.workers.get(
+            worker_id,
+            default,
+        )
+
+
+
+    def get_task_state(
+        self,
+        task_id: str,
+        default=None,
+    ):
+
+        return self.tasks.get(
+            task_id,
+            default,
+        )
+
+
+
+    def _touch(self):
+
+        self.updated_at = datetime.now(
+            timezone.utc
+        )
 
 
 
     def to_dict(self) -> dict[str, Any]:
-        """
-        Serialize runtime state.
-        """
 
-        return self.snapshot()
+        return {
+            "status": self.status,
+            "workers": self.workers,
+            "tasks": self.tasks,
+            "metadata": self.metadata,
+            "updated_at":
+                self.updated_at.isoformat(),
+        }
