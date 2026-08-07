@@ -13,81 +13,123 @@ def test_init():
     monitor = RuntimeHealthMonitor()
 
     assert (
-        monitor.checks
+        monitor.failure_count()
         ==
         0
     )
 
 
 
-def test_health_before_start():
+def test_register():
 
     monitor = RuntimeHealthMonitor()
 
 
-    assert (
-        monitor.healthy()
-        is False
+    monitor.register(
+        "ai_engine",
     )
 
 
-
-def test_health_after_start():
-
-    monitor = RuntimeHealthMonitor()
-
-
-    monitor.runtime.start()
-
-
     assert (
-        monitor.healthy()
+        monitor.healthy(
+            "ai_engine"
+        )
         is True
     )
 
 
 
-def test_check():
+def test_update():
 
     monitor = RuntimeHealthMonitor()
 
 
-    result = monitor.check()
+    monitor.register(
+        "database",
+    )
 
 
-    assert "healthy" in result
-
-    assert "runtime" in result
-
-
-
-def test_metrics():
-
-    monitor = RuntimeHealthMonitor()
-
-
-    result = monitor.metrics()
-
-
-    assert "health_checks" in result
-
-    assert "running" in result
-
-
-
-def test_reset():
-
-    monitor = RuntimeHealthMonitor()
-
-
-    monitor.check()
-
-
-    monitor.reset()
+    monitor.update(
+        "database",
+        "offline",
+    )
 
 
     assert (
-        monitor.checks
-        ==
-        0
+        monitor.healthy(
+            "database"
+        )
+        is False
     )
+
+
+
+def test_failure():
+
+    monitor = RuntimeHealthMonitor()
+
+
+    monitor.record_failure(
+        "agent",
+        "timeout",
+    )
+
+
+    assert (
+        monitor.failure_count()
+        ==
+        1
+    )
+
+
+
+def test_ready():
+
+    monitor = RuntimeHealthMonitor()
+
+
+    monitor.register(
+        "runtime",
+    )
+
+
+    assert (
+        monitor.ready()
+        is True
+    )
+
+
+
+def test_clear():
+
+    monitor = RuntimeHealthMonitor()
+
+
+    monitor.register(
+        "test",
+    )
+
+
+    monitor.clear()
+
+
+    assert (
+        monitor.ready()
+        is True
+    )
+
+
+
+def test_status():
+
+    monitor = RuntimeHealthMonitor()
+
+
+    result = monitor.status()
+
+
+    assert "components" in result
+
+    assert "failures" in result
+
+    assert "ready" in result
