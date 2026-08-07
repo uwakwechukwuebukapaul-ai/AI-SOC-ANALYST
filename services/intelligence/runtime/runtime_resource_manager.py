@@ -1,14 +1,7 @@
 """
 Sentinel DNA Runtime Resource Manager
 
-Enterprise runtime resource control layer.
-
-Responsibilities:
-
-- register resources
-- allocate resources
-- release resources
-- track utilization
+Enterprise runtime resource management layer.
 """
 
 from __future__ import annotations
@@ -27,14 +20,13 @@ class RuntimeResourceManager:
         default_factory=dict
     )
 
-
     def register(
         self,
         name: str,
         capacity: int,
     ) -> None:
         """
-        Register resource pool.
+        Register a runtime resource.
         """
 
         self.resources[name] = {
@@ -42,123 +34,91 @@ class RuntimeResourceManager:
             "allocated": 0,
         }
 
-
-
     def allocate(
         self,
         name: str,
         amount: int = 1,
     ) -> bool:
         """
-        Allocate resource.
+        Allocate resource capacity.
         """
 
-        resource = self.resources.get(
-            name
-        )
+        resource = self.resources.get(name)
 
         if resource is None:
             return False
 
-
-        available = (
-            resource["capacity"]
-            -
-            resource["allocated"]
-        )
-
-
-        if amount > available:
+        if resource["allocated"] + amount > resource["capacity"]:
             return False
 
-
         resource["allocated"] += amount
-
         return True
-
-
 
     def release(
         self,
         name: str,
         amount: int = 1,
-    ) -> None:
+    ) -> bool:
         """
-        Release resource.
+        Release allocated capacity.
         """
 
-        resource = self.resources.get(
-            name
-        )
+        resource = self.resources.get(name)
 
         if resource is None:
-            return
-
+            return False
 
         resource["allocated"] = max(
             0,
             resource["allocated"] - amount,
         )
 
+        return True
 
-
-    def utilization(
+    def available(
         self,
         name: str,
-    ) -> float:
+    ) -> int:
         """
-        Calculate utilization.
+        Return available capacity.
         """
 
-        resource = self.resources.get(
-            name
-        )
+        resource = self.resources.get(name)
 
         if resource is None:
-            return 0.0
-
-
-        if resource["capacity"] == 0:
-            return 0.0
-
+            return 0
 
         return (
-            resource["allocated"]
-            /
             resource["capacity"]
+            - resource["allocated"]
         )
 
-
-
-    def count(self) -> int:
+    def count(
+        self,
+    ) -> int:
         """
-        Return resource count.
+        Return registered resource count.
         """
 
-        return len(
-            self.resources
-        )
+        return len(self.resources)
 
-
-
-    def clear(self) -> None:
+    def clear(
+        self,
+    ) -> None:
         """
-        Reset resources.
+        Remove all resources.
         """
 
         self.resources.clear()
 
-
-
-    def status(self) -> dict[str, Any]:
+    def status(
+        self,
+    ) -> dict[str, Any]:
         """
-        Resource status.
+        Resource manager status.
         """
 
         return {
-            "resources":
-                self.resources,
-
-            "count":
-                self.count(),
+            "count": self.count(),
+            "resources": self.resources,
         }
