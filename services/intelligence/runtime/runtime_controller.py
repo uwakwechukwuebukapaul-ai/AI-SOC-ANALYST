@@ -1,14 +1,13 @@
 """
 Sentinel DNA Runtime Controller
 
-Control plane for Intelligence Runtime.
+Enterprise runtime control plane.
 
-Responsibilities:
-
-- Runtime startup/shutdown
-- Component coordination
-- Runtime state management
-- Worker orchestration
+Responsible for:
+- runtime lifecycle
+- task submission
+- execution control
+- health reporting
 """
 
 from __future__ import annotations
@@ -16,108 +15,99 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
-from .runtime_engine import RuntimeEngine
-from .runtime_state import RuntimeStateManager
-from .runtime_events import RuntimeEventBus
+from .task import Task
+from .execution_result import ExecutionResult
+from .runtime_execution_manager import RuntimeExecutionManager
 
 
 @dataclass
 class RuntimeController:
     """
-    Enterprise runtime control plane.
+    High-level runtime controller.
     """
 
-    engine: RuntimeEngine = field(
-        default_factory=RuntimeEngine
+    manager: RuntimeExecutionManager = field(
+        default_factory=RuntimeExecutionManager
     )
 
-    state: RuntimeStateManager = field(
-        default_factory=RuntimeStateManager
-    )
-
-    events: RuntimeEventBus = field(
-        default_factory=RuntimeEventBus
-    )
-
-    running: bool = False
+    initialized: bool = False
 
 
-    def start(self) -> None:
+    def initialize(self) -> None:
         """
-        Start runtime.
+        Initialize runtime.
         """
 
-        self.running = True
+        self.manager.start()
 
-        self.state.set_status(
-            "running"
-        )
-
-        self.events.publish(
-            "runtime.started"
-        )
+        self.initialized = True
 
 
-    def stop(self) -> None:
+
+    def shutdown(self) -> None:
         """
-        Stop runtime.
+        Shutdown runtime.
         """
 
-        self.running = False
+        self.manager.stop()
 
-        self.state.set_status(
-            "stopped"
-        )
+        self.initialized = False
 
-        self.events.publish(
-            "runtime.stopped"
+
+
+    def submit(
+        self,
+        task: Task,
+    ) -> None:
+        """
+        Submit runtime task.
+        """
+
+        self.manager.submit(
+            task
         )
 
 
-    def restart(self) -> None:
+
+    def register(
+        self,
+        capability: str,
+        handler,
+    ) -> None:
         """
-        Restart runtime.
-        """
-
-        self.stop()
-
-        self.start()
-
-
-
-    def health(self) -> dict[str, Any]:
-        """
-        Runtime health report.
+        Register execution capability.
         """
 
-        return {
-            "running":
-                self.running,
+        self.manager.register_handler(
+            capability,
+            handler,
+        )
 
-            "state":
-                self.state.get_status(),
 
-            "engine":
-                self.engine.status(),
-        }
+
+    def execute(
+        self,
+        task: Task,
+    ) -> ExecutionResult:
+        """
+        Execute task.
+        """
+
+        return self.manager.execute(
+            task
+        )
 
 
 
     def status(self) -> dict[str, Any]:
         """
-        Runtime status snapshot.
+        Runtime snapshot.
         """
 
         return {
-            "running":
-                self.running,
+            "initialized":
+                self.initialized,
 
-            "state":
-                self.state.snapshot(),
-
-            "events":
-                self.events.status(),
-
-            "engine":
-                self.engine.status(),
+            "runtime":
+                self.manager.status(),
         }

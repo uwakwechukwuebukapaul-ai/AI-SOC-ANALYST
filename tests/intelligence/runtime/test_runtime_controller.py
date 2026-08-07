@@ -1,6 +1,23 @@
+"""
+Runtime Controller Tests
+"""
+
 from services.intelligence.runtime.runtime_controller import (
     RuntimeController,
 )
+
+from services.intelligence.runtime.task import Task
+
+
+
+def create_task():
+
+    return Task(
+        capability="analysis",
+        payload={
+            "test": True
+        }
+    )
 
 
 
@@ -9,76 +26,75 @@ def test_controller_init():
     controller = RuntimeController()
 
     assert (
-        controller.running
+        controller.initialized
         is False
     )
 
 
 
-def test_start():
+def test_initialize():
 
     controller = RuntimeController()
 
-    controller.start()
+    controller.initialize()
 
     assert (
-        controller.running
+        controller.initialized
         is True
     )
 
-    assert (
-        controller.state.get_status()
-        ==
-        "running"
-    )
 
 
-
-def test_stop():
+def test_shutdown():
 
     controller = RuntimeController()
 
-    controller.start()
+    controller.initialize()
 
-    controller.stop()
+    controller.shutdown()
 
     assert (
-        controller.running
+        controller.initialized
         is False
     )
 
+
+
+def test_submit():
+
+    controller = RuntimeController()
+
+    controller.submit(
+        create_task()
+    )
+
     assert (
-        controller.state.get_status()
+        controller.manager.pipeline.size()
         ==
-        "stopped"
+        1
     )
 
 
 
-def test_restart():
+def test_execute():
 
     controller = RuntimeController()
 
-    controller.start()
+    controller.register(
+        "analysis",
+        lambda task: "success"
+    )
 
-    controller.restart()
+
+    result = controller.execute(
+        create_task()
+    )
+
 
     assert (
-        controller.running
+        result.success
         is True
     )
-
-
-
-def test_health():
-
-    controller = RuntimeController()
-
-    result = controller.health()
-
-    assert "running" in result
-
-    assert "state" in result
 
 
 
@@ -88,6 +104,6 @@ def test_status():
 
     result = controller.status()
 
-    assert "engine" in result
+    assert "initialized" in result
 
-    assert "events" in result
+    assert "runtime" in result
