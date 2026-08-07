@@ -13,7 +13,7 @@ def test_init():
     engine = RuntimePolicyEngine()
 
     assert (
-        engine.evaluations
+        engine.count()
         ==
         0
     )
@@ -26,65 +26,59 @@ def test_register():
 
 
     engine.register(
-        "allow_admin",
-        lambda ctx: True,
+        "allow_low_risk",
+        lambda ctx: ctx["risk"] == "low",
     )
 
 
     assert (
         engine.exists(
-            "allow_admin"
+            "allow_low_risk"
         )
         is True
     )
 
 
 
-def test_evaluate_allow():
+def test_allow_policy():
 
     engine = RuntimePolicyEngine()
 
 
     engine.register(
-        "allow",
+        "safe",
         lambda ctx: True,
     )
 
 
     result = engine.evaluate(
-        "allow",
+        "safe",
         {},
     )
 
 
-    assert (
-        result
-        is True
-    )
+    assert result is True
 
 
 
-def test_evaluate_deny():
+def test_deny_policy():
 
     engine = RuntimePolicyEngine()
 
 
     engine.register(
-        "deny",
+        "blocked",
         lambda ctx: False,
     )
 
 
     result = engine.evaluate(
-        "deny",
+        "blocked",
         {},
     )
 
 
-    assert (
-        result
-        is False
-    )
+    assert result is False
 
 
 
@@ -99,10 +93,7 @@ def test_missing_policy():
     )
 
 
-    assert (
-        result
-        is False
-    )
+    assert result is None
 
 
 
@@ -113,7 +104,7 @@ def test_clear():
 
     engine.register(
         "test",
-        lambda ctx: True,
+        lambda x: True,
     )
 
 

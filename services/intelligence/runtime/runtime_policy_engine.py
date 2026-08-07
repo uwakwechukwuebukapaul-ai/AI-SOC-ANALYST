@@ -1,11 +1,11 @@
 """
 Sentinel DNA Runtime Policy Engine
 
-Enterprise runtime decision policy layer.
+Enterprise runtime governance engine.
 
 Responsibilities:
 
-- create policies
+- register policies
 - evaluate runtime actions
 - return execution decisions
 """
@@ -16,17 +16,20 @@ from dataclasses import dataclass, field
 from typing import Any, Callable
 
 
+
 @dataclass
 class RuntimePolicyEngine:
     """
-    Runtime policy evaluation engine.
+    Runtime policy evaluator.
     """
 
     policies: dict[str, Callable] = field(
         default_factory=dict
     )
 
+
     evaluations: int = 0
+
 
 
     def register(
@@ -46,25 +49,25 @@ class RuntimePolicyEngine:
         self,
         name: str,
         context: dict[str, Any],
-    ) -> bool:
+    ) -> bool | None:
         """
         Evaluate policy.
         """
 
-        self.evaluations += 1
-
-
-        rule = self.policies.get(
+        policy = self.policies.get(
             name
         )
 
 
-        if rule is None:
-            return False
+        if policy is None:
+            return None
 
 
-        return bool(
-            rule(context)
+        self.evaluations += 1
+
+
+        return policy(
+            context
         )
 
 
@@ -81,6 +84,15 @@ class RuntimePolicyEngine:
 
 
 
+    def count(self) -> int:
+        """
+        Return evaluation count.
+        """
+
+        return self.evaluations
+
+
+
     def clear(self) -> None:
         """
         Reset policies.
@@ -94,7 +106,7 @@ class RuntimePolicyEngine:
 
     def status(self) -> dict[str, Any]:
         """
-        Policy engine status.
+        Policy status.
         """
 
         return {
