@@ -1,14 +1,14 @@
 """
 Sentinel DNA Runtime Intelligence Gateway
 
-Enterprise intelligence access layer.
+Enterprise API gateway for intelligence operations.
 
 Responsibilities:
 
-- register intelligence capabilities
-- execute intelligence requests
-- route runtime intelligence tasks
-- track requests
+- register intelligence agents
+- check capability availability
+- route intelligence requests
+- expose runtime status
 """
 
 from __future__ import annotations
@@ -16,13 +16,15 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
-from .runtime_agent_orchestrator import RuntimeAgentOrchestrator
+from .runtime_agent_orchestrator import (
+    RuntimeAgentOrchestrator,
+)
 
 
 @dataclass
 class RuntimeIntelligenceGateway:
     """
-    Runtime intelligence gateway.
+    Intelligence runtime gateway.
     """
 
     orchestrator: RuntimeAgentOrchestrator = field(
@@ -54,18 +56,45 @@ class RuntimeIntelligenceGateway:
     ) -> str | None:
         """
         Submit intelligence request.
+
+        Returns selected agent identity.
         """
 
-        agent = self.orchestrator.submit(
+        self.requests += 1
+
+        return self.orchestrator.submit(
             capability,
             request,
         )
 
-        if agent:
-            self.requests += 1
 
-        return agent
+    def execute_request(
+        self,
+        capability: str,
+        request: dict[str, Any],
+    ) -> Any:
+        """
+        Execute intelligence request.
 
+        Enterprise execution path.
+        """
+
+        self.requests += 1
+
+
+        task = type(
+            "RuntimeTask",
+            (),
+            {
+                "capability": capability,
+                "payload": request,
+            },
+        )()
+
+
+        return self.orchestrator.execute(
+            task
+        )
 
 
     def available(
@@ -76,18 +105,16 @@ class RuntimeIntelligenceGateway:
         Check capability availability.
         """
 
-        for agent in self.orchestrator.scheduler.agents.values():
-
-            if capability in agent["capabilities"]:
-                return True
-
-        return False
+        return self.orchestrator.has_capability(
+            capability
+        )
 
 
-
-    def clear(self) -> None:
+    def clear(
+        self,
+    ) -> None:
         """
-        Reset gateway.
+        Clear gateway state.
         """
 
         self.orchestrator.clear()
@@ -95,15 +122,19 @@ class RuntimeIntelligenceGateway:
         self.requests = 0
 
 
-
-    def status(self) -> dict[str, Any]:
+    def status(
+        self,
+    ) -> dict[str, Any]:
         """
         Gateway status.
         """
 
         return {
-            "requests":
-                self.requests,
+            "requests": self.requests,
+
+            "capabilities": {
+                "available": True
+            },
 
             "orchestrator":
                 self.orchestrator.status(),
