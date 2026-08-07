@@ -1,13 +1,13 @@
 """
 Sentinel DNA Runtime Security Manager
 
-Enterprise runtime security governance layer.
+Enterprise runtime security layer.
 
 Responsibilities:
 
-- manage permissions
-- authorize actions
-- enforce runtime policies
+- register permissions
+- validate access
+- protect runtime operations
 """
 
 from __future__ import annotations
@@ -16,34 +16,33 @@ from dataclasses import dataclass, field
 from typing import Any
 
 
+
 @dataclass
 class RuntimeSecurityManager:
     """
-    Runtime security policy manager.
+    Runtime access controller.
     """
 
     permissions: dict[str, set[str]] = field(
         default_factory=dict
     )
 
-    policies: dict[str, bool] = field(
-        default_factory=dict
-    )
 
 
     def grant(
         self,
-        actor: str,
+        identity: str,
         permission: str,
     ) -> None:
         """
         Grant permission.
         """
 
-        if actor not in self.permissions:
-            self.permissions[actor] = set()
+        if identity not in self.permissions:
+            self.permissions[identity] = set()
 
-        self.permissions[actor].add(
+
+        self.permissions[identity].add(
             permission
         )
 
@@ -51,15 +50,15 @@ class RuntimeSecurityManager:
 
     def revoke(
         self,
-        actor: str,
+        identity: str,
         permission: str,
     ) -> None:
         """
-        Remove permission.
+        Revoke permission.
         """
 
-        if actor in self.permissions:
-            self.permissions[actor].discard(
+        if identity in self.permissions:
+            self.permissions[identity].discard(
                 permission
             )
 
@@ -67,56 +66,66 @@ class RuntimeSecurityManager:
 
     def allowed(
         self,
-        actor: str,
+        identity: str,
         permission: str,
     ) -> bool:
         """
         Check permission.
         """
 
-        return permission in self.permissions.get(
-            actor,
-            set(),
+        return permission in (
+            self.permissions.get(
+                identity,
+                set(),
+            )
         )
 
 
 
-    def set_policy(
+    def identity_exists(
         self,
-        name: str,
-        enabled: bool,
-    ) -> None:
-        """
-        Configure security policy.
-        """
-
-        self.policies[name] = enabled
-
-
-
-    def policy_enabled(
-        self,
-        name: str,
+        identity: str,
     ) -> bool:
         """
-        Check policy state.
+        Check identity registration.
         """
 
-        return self.policies.get(
-            name,
-            False,
+        return identity in self.permissions
+
+
+
+    def remove(
+        self,
+        identity: str,
+    ) -> None:
+        """
+        Remove identity permissions.
+        """
+
+        self.permissions.pop(
+            identity,
+            None,
+        )
+
+
+
+    def count(self) -> int:
+        """
+        Return identity count.
+        """
+
+        return len(
+            self.permissions
         )
 
 
 
     def clear(self) -> None:
         """
-        Reset security state.
+        Reset permissions.
         """
 
         self.permissions.clear()
-
-        self.policies.clear()
 
 
 
@@ -126,13 +135,9 @@ class RuntimeSecurityManager:
         """
 
         return {
-            "permissions":
-                {
-                    key: list(value)
-                    for key, value
-                    in self.permissions.items()
-                },
+            "identities":
+                self.permissions,
 
-            "policies":
-                self.policies,
+            "count":
+                self.count(),
         }

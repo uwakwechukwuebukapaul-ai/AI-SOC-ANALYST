@@ -13,9 +13,9 @@ def test_init():
     manager = RuntimeSecurityManager()
 
     assert (
-        manager.permissions
+        manager.count()
         ==
-        {}
+        0
     )
 
 
@@ -26,15 +26,15 @@ def test_grant():
 
 
     manager.grant(
-        "agent",
-        "execute",
+        "analyst",
+        "investigate",
     )
 
 
     assert (
         manager.allowed(
-            "agent",
-            "execute",
+            "analyst",
+            "investigate",
         )
         is True
     )
@@ -68,20 +68,35 @@ def test_revoke():
 
 
 
-def test_policy():
+def test_missing_permission():
 
     manager = RuntimeSecurityManager()
 
 
-    manager.set_policy(
-        "require_auth",
-        True,
+    assert (
+        manager.allowed(
+            "unknown",
+            "execute",
+        )
+        is False
+    )
+
+
+
+def test_identity_exists():
+
+    manager = RuntimeSecurityManager()
+
+
+    manager.grant(
+        "service",
+        "read",
     )
 
 
     assert (
-        manager.policy_enabled(
-            "require_auth"
+        manager.identity_exists(
+            "service"
         )
         is True
     )
@@ -94,8 +109,8 @@ def test_clear():
 
 
     manager.grant(
-        "agent",
-        "run",
+        "test",
+        "access",
     )
 
 
@@ -103,9 +118,9 @@ def test_clear():
 
 
     assert (
-        manager.permissions
+        manager.count()
         ==
-        {}
+        0
     )
 
 
@@ -118,6 +133,6 @@ def test_status():
     result = manager.status()
 
 
-    assert "permissions" in result
+    assert "identities" in result
 
-    assert "policies" in result
+    assert "count" in result
