@@ -1,69 +1,99 @@
 from services.intelligence.runtime.runtime_state import (
-    RuntimeState,
+    RuntimeStateManager,
 )
 
 
 
 def test_state_init():
 
-    state = RuntimeState()
+    manager = RuntimeStateManager()
 
-    assert state.status == "initialized"
+    assert (
+        manager.get_status()
+        ==
+        "initialized"
+    )
 
 
 
-def test_update_status():
+def test_set_status():
 
-    state = RuntimeState()
+    manager = RuntimeStateManager()
 
-    state.update_status(
+    manager.set_status(
         "running"
     )
 
-    assert state.status == "running"
+    assert (
+        manager.get_status()
+        ==
+        "running"
+    )
 
 
 
-def test_worker_state():
+def test_component():
 
-    state = RuntimeState()
+    manager = RuntimeStateManager()
 
-    state.set_worker_state(
-        "worker-1",
-        "active",
+    manager.set_component(
+        "worker",
+        "healthy",
     )
 
     assert (
-        state.get_worker_state("worker-1")
+        manager.get_component(
+            "worker"
+        )
         ==
-        "active"
+        "healthy"
     )
 
 
 
-def test_task_state():
+def test_metadata():
 
-    state = RuntimeState()
+    manager = RuntimeStateManager()
 
-    state.set_task_state(
-        "task-1",
-        "completed",
+    manager.set_metadata(
+        "version",
+        "1.0",
     )
+
+    snapshot = manager.snapshot()
 
     assert (
-        state.get_task_state("task-1")
+        snapshot["metadata"]["version"]
         ==
-        "completed"
+        "1.0"
     )
 
 
 
-def test_to_dict():
+def test_snapshot():
 
-    state = RuntimeState()
+    manager = RuntimeStateManager()
 
-    result = state.to_dict()
+    result = manager.snapshot()
 
     assert "status" in result
-    assert "workers" in result
-    assert "tasks" in result
+
+    assert "components" in result
+
+
+
+def test_reset():
+
+    manager = RuntimeStateManager()
+
+    manager.set_status(
+        "running"
+    )
+
+    manager.reset()
+
+    assert (
+        manager.get_status()
+        ==
+        "initialized"
+    )

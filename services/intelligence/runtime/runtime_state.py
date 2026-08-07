@@ -1,7 +1,12 @@
 """
-Sentinel DNA Runtime State Manager
+Sentinel DNA Runtime State
 
-Tracks runtime lifecycle and execution state.
+Enterprise runtime state management.
+
+Tracks:
+- lifecycle state
+- component states
+- runtime metadata
 """
 
 from __future__ import annotations
@@ -19,11 +24,7 @@ class RuntimeState:
 
     status: str = "initialized"
 
-    workers: dict[str, str] = field(
-        default_factory=dict
-    )
-
-    tasks: dict[str, str] = field(
+    components: dict[str, str] = field(
         default_factory=dict
     )
 
@@ -32,11 +33,24 @@ class RuntimeState:
     )
 
     updated_at: datetime = field(
-        default_factory=lambda: datetime.now(timezone.utc)
+        default_factory=lambda:
+        datetime.now(timezone.utc)
     )
 
 
-    def update_status(
+
+class RuntimeStateManager:
+    """
+    Controls runtime state.
+    """
+
+    def __init__(self):
+
+        self.state = RuntimeState()
+
+
+
+    def set_status(
         self,
         status: str,
     ) -> None:
@@ -44,80 +58,100 @@ class RuntimeState:
         Update runtime status.
         """
 
-        self.status = status
+        self.state.status = status
+
         self._touch()
 
 
 
-    def set_worker_state(
+    def get_status(
         self,
-        worker_id: str,
-        state: str,
+    ) -> str:
+        """
+        Return runtime status.
+        """
+
+        return self.state.status
+
+
+
+    def set_component(
+        self,
+        name: str,
+        status: str,
     ) -> None:
         """
-        Update worker state.
+        Update component state.
         """
 
-        self.workers[worker_id] = state
+        self.state.components[name] = status
+
         self._touch()
 
 
 
-    def set_task_state(
+    def get_component(
         self,
-        task_id: str,
-        state: str,
-    ) -> None:
-        """
-        Update task state.
-        """
-
-        self.tasks[task_id] = state
-        self._touch()
-
-
-
-    def get_worker_state(
-        self,
-        worker_id: str,
+        name: str,
         default=None,
     ):
+        """
+        Retrieve component state.
+        """
 
-        return self.workers.get(
-            worker_id,
+        return self.state.components.get(
+            name,
             default,
         )
 
 
 
-    def get_task_state(
+    def set_metadata(
         self,
-        task_id: str,
-        default=None,
-    ):
+        key: str,
+        value: Any,
+    ) -> None:
+        """
+        Store runtime metadata.
+        """
 
-        return self.tasks.get(
-            task_id,
-            default,
-        )
+        self.state.metadata[key] = value
+
+        self._touch()
+
+
+
+    def snapshot(self) -> dict:
+        """
+        Create runtime snapshot.
+        """
+
+        return {
+            "status":
+                self.state.status,
+
+            "components":
+                dict(self.state.components),
+
+            "metadata":
+                dict(self.state.metadata),
+
+            "updated_at":
+                self.state.updated_at,
+        }
+
+
+
+    def reset(self) -> None:
+        """
+        Reset runtime state.
+        """
+
+        self.state = RuntimeState()
 
 
 
     def _touch(self):
-
-        self.updated_at = datetime.now(
-            timezone.utc
+        self.state.updated_at = (
+            datetime.now(timezone.utc)
         )
-
-
-
-    def to_dict(self) -> dict[str, Any]:
-
-        return {
-            "status": self.status,
-            "workers": self.workers,
-            "tasks": self.tasks,
-            "metadata": self.metadata,
-            "updated_at":
-                self.updated_at.isoformat(),
-        }
