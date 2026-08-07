@@ -19,16 +19,17 @@ from typing import Any
 @dataclass
 class RuntimeConfigurationManager:
     """
-    Runtime configuration service.
+    Runtime configuration controller.
     """
 
     settings: dict[str, Any] = field(
         default_factory=dict
     )
 
-    features: dict[str, bool] = field(
+    flags: dict[str, bool] = field(
         default_factory=dict
     )
+
 
 
     def set(
@@ -37,7 +38,7 @@ class RuntimeConfigurationManager:
         value: Any,
     ) -> None:
         """
-        Store runtime setting.
+        Store configuration value.
         """
 
         self.settings[key] = value
@@ -50,7 +51,7 @@ class RuntimeConfigurationManager:
         default: Any = None,
     ) -> Any:
         """
-        Retrieve runtime setting.
+        Retrieve configuration.
         """
 
         return self.settings.get(
@@ -60,40 +61,40 @@ class RuntimeConfigurationManager:
 
 
 
-    def enable_feature(
+    def enable(
         self,
-        name: str,
+        feature: str,
     ) -> None:
         """
-        Enable runtime feature.
+        Enable feature flag.
         """
 
-        self.features[name] = True
+        self.flags[feature] = True
 
 
 
-    def disable_feature(
+    def disable(
         self,
-        name: str,
+        feature: str,
     ) -> None:
         """
-        Disable runtime feature.
+        Disable feature flag.
         """
 
-        self.features[name] = False
+        self.flags[feature] = False
 
 
 
-    def feature_enabled(
+    def enabled(
         self,
-        name: str,
+        feature: str,
     ) -> bool:
         """
         Check feature state.
         """
 
-        return self.features.get(
-            name,
+        return self.flags.get(
+            feature,
             False,
         )
 
@@ -106,7 +107,7 @@ class RuntimeConfigurationManager:
 
         self.settings.clear()
 
-        self.features.clear()
+        self.flags.clear()
 
 
 
@@ -119,6 +120,6 @@ class RuntimeConfigurationManager:
             "settings":
                 self.settings,
 
-            "features":
-                self.features,
+            "flags":
+                self.flags,
         }

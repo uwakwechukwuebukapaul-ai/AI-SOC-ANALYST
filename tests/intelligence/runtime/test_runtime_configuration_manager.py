@@ -13,9 +13,11 @@ def test_init():
     config = RuntimeConfigurationManager()
 
     assert (
-        config.settings
+        len(
+            config.settings
+        )
         ==
-        {}
+        0
     )
 
 
@@ -60,14 +62,14 @@ def test_enable_feature():
     config = RuntimeConfigurationManager()
 
 
-    config.enable_feature(
-        "ai_investigation"
+    config.enable(
+        "ai_reasoning",
     )
 
 
     assert (
-        config.feature_enabled(
-            "ai_investigation"
+        config.enabled(
+            "ai_reasoning"
         )
         is True
     )
@@ -79,18 +81,17 @@ def test_disable_feature():
     config = RuntimeConfigurationManager()
 
 
-    config.enable_feature(
-        "automation"
+    config.enable(
+        "automation",
     )
 
-
-    config.disable_feature(
-        "automation"
+    config.disable(
+        "automation",
     )
 
 
     assert (
-        config.feature_enabled(
+        config.enabled(
             "automation"
         )
         is False
@@ -104,8 +105,8 @@ def test_clear():
 
 
     config.set(
-        "mode",
         "test",
+        True,
     )
 
 
@@ -113,9 +114,11 @@ def test_clear():
 
 
     assert (
-        config.settings
+        len(
+            config.settings
+        )
         ==
-        {}
+        0
     )
 
 
@@ -130,4 +133,4 @@ def test_status():
 
     assert "settings" in result
 
-    assert "features" in result
+    assert "flags" in result
