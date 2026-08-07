@@ -1,14 +1,22 @@
+"""
+Runtime Scheduler Tests
+"""
+
 from services.intelligence.runtime.runtime_scheduler import (
     RuntimeScheduler,
 )
 
 
 
-def test_scheduler_init():
+def test_init():
 
     scheduler = RuntimeScheduler()
 
-    assert scheduler.size() == 0
+    assert (
+        scheduler.pending()
+        ==
+        0
+    )
 
 
 
@@ -18,38 +26,55 @@ def test_schedule():
 
 
     scheduler.schedule(
-        "task1",
-        {},
+        "task01",
     )
 
 
-    assert scheduler.size() == 1
+    assert (
+        scheduler.pending()
+        ==
+        1
+    )
 
 
 
-def test_priority():
+def test_priority_order():
 
     scheduler = RuntimeScheduler()
 
 
     scheduler.schedule(
         "low",
-        {},
-        priority=20,
+        priority=1,
     )
 
 
     scheduler.schedule(
         "high",
-        {},
-        priority=1,
+        priority=10,
     )
 
 
-    task = scheduler.next_task()
+    result = scheduler.next()
 
 
-    assert task.task_id == "high"
+    assert (
+        result["id"]
+        ==
+        "high"
+    )
+
+
+
+def test_next_empty():
+
+    scheduler = RuntimeScheduler()
+
+
+    assert (
+        scheduler.next()
+        is None
+    )
 
 
 
@@ -58,31 +83,34 @@ def test_complete():
     scheduler = RuntimeScheduler()
 
 
-    scheduler.complete(
-        "task1"
-    )
+    scheduler.complete()
 
 
     assert (
-        "task1"
-        in scheduler.completed
+        scheduler.count()
+        ==
+        1
     )
 
 
 
-def test_fail():
+def test_clear():
 
     scheduler = RuntimeScheduler()
 
 
-    scheduler.fail(
-        "task1"
+    scheduler.schedule(
+        "test",
     )
 
 
+    scheduler.clear()
+
+
     assert (
-        "task1"
-        in scheduler.failed
+        scheduler.pending()
+        ==
+        0
     )
 
 
@@ -92,8 +120,9 @@ def test_status():
     scheduler = RuntimeScheduler()
 
 
-    status = scheduler.status()
+    result = scheduler.status()
 
 
-    assert "queued" in status
-    assert "completed" in status
+    assert "pending" in result
+
+    assert "executed" in result
