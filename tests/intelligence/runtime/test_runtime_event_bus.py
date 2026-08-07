@@ -25,17 +25,22 @@ def test_subscribe():
     bus = RuntimeEventBus()
 
 
+    def handler(data):
+        pass
+
+
     bus.subscribe(
-        "threat_detected",
-        lambda data: True,
+        "alert",
+        handler,
     )
 
 
     assert (
-        bus.exists(
-            "threat_detected"
+        bus.subscriber_count(
+            "alert"
         )
-        is True
+        ==
+        1
     )
 
 
@@ -45,54 +50,56 @@ def test_publish():
     bus = RuntimeEventBus()
 
 
-    bus.subscribe(
+    bus.publish(
         "incident",
-        lambda data: {
-            "handled":
-                True
+        {
+            "id":
+                "INC001"
         },
     )
 
 
-    result = bus.publish(
-        "incident",
-        {},
-    )
-
-
     assert (
-        result[0]["handled"]
-        is True
+        bus.count()
+        ==
+        1
     )
 
 
 
-def test_multiple_handlers():
+def test_dispatch():
 
     bus = RuntimeEventBus()
 
 
+    received = []
+
+
+    def handler(data):
+        received.append(
+            data
+        )
+
+
     bus.subscribe(
-        "event",
-        lambda data: 1,
+        "alert",
+        handler,
     )
 
-    bus.subscribe(
-        "event",
-        lambda data: 2,
-    )
 
-
-    result = bus.publish(
-        "event",
-        {},
+    bus.publish(
+        "alert",
+        {
+            "severity":
+                "high"
+        },
     )
 
 
     assert (
-        len(result)
+        received[0]["severity"]
         ==
-        2
+        "high"
     )
 
 
@@ -102,9 +109,9 @@ def test_clear():
     bus = RuntimeEventBus()
 
 
-    bus.subscribe(
+    bus.publish(
         "test",
-        lambda x: True,
+        {},
     )
 
 
@@ -112,10 +119,9 @@ def test_clear():
 
 
     assert (
-        bus.exists(
-            "test"
-        )
-        is False
+        bus.count()
+        ==
+        0
     )
 
 
@@ -130,4 +136,4 @@ def test_status():
 
     assert "events" in result
 
-    assert "subscriptions" in result
+    assert "subscribers" in result

@@ -1,13 +1,13 @@
 """
 Sentinel DNA Runtime Event Bus
 
-Enterprise internal event communication layer.
+Enterprise event communication layer.
 
 Responsibilities:
 
 - publish runtime events
-- subscribe event handlers
-- dispatch security workflows
+- subscribe handlers
+- dispatch events
 """
 
 from __future__ import annotations
@@ -23,28 +23,30 @@ class RuntimeEventBus:
     Runtime event dispatcher.
     """
 
+    events: list[dict[str, Any]] = field(
+        default_factory=list
+    )
+
     subscribers: dict[str, list[Callable]] = field(
         default_factory=dict
     )
-
-    events: int = 0
 
 
 
     def subscribe(
         self,
-        event: str,
+        event_type: str,
         handler: Callable,
     ) -> None:
         """
-        Register event listener.
+        Register event handler.
         """
 
-        if event not in self.subscribers:
-            self.subscribers[event] = []
+        if event_type not in self.subscribers:
+            self.subscribers[event_type] = []
 
 
-        self.subscribers[event].append(
+        self.subscribers[event_type].append(
             handler
         )
 
@@ -52,44 +54,34 @@ class RuntimeEventBus:
 
     def publish(
         self,
-        event: str,
+        event_type: str,
         payload: dict[str, Any],
-    ) -> list[Any]:
+    ) -> None:
         """
-        Publish runtime event.
+        Publish event.
         """
 
-        self.events += 1
+        event = {
+            "type":
+                event_type,
+
+            "payload":
+                payload,
+        }
 
 
-        results = []
-
-
-        handlers = self.subscribers.get(
-            event,
-            [],
+        self.events.append(
+            event
         )
 
 
-        for handler in handlers:
-            results.append(
-                handler(payload)
+        for handler in self.subscribers.get(
+            event_type,
+            [],
+        ):
+            handler(
+                payload
             )
-
-
-        return results
-
-
-
-    def exists(
-        self,
-        event: str,
-    ) -> bool:
-        """
-        Check event subscription.
-        """
-
-        return event in self.subscribers
 
 
 
@@ -98,7 +90,26 @@ class RuntimeEventBus:
         Return event count.
         """
 
-        return self.events
+        return len(
+            self.events
+        )
+
+
+
+    def subscriber_count(
+        self,
+        event_type: str,
+    ) -> int:
+        """
+        Return subscribers for event.
+        """
+
+        return len(
+            self.subscribers.get(
+                event_type,
+                [],
+            )
+        )
 
 
 
@@ -107,9 +118,9 @@ class RuntimeEventBus:
         Reset event bus.
         """
 
-        self.subscribers.clear()
+        self.events.clear()
 
-        self.events = 0
+        self.subscribers.clear()
 
 
 
@@ -120,10 +131,13 @@ class RuntimeEventBus:
 
         return {
             "events":
-                self.events,
+                self.count(),
 
-            "subscriptions":
-                list(
-                    self.subscribers.keys()
-                ),
+            "subscribers":
+                {
+                    key:
+                        len(value)
+                    for key, value
+                    in self.subscribers.items()
+                },
         }
