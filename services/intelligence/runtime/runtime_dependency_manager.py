@@ -1,13 +1,13 @@
 """
 Sentinel DNA Runtime Dependency Manager
 
-Enterprise runtime service management layer.
+Enterprise dependency tracking layer.
 
 Responsibilities:
 
 - register dependencies
-- track service state
 - validate availability
+- monitor runtime requirements
 """
 
 from __future__ import annotations
@@ -20,7 +20,7 @@ from typing import Any
 @dataclass
 class RuntimeDependencyManager:
     """
-    Runtime dependency registry.
+    Runtime dependency controller.
     """
 
     dependencies: dict[str, dict[str, Any]] = field(
@@ -28,38 +28,23 @@ class RuntimeDependencyManager:
     )
 
 
-
     def register(
         self,
         name: str,
-        metadata: dict[str, Any] | None = None,
+        dependency_type: str,
+        available: bool = True,
     ) -> None:
         """
-        Register runtime dependency.
+        Register dependency.
         """
 
         self.dependencies[name] = {
+            "type":
+                dependency_type,
+
             "available":
-                True,
-
-            "metadata":
-                metadata or {},
+                available,
         }
-
-
-
-    def remove(
-        self,
-        name: str,
-    ) -> None:
-        """
-        Remove dependency.
-        """
-
-        self.dependencies.pop(
-            name,
-            None,
-        )
 
 
 
@@ -84,29 +69,46 @@ class RuntimeDependencyManager:
 
 
 
-    def disable(
+    def update(
+        self,
+        name: str,
+        available: bool,
+    ) -> None:
+        """
+        Update dependency state.
+        """
+
+        if name in self.dependencies:
+            self.dependencies[name]["available"] = available
+
+
+
+    def validate(
+        self,
+    ) -> bool:
+        """
+        Validate all dependencies.
+        """
+
+        return all(
+            item["available"]
+            for item in self.dependencies.values()
+        )
+
+
+
+    def remove(
         self,
         name: str,
     ) -> None:
         """
-        Disable dependency.
+        Remove dependency.
         """
 
-        if name in self.dependencies:
-            self.dependencies[name]["available"] = False
-
-
-
-    def enable(
-        self,
-        name: str,
-    ) -> None:
-        """
-        Enable dependency.
-        """
-
-        if name in self.dependencies:
-            self.dependencies[name]["available"] = True
+        self.dependencies.pop(
+            name,
+            None,
+        )
 
 
 
@@ -138,6 +140,9 @@ class RuntimeDependencyManager:
         return {
             "dependencies":
                 self.dependencies,
+
+            "ready":
+                self.validate(),
 
             "count":
                 self.count(),

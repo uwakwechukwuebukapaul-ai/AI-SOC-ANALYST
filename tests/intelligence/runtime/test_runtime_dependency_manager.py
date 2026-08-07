@@ -26,89 +26,79 @@ def test_register():
 
 
     manager.register(
-        "threat_intelligence",
-    )
-
-
-    assert (
-        manager.available(
-            "threat_intelligence"
-        )
-        is True
-    )
-
-
-
-def test_metadata():
-
-    manager = RuntimeDependencyManager()
-
-
-    manager.register(
-        "engine",
-        {
-            "version":
-                "1.0"
-        },
-    )
-
-
-    assert (
-        manager.dependencies["engine"]["metadata"]["version"]
-        ==
-        "1.0"
-    )
-
-
-
-def test_disable():
-
-    manager = RuntimeDependencyManager()
-
-
-    manager.register(
         "database",
-    )
-
-
-    manager.disable(
-        "database"
+        "storage",
     )
 
 
     assert (
         manager.available(
             "database"
+        )
+        is True
+    )
+
+
+
+def test_update():
+
+    manager = RuntimeDependencyManager()
+
+
+    manager.register(
+        "api",
+        "service",
+    )
+
+
+    manager.update(
+        "api",
+        False,
+    )
+
+
+    assert (
+        manager.available(
+            "api"
         )
         is False
     )
 
 
 
-def test_enable():
+def test_validate_success():
 
     manager = RuntimeDependencyManager()
 
 
     manager.register(
-        "database",
-    )
-
-
-    manager.disable(
-        "database"
-    )
-
-    manager.enable(
-        "database"
+        "engine",
+        "ai",
     )
 
 
     assert (
-        manager.available(
-            "database"
-        )
+        manager.validate()
         is True
+    )
+
+
+
+def test_validate_failure():
+
+    manager = RuntimeDependencyManager()
+
+
+    manager.register(
+        "engine",
+        "ai",
+        False,
+    )
+
+
+    assert (
+        manager.validate()
+        is False
     )
 
 
@@ -120,6 +110,7 @@ def test_remove():
 
     manager.register(
         "test",
+        "module",
     )
 
 
@@ -144,6 +135,7 @@ def test_clear():
 
     manager.register(
         "test",
+        "module",
     )
 
 
@@ -167,5 +159,7 @@ def test_status():
 
 
     assert "dependencies" in result
+
+    assert "ready" in result
 
     assert "count" in result
