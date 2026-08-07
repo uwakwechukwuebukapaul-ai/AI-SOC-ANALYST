@@ -1,14 +1,13 @@
 """
 Sentinel DNA Runtime Control Plane
 
-Enterprise runtime management layer.
+Enterprise runtime operations layer.
 
 Responsibilities:
 
-- runtime lifecycle
-- component coordination
-- execution control
-- health reporting
+- coordinate runtime services
+- manage lifecycle
+- expose operational state
 """
 
 from __future__ import annotations
@@ -16,40 +15,43 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
-from .runtime_execution_manager import RuntimeExecutionManager
-from .runtime_security_manager import RuntimeSecurityManager
-from .runtime_audit_manager import RuntimeAuditManager
-from .runtime_observability_manager import RuntimeObservabilityManager
-from .runtime_session_manager import RuntimeSessionManager
+from .runtime_execution_manager import (
+    RuntimeExecutionManager,
+)
+
+from .runtime_event_orchestrator import (
+    RuntimeEventOrchestrator,
+)
+
+from .runtime_health_monitor import (
+    RuntimeHealthMonitor,
+)
+
+from .task import Task
+
 
 
 @dataclass
 class RuntimeControlPlane:
     """
-    Central runtime control service.
+    Runtime operational controller.
     """
 
     execution: RuntimeExecutionManager = field(
         default_factory=RuntimeExecutionManager
     )
 
-    security: RuntimeSecurityManager = field(
-        default_factory=RuntimeSecurityManager
+    events: RuntimeEventOrchestrator = field(
+        default_factory=RuntimeEventOrchestrator
     )
 
-    audit: RuntimeAuditManager = field(
-        default_factory=RuntimeAuditManager
+    health: RuntimeHealthMonitor = field(
+        default_factory=RuntimeHealthMonitor
     )
 
-    observability: RuntimeObservabilityManager = field(
-        default_factory=RuntimeObservabilityManager
-    )
-
-    sessions: RuntimeSessionManager = field(
-        default_factory=RuntimeSessionManager
-    )
 
     running: bool = False
+
 
 
     def start(self) -> None:
@@ -57,7 +59,12 @@ class RuntimeControlPlane:
         Start runtime control plane.
         """
 
+        self.execution.start()
+
+        self.health.runtime.start()
+
         self.running = True
+
 
 
     def stop(self) -> None:
@@ -65,45 +72,47 @@ class RuntimeControlPlane:
         Stop runtime control plane.
         """
 
+        self.execution.stop()
+
+        self.health.runtime.stop()
+
         self.running = False
+
 
 
     def submit(
         self,
-        capability: str,
-        payload: dict[str, Any],
-    ) -> None:
+        task: Task,
+    ) -> Any:
         """
-        Submit runtime execution.
+        Submit intelligence task.
         """
 
-        self.execution.submit(
-            capability,
+        return self.execution.submit(
+            task
+        )
+
+
+
+    def emit(
+        self,
+        event_type: str,
+        payload: dict[str, Any],
+    ) -> list[Any]:
+        """
+        Emit runtime event.
+        """
+
+        return self.events.emit(
+            event_type,
             payload,
         )
 
-        self.observability.increment(
-            "submitted_tasks"
-        )
-
-
-    def execute(self) -> Any:
-        """
-        Execute runtime job.
-        """
-
-        result = self.execution.execute()
-
-        self.observability.increment(
-            "executed_tasks"
-        )
-
-        return result
 
 
     def status(self) -> dict[str, Any]:
         """
-        Runtime status.
+        Runtime operational status.
         """
 
         return {
@@ -113,15 +122,9 @@ class RuntimeControlPlane:
             "execution":
                 self.execution.status(),
 
-            "security":
-                self.security.status(),
+            "events":
+                self.events.status(),
 
-            "audit":
-                self.audit.status(),
-
-            "observability":
-                self.observability.status(),
-
-            "sessions":
-                self.sessions.status(),
+            "health":
+                self.health.check(),
         }

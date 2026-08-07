@@ -6,6 +6,22 @@ from services.intelligence.runtime.runtime_control_plane import (
     RuntimeControlPlane,
 )
 
+from services.intelligence.runtime.task import (
+    Task,
+)
+
+
+
+def create_task():
+
+    return Task(
+        capability="analysis",
+        payload={
+            "test":
+                True
+        },
+    )
+
 
 
 def test_init():
@@ -18,11 +34,14 @@ def test_init():
     )
 
 
+
 def test_start():
 
     plane = RuntimeControlPlane()
 
+
     plane.start()
+
 
     assert (
         plane.running
@@ -30,13 +49,16 @@ def test_start():
     )
 
 
+
 def test_stop():
 
     plane = RuntimeControlPlane()
 
+
     plane.start()
 
     plane.stop()
+
 
     assert (
         plane.running
@@ -44,24 +66,65 @@ def test_stop():
     )
 
 
+
 def test_submit():
 
     plane = RuntimeControlPlane()
 
 
-    plane.submit(
+    plane.start()
+
+
+    plane.execution.workers.executor.register(
         "analysis",
+        lambda data: {
+            "ok":
+                True
+        },
+    )
+
+
+    result = plane.submit(
+        create_task()
+    )
+
+
+    assert (
+        result["ok"]
+        is True
+    )
+
+
+
+def test_event():
+
+    plane = RuntimeControlPlane()
+
+
+    result = []
+
+
+    plane.events.register(
+        "alert",
+        lambda data: result.append(data),
+    )
+
+
+    plane.emit(
+        "alert",
         {
-            "id": 1
+            "level":
+                "high"
         },
     )
 
 
     assert (
-        plane.execution.pending()
+        result[0]["level"]
         ==
-        1
+        "high"
     )
+
 
 
 def test_status():
@@ -76,4 +139,6 @@ def test_status():
 
     assert "execution" in result
 
-    assert "security" in result
+    assert "events" in result
+
+    assert "health" in result
