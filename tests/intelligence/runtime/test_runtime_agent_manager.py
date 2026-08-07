@@ -6,6 +6,40 @@ from services.intelligence.runtime.runtime_agent_manager import (
     RuntimeAgentManager,
 )
 
+from services.intelligence.runtime.runtime_agent_runtime import (
+    RuntimeAgentRuntime,
+)
+
+from services.intelligence.runtime.task import (
+    Task,
+)
+
+
+
+def create_agent():
+
+    agent = RuntimeAgentRuntime(
+        "analysis_agent"
+    )
+
+    agent.add_capability(
+        "analysis"
+    )
+
+    return agent
+
+
+
+def create_task():
+
+    return Task(
+        capability="analysis",
+        payload={
+            "test":
+                True
+        },
+    )
+
 
 
 def test_init():
@@ -24,43 +58,61 @@ def test_register():
 
     manager = RuntimeAgentManager()
 
-
     manager.register(
-        "investigation_agent",
-        [
-            "investigate",
-            "summarize",
-        ],
+        create_agent()
     )
 
 
     assert (
-        manager.exists(
-            "investigation_agent"
-        )
-        is True
+        manager.count()
+        ==
+        1
     )
 
 
 
-def test_capability():
+def test_get():
 
     manager = RuntimeAgentManager()
 
+    agent = create_agent()
 
     manager.register(
-        "threat_agent",
-        [
-            "ioc_lookup",
-        ],
+        agent
+    )
+
+
+    result = manager.get(
+        "analysis_agent"
     )
 
 
     assert (
-        manager.has_capability(
-            "ioc_lookup"
-        )
-        is True
+        result
+        ==
+        agent
+    )
+
+
+
+def test_find_capability():
+
+    manager = RuntimeAgentManager()
+
+    manager.register(
+        create_agent()
+    )
+
+
+    result = manager.find_capability(
+        "analysis"
+    )
+
+
+    assert (
+        len(result)
+        ==
+        1
     )
 
 
@@ -69,39 +121,14 @@ def test_unregister():
 
     manager = RuntimeAgentManager()
 
-
     manager.register(
-        "agent1",
-        [],
+        create_agent()
     )
 
 
     manager.unregister(
-        "agent1"
+        "analysis_agent"
     )
-
-
-    assert (
-        manager.exists(
-            "agent1"
-        )
-        is False
-    )
-
-
-
-def test_clear():
-
-    manager = RuntimeAgentManager()
-
-
-    manager.register(
-        "agent1",
-        [],
-    )
-
-
-    manager.clear()
 
 
     assert (
@@ -122,4 +149,4 @@ def test_status():
 
     assert "agents" in result
 
-    assert "registered" in result
+    assert "count" in result
