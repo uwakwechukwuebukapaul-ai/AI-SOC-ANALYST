@@ -1,54 +1,92 @@
 """
 Sentinel DNA Runtime State
 
-Enterprise runtime state management.
-
-Tracks:
-- lifecycle state
-- component states
-- runtime metadata
+Tracks runtime lifecycle, components,
+metadata and execution health.
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
 from typing import Any
 
 
 @dataclass
 class RuntimeState:
     """
-    Runtime state container.
+    Runtime lifecycle state model.
     """
 
-    status: str = "initialized"
+    status: str = "stopped"
 
-    components: dict[str, str] = field(
-        default_factory=dict
-    )
+    successful: int = 0
 
-    metadata: dict[str, Any] = field(
-        default_factory=dict
-    )
+    failed: int = 0
 
-    updated_at: datetime = field(
-        default_factory=lambda:
-        datetime.now(timezone.utc)
-    )
+    def start(self) -> None:
+        """
+        Start runtime.
+        """
 
+        self.status = "running"
+
+    def stop(self) -> None:
+        """
+        Stop runtime.
+        """
+
+        self.status = "stopped"
+
+    def record_success(self) -> None:
+        """
+        Record successful execution.
+        """
+
+        self.successful += 1
+
+    def record_failure(self) -> None:
+        """
+        Record failed execution.
+        """
+
+        self.failed += 1
+
+    def to_dict(self) -> dict[str, Any]:
+        """
+        Serialize runtime state.
+        """
+
+        return {
+            "status": self.status,
+            "successful": self.successful,
+            "failed": self.failed,
+        }
 
 
 class RuntimeStateManager:
     """
-    Controls runtime state.
+    Runtime state management service.
+
+    Maintains:
+    - lifecycle status
+    - component health
+    - metadata
+    - snapshots
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
+        self._status = "initialized"
 
-        self.state = RuntimeState()
+        self._components: dict[str, str] = {}
 
+        self._metadata: dict[str, Any] = {}
 
+    def get_status(self) -> str:
+        """
+        Return current runtime status.
+        """
+
+        return self._status
 
     def set_status(
         self,
@@ -58,22 +96,7 @@ class RuntimeStateManager:
         Update runtime status.
         """
 
-        self.state.status = status
-
-        self._touch()
-
-
-
-    def get_status(
-        self,
-    ) -> str:
-        """
-        Return runtime status.
-        """
-
-        return self.state.status
-
-
+        self._status = status
 
     def set_component(
         self,
@@ -81,30 +104,20 @@ class RuntimeStateManager:
         status: str,
     ) -> None:
         """
-        Update component state.
+        Register component health.
         """
 
-        self.state.components[name] = status
-
-        self._touch()
-
-
+        self._components[name] = status
 
     def get_component(
         self,
         name: str,
-        default=None,
-    ):
+    ) -> str | None:
         """
-        Retrieve component state.
+        Retrieve component health.
         """
 
-        return self.state.components.get(
-            name,
-            default,
-        )
-
-
+        return self._components.get(name)
 
     def set_metadata(
         self,
@@ -115,43 +128,36 @@ class RuntimeStateManager:
         Store runtime metadata.
         """
 
-        self.state.metadata[key] = value
+        self._metadata[key] = value
 
-        self._touch()
-
-
-
-    def snapshot(self) -> dict:
+    def get_metadata(
+        self,
+        key: str,
+    ) -> Any:
         """
-        Create runtime snapshot.
+        Retrieve metadata.
+        """
+
+        return self._metadata.get(key)
+
+    def snapshot(self) -> dict[str, Any]:
+        """
+        Return runtime snapshot.
         """
 
         return {
-            "status":
-                self.state.status,
-
-            "components":
-                dict(self.state.components),
-
-            "metadata":
-                dict(self.state.metadata),
-
-            "updated_at":
-                self.state.updated_at,
+            "status": self._status,
+            "components": self._components.copy(),
+            "metadata": self._metadata.copy(),
         }
-
-
 
     def reset(self) -> None:
         """
         Reset runtime state.
         """
 
-        self.state = RuntimeState()
+        self._status = "initialized"
 
+        self._components.clear()
 
-
-    def _touch(self):
-        self.state.updated_at = (
-            datetime.now(timezone.utc)
-        )
+        self._metadata.clear()

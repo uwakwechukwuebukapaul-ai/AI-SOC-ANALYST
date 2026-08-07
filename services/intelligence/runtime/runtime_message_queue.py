@@ -1,13 +1,15 @@
 """
 Sentinel DNA Runtime Message Queue
 
-Enterprise asynchronous messaging layer.
+Enterprise runtime message buffering layer.
 
 Responsibilities:
 
-- enqueue runtime messages
-- consume messages
-- track queue operations
+- queue runtime messages
+- publish runtime events
+- consume pending messages
+- track processed count
+- expose queue status
 """
 
 from __future__ import annotations
@@ -16,11 +18,10 @@ from dataclasses import dataclass, field
 from typing import Any
 
 
-
 @dataclass
 class RuntimeMessageQueue:
     """
-    Runtime message broker.
+    Runtime message queue.
     """
 
     queue: list[dict[str, Any]] = field(
@@ -30,6 +31,18 @@ class RuntimeMessageQueue:
     processed: int = 0
 
 
+    def enqueue(
+        self,
+        message: dict[str, Any],
+    ) -> None:
+        """
+        Add message.
+        """
+
+        self.queue.append(
+            message
+        )
+
 
     def publish(
         self,
@@ -37,52 +50,79 @@ class RuntimeMessageQueue:
         payload: dict[str, Any],
     ) -> None:
         """
-        Add message to queue.
+        Publish message.
+
+        Example:
+
+        publish(
+            "incident",
+            {
+                "id": "INC001"
+            }
+        )
         """
 
-        self.queue.append(
+        self.enqueue(
             {
-                "topic":
-                    topic,
-
-                "payload":
-                    payload,
+                "topic": topic,
+                "payload": payload,
             }
         )
 
 
-
-    def consume(
-        self,
-    ) -> dict[str, Any] | None:
+    def dequeue(self):
         """
-        Consume next message.
+        Remove next message.
         """
 
         if not self.queue:
             return None
 
-
-        message = self.queue.pop(
+        return self.queue.pop(
             0
         )
 
-        self.processed += 1
 
+    def consume(self):
+        """
+        Consume message and track processing.
+        """
+
+        message = self.dequeue()
+
+        if message is not None:
+            self.processed += 1
 
         return message
 
 
-
-    def size(self) -> int:
+    def push(
+        self,
+        message: dict[str, Any],
+    ) -> None:
         """
-        Return queue size.
+        Compatibility alias.
         """
 
-        return len(
-            self.queue
+        self.enqueue(
+            message
         )
 
+
+    def pop(self):
+        """
+        Compatibility alias.
+        """
+
+        return self.dequeue()
+
+
+    def mark_processed(self) -> None:
+        """
+        Increment processed count.
+        """
+
+        self.processed += 1
 
 
     def count(self) -> int:
@@ -91,7 +131,6 @@ class RuntimeMessageQueue:
         """
 
         return self.processed
-
 
 
     def clear(self) -> None:
@@ -104,6 +143,15 @@ class RuntimeMessageQueue:
         self.processed = 0
 
 
+    def size(self) -> int:
+        """
+        Pending queue size.
+        """
+
+        return len(
+            self.queue
+        )
+
 
     def status(self) -> dict[str, Any]:
         """
@@ -111,9 +159,7 @@ class RuntimeMessageQueue:
         """
 
         return {
-            "queue_size":
-                self.size(),
-
-            "processed":
-                self.processed,
+            "queue_size": len(self.queue),
+            "queued": len(self.queue),
+            "processed": self.processed,
         }

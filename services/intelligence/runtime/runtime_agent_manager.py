@@ -1,58 +1,57 @@
 """
-Sentinel DNA Runtime Agent Manager
+Runtime Agent Manager
 
-Enterprise AI agent management layer.
-
-Responsibilities:
-
-- register agents
-- discover capabilities
-- route tasks
-- manage agent lifecycle
+Manages runtime intelligence agents,
+registration, discovery, execution,
+and lifecycle operations.
 """
-
-from __future__ import annotations
 
 from dataclasses import dataclass, field
 from typing import Any
-
-from .runtime_agent_runtime import (
-    RuntimeAgentRuntime,
-)
-
-from .task import (
-    Task,
-)
-
 
 
 @dataclass
 class RuntimeAgentManager:
     """
-    Multi-agent runtime manager.
+    Runtime agent registry.
     """
 
-    agents: dict[str, RuntimeAgentRuntime] = field(
+    agents: dict[str, Any] = field(
         default_factory=dict
     )
 
 
     def register(
         self,
-        agent: RuntimeAgentRuntime,
+        agent: Any,
     ) -> None:
         """
-        Register AI agent.
+        Register runtime agent.
         """
 
-        self.agents[agent.name] = agent
+        name = self._agent_name(agent)
 
+        self.agents[name] = agent
+
+
+    def unregister(
+        self,
+        name: str,
+    ) -> None:
+        """
+        Remove runtime agent.
+        """
+
+        self.agents.pop(
+            name,
+            None,
+        )
 
 
     def get(
         self,
         name: str,
-    ) -> RuntimeAgentRuntime | None:
+    ) -> Any | None:
         """
         Retrieve agent.
         """
@@ -62,75 +61,92 @@ class RuntimeAgentManager:
         )
 
 
-
     def find_capability(
         self,
         capability: str,
-    ) -> list[RuntimeAgentRuntime]:
+    ) -> list[Any]:
         """
         Find agents supporting capability.
         """
 
-        return [
-            agent
-            for agent in self.agents.values()
-            if agent.can_execute(
-                capability
-            )
-        ]
+        results = []
 
+        for agent in self.agents.values():
+
+            capabilities = self._capabilities(
+                agent
+            )
+
+            if capability in capabilities:
+                results.append(agent)
+
+        return results
 
 
     def execute(
         self,
-        task: Task,
-    ) -> Any:
+        capability: str,
+        payload: dict[str, Any],
+    ) -> dict[str, Any]:
         """
-        Route task to capable agent.
+        Execute capability using matching agent.
         """
 
         agents = self.find_capability(
-            task.capability
+            capability
         )
-
 
         if not agents:
-            return None
+            return {
+                "success": False,
+                "error": (
+                    f"No agent supports {capability}"
+                )
+            }
 
 
-        return agents[0].execute(
-            task
-        )
+        agent = agents[0]
 
 
+        try:
 
-    def unregister(
+            if hasattr(
+                agent,
+                "execute",
+            ):
+
+                return agent.execute(
+                    payload
+                )
+
+
+            if callable(agent):
+
+                return agent(
+                    payload
+                )
+
+
+            return {
+                "success": False,
+                "error":
+                    "Agent cannot execute",
+            }
+
+
+        except Exception as exc:
+
+            return {
+                "success": False,
+                "error": str(exc),
+            }
+
+
+    def count(
         self,
-        name: str,
-    ) -> None:
+    ) -> int:
         """
-        Remove agent.
-        """
-
-        self.agents.pop(
-            name,
-            None,
-        )
-
-
-
-    def clear(self) -> None:
-        """
-        Remove all agents.
-        """
-
-        self.agents.clear()
-
-
-
-    def count(self) -> int:
-        """
-        Return agent count.
+        Number of registered agents.
         """
 
         return len(
@@ -138,18 +154,96 @@ class RuntimeAgentManager:
         )
 
 
-
-    def status(self) -> dict[str, Any]:
+    def clear(
+        self,
+    ) -> None:
         """
-        Agent manager status.
+        Remove all agents.
+        """
+
+        self.agents.clear()
+
+
+    def status(
+        self,
+    ) -> dict[str, Any]:
+        """
+        Runtime status.
         """
 
         return {
             "agents":
+                len(self.agents),
+
+            "count":
+                len(self.agents),
+
+            "names":
                 list(
                     self.agents.keys()
                 ),
-
-            "count":
-                self.count(),
         }
+
+
+    def _agent_name(
+        self,
+        agent: Any,
+    ) -> str:
+        """
+        Resolve agent name.
+        """
+
+        if hasattr(
+            agent,
+            "metadata",
+        ):
+
+            metadata = agent.metadata
+
+            if hasattr(
+                metadata,
+                "name",
+            ):
+                return metadata.name
+
+
+        if hasattr(
+            agent,
+            "name",
+        ):
+            return agent.name
+
+
+        return agent.__class__.__name__
+
+
+    def _capabilities(
+        self,
+        agent: Any,
+    ) -> list[str]:
+        """
+        Resolve capabilities.
+        """
+
+        if hasattr(
+            agent,
+            "metadata",
+        ):
+
+            metadata = agent.metadata
+
+            if hasattr(
+                metadata,
+                "capabilities",
+            ):
+                return metadata.capabilities
+
+
+        if hasattr(
+            agent,
+            "capabilities",
+        ):
+            return agent.capabilities
+
+
+        return []

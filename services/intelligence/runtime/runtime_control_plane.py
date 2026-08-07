@@ -1,26 +1,23 @@
 """
 Sentinel DNA Runtime Control Plane
 
-Enterprise runtime operations layer.
+Enterprise runtime coordination layer.
 
 Responsibilities:
 
-- coordinate runtime services
-- manage lifecycle
-- expose operational state
+- runtime lifecycle control
+- execution delegation
+- event management
+- health monitoring
+- workflow compatibility
 """
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
 from typing import Any
 
 from .runtime_execution_manager import (
     RuntimeExecutionManager,
-)
-
-from .runtime_event_orchestrator import (
-    RuntimeEventOrchestrator,
 )
 
 from .runtime_health_monitor import (
@@ -30,65 +27,163 @@ from .runtime_health_monitor import (
 from .task import Task
 
 
+class RuntimeEventBus:
+    """
+    Runtime event dispatcher.
+    """
 
-@dataclass
+    def __init__(self):
+
+        self.handlers = {}
+
+
+    def register(
+        self,
+        name: str,
+        handler,
+    ) -> None:
+        """
+        Register event handler.
+        """
+
+        self.handlers[name] = handler
+
+
+    def emit(
+        self,
+        name: str,
+        payload: dict[str, Any],
+    ) -> None:
+        """
+        Emit runtime event.
+        """
+
+        handler = self.handlers.get(
+            name
+        )
+
+        if handler:
+            handler(payload)
+
+
+    def status(self) -> dict[str, Any]:
+        """
+        Event status.
+        """
+
+        return {
+            "registered":
+                len(self.handlers),
+
+            "events":
+                list(self.handlers.keys()),
+        }
+
+
+
 class RuntimeControlPlane:
     """
-    Runtime operational controller.
+    Controls runtime execution.
     """
 
-    execution: RuntimeExecutionManager = field(
-        default_factory=RuntimeExecutionManager
-    )
+    def __init__(self):
 
-    events: RuntimeEventOrchestrator = field(
-        default_factory=RuntimeEventOrchestrator
-    )
+        self.runtime = RuntimeExecutionManager()
 
-    health: RuntimeHealthMonitor = field(
-        default_factory=RuntimeHealthMonitor
-    )
+        self.health = RuntimeHealthMonitor()
 
+        self.events = RuntimeEventBus()
 
-    running: bool = False
+        self.running = False
+
+        self.last_task = None
 
 
+        # compatibility alias
 
-    def start(self) -> None:
-        """
-        Start runtime control plane.
-        """
+        self.execution = self.runtime
 
-        self.execution.start()
 
-        self.health.runtime.start()
+
+    def start(self):
 
         self.running = True
 
+        self.runtime.start()
 
 
-    def stop(self) -> None:
-        """
-        Stop runtime control plane.
-        """
 
-        self.execution.stop()
-
-        self.health.runtime.stop()
+    def stop(self):
 
         self.running = False
+
+        self.runtime.stop()
 
 
 
     def submit(
         self,
-        task: Task,
-    ) -> Any:
+        task,
+        payload=None,
+    ):
         """
-        Submit intelligence task.
+        Submit runtime task.
+
+        Supports:
+
+        submit(Task)
+        submit(Task,payload)
+        submit(capability,payload)
         """
 
-        return self.execution.submit(
+        if isinstance(task, str):
+
+            task = Task(
+                capability=task,
+                payload=payload or {},
+            )
+
+
+        elif payload is not None:
+
+            task.payload = payload
+
+
+        self.last_task = task
+
+
+        return self.runtime.submit(
+            task
+        )
+
+
+
+    def execute(
+        self,
+        task=None,
+    ):
+        """
+        Execute runtime task.
+
+        Supports:
+
+        execute(Task)
+
+        execute()
+        using last submitted workflow
+        """
+
+        if task is None:
+
+            task = self.last_task
+
+
+        if task is None:
+
+            return None
+
+
+        return self.runtime.execute(
             task
         )
 
@@ -96,35 +191,38 @@ class RuntimeControlPlane:
 
     def emit(
         self,
-        event_type: str,
-        payload: dict[str, Any],
-    ) -> list[Any]:
-        """
-        Emit runtime event.
-        """
+        name,
+        payload,
+    ):
 
-        return self.events.emit(
-            event_type,
-            payload,
+        self.events.emit(
+            name,
+            payload
         )
 
 
 
-    def status(self) -> dict[str, Any]:
-        """
-        Runtime operational status.
-        """
+    def status(self):
 
         return {
+
             "running":
                 self.running,
 
+
             "execution":
-                self.execution.status(),
+                self.runtime.status(),
+
+
+            "runtime":
+                self.runtime.status(),
+
+
+            "health":
+                self.health.check(),
+
 
             "events":
                 self.events.status(),
 
-            "health":
-                self.health.check(),
         }

@@ -1,14 +1,7 @@
 """
 Sentinel DNA Runtime Task Executor
 
-Enterprise task execution engine.
-
-Responsibilities:
-
-- execute runtime tasks
-- manage task lifecycle
-- track execution results
-- handle failures
+Executes registered runtime capabilities.
 """
 
 from __future__ import annotations
@@ -16,16 +9,13 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any, Callable
 
-from .task import (
-    Task,
-    TaskStatus,
-)
+from .task import TaskStatus
 
 
 @dataclass
 class RuntimeTaskExecutor:
     """
-    Runtime task execution engine.
+    Runtime capability executor.
     """
 
     handlers: dict[str, Callable] = field(
@@ -37,35 +27,65 @@ class RuntimeTaskExecutor:
     failed: int = 0
 
 
-
     def register(
         self,
         capability: str,
         handler: Callable,
     ) -> None:
         """
-        Register task capability handler.
+        Register execution handler.
         """
 
         self.handlers[capability] = handler
 
 
+    def available(
+        self,
+        capability: str,
+    ) -> bool:
+        """
+        Check capability availability.
+        """
+
+        return capability in self.handlers
+
 
     def execute(
         self,
-        task: Task,
+        task,
+        payload: dict[str, Any] | None = None,
     ) -> Any:
         """
         Execute runtime task.
+
+        Supports:
+        - execute(Task)
+        - execute(capability, payload)
         """
 
+        if hasattr(task, "capability"):
+
+            capability = task.capability
+
+            task_payload = task.payload
+
+        else:
+
+            capability = task
+
+            task_payload = payload or {}
+
+
         handler = self.handlers.get(
-            task.capability
+            capability
         )
 
 
         if handler is None:
-            task.fail()
+
+            if hasattr(task, "status"):
+
+                task.status = TaskStatus.FAILED
 
             self.failed += 1
 
@@ -74,15 +94,19 @@ class RuntimeTaskExecutor:
 
         try:
 
-            task.start()
+            if hasattr(task, "status"):
+
+                task.status = TaskStatus.RUNNING
 
 
             result = handler(
-                task.payload
+                task_payload
             )
 
 
-            task.complete()
+            if hasattr(task, "status"):
+
+                task.status = TaskStatus.COMPLETED
 
 
             self.executed += 1
@@ -93,37 +117,23 @@ class RuntimeTaskExecutor:
 
         except Exception:
 
-            task.fail()
+            if hasattr(task, "status"):
+
+                task.status = TaskStatus.FAILED
+
 
             self.failed += 1
+
 
             return None
 
 
-
-    def available(
-        self,
-        capability: str,
-    ) -> bool:
-        """
-        Check capability handler.
-        """
-
-        return capability in self.handlers
-
-
-
     def clear(self) -> None:
         """
-        Reset executor.
+        Remove all handlers.
         """
 
         self.handlers.clear()
-
-        self.executed = 0
-
-        self.failed = 0
-
 
 
     def status(self) -> dict[str, Any]:
@@ -132,12 +142,9 @@ class RuntimeTaskExecutor:
         """
 
         return {
-            "executed":
-                self.executed,
-
-            "failed":
-                self.failed,
-
-            "handlers":
-                len(self.handlers),
+            "handlers": list(
+                self.handlers.keys()
+            ),
+            "executed": self.executed,
+            "failed": self.failed,
         }

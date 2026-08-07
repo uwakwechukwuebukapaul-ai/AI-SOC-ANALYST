@@ -1,15 +1,7 @@
 """
 Sentinel DNA Runtime Worker Pool
 
-Enterprise worker execution manager.
-
-Responsibilities:
-
-- manage worker lifecycle
-- execute runtime tasks
-- track completed executions
-- expose runtime metrics
-- maintain capability execution registry
+Enterprise worker execution pool.
 """
 
 from __future__ import annotations
@@ -17,14 +9,16 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
+from .worker import RuntimeWorker
 
-class DefaultExecutor:
+
+class _DefaultExecutor:
     """
-    Runtime capability executor registry.
+    Capability execution registry.
     """
 
     def __init__(self):
-        self.handlers: dict[str, Any] = {}
+        self.handlers = {}
 
 
     def register(
@@ -47,7 +41,7 @@ class DefaultExecutor:
     def execute(
         self,
         task,
-    ) -> Any:
+    ):
 
         handler = self.handlers.get(
             task.capability
@@ -66,26 +60,14 @@ class DefaultExecutor:
         self.handlers.clear()
 
 
-    def status(self):
-
-        return {
-            "capabilities": list(
-                self.handlers.keys()
-            ),
-            "count": len(
-                self.handlers
-            ),
-        }
-
-
 @dataclass
 class RuntimeWorkerPool:
     """
-    Enterprise runtime worker pool.
+    Runtime worker manager.
     """
 
-    executor: DefaultExecutor = field(
-        default_factory=DefaultExecutor
+    executor: Any = field(
+        default_factory=_DefaultExecutor
     )
 
     workers: int = 0
@@ -94,32 +76,36 @@ class RuntimeWorkerPool:
 
     completed: int = 0
 
-
-    def __post_init__(self):
-
-        # backward compatibility
-        self.dispatcher = self.executor
+    _worker_instances: list = field(
+        default_factory=list
+    )
 
 
     def start_workers(
         self,
         count: int,
-    ):
+    ) -> None:
 
-        self.workers = count
         self.running = True
 
+        self.workers = count
 
-    def stop_workers(self):
+        self._worker_instances = [
+            RuntimeWorker()
+            for _ in range(count)
+        ]
 
-        self.workers = 0
+
+    def stop_workers(self) -> None:
+
         self.running = False
 
+        self.workers = 0
 
-    def active_workers(self):
+        self._worker_instances.clear()
 
-        if not self.running:
-            return 0
+
+    def active_workers(self) -> int:
 
         return self.workers
 
@@ -147,8 +133,10 @@ class RuntimeWorkerPool:
     def clear(self):
 
         self.completed = 0
+
         self.workers = 0
-        self.running = False
+
+        self._worker_instances.clear()
 
         self.executor.clear()
 
@@ -156,20 +144,9 @@ class RuntimeWorkerPool:
     def status(self):
 
         return {
-
-            "running":
-                self.running,
-
-            "workers":
-                self.workers,
-
-            "active_workers":
-                self.active_workers(),
-
-            "completed":
-                self.completed,
-
-            "executor":
-                self.executor.status(),
-
+            "running": self.running,
+            "workers": self.workers,
+            "active_workers": self.active_workers(),
+            "completed": self.completed,
+            "executor": self.executor,
         }

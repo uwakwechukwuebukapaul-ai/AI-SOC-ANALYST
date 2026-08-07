@@ -1,50 +1,62 @@
 """
 Sentinel DNA Runtime Execution Result
 
-Represents the outcome of runtime task execution.
+Enterprise execution result contract.
+
+Responsibilities:
+
+- standardize runtime responses
+- support dictionary compatibility
+- expose execution metadata
+- support workflow consumers
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
 from typing import Any
 
 
-@dataclass(slots=True)
+@dataclass
 class ExecutionResult:
     """
-    Runtime execution response.
+    Runtime execution response object.
     """
 
-    success: bool
+    success: bool = False
 
-    message: str = ""
-
-    data: dict[str, Any] = field(
-        default_factory=dict
-    )
+    output: Any = None
 
     error: str | None = None
 
-    execution_time: float = 0.0
+    confidence: float | None = None
 
-    created_at: datetime = field(
-        default_factory=lambda: datetime.now(timezone.utc)
+    metadata: dict[str, Any] = field(
+        default_factory=dict
     )
 
 
     @classmethod
     def ok(
         cls,
-        data: dict[str, Any] | None = None,
-        message: str = "Execution completed",
+        data: Any = None,
+        output: Any = None,
+        confidence: float | None = None,
+        metadata: dict[str, Any] | None = None,
     ) -> "ExecutionResult":
+        """
+        Create successful execution result.
+        """
+
+        if output is None:
+            output = data
+
 
         return cls(
             success=True,
-            message=message,
-            data=data or {},
+            output=output,
+            confidence=confidence,
+            metadata=metadata or {},
         )
 
 
@@ -52,23 +64,161 @@ class ExecutionResult:
     def failure(
         cls,
         error: str,
-        message: str = "Execution failed",
+        confidence: float | None = None,
+        metadata: dict[str, Any] | None = None,
     ) -> "ExecutionResult":
+        """
+        Create failed execution result.
+        """
 
         return cls(
             success=False,
-            message=message,
             error=error,
+            confidence=confidence,
+            metadata=metadata or {},
         )
 
 
+    @property
+    def failed(self) -> bool:
+        """
+        Check execution failure.
+        """
+
+        return not self.success
+
+
+    @property
+    def data(self):
+        """
+        Compatibility alias.
+        """
+
+        return self.output
+
+
+    def add_metadata(
+        self,
+        key: str,
+        value: Any,
+    ) -> None:
+        """
+        Add execution metadata.
+        """
+
+        self.metadata[key] = value
+
+
+
     def to_dict(self) -> dict[str, Any]:
+        """
+        Convert result to dictionary.
+        """
 
         return {
             "success": self.success,
-            "message": self.message,
-            "data": self.data,
+            "output": self.output,
             "error": self.error,
-            "execution_time": self.execution_time,
-            "created_at": self.created_at.isoformat(),
+            "confidence": self.confidence,
+            "metadata": self.metadata,
         }
+
+
+
+    def __getitem__(
+        self,
+        key: str,
+    ):
+        """
+        Dictionary compatibility access.
+
+        Supports:
+
+        result["done"]
+
+        when output:
+
+        {
+            "done": True
+        }
+
+        or:
+
+        {
+            "result": {
+                "done": True
+            }
+        }
+        """
+
+        if isinstance(
+            self.output,
+            dict,
+        ):
+
+            if key in self.output:
+                return self.output[key]
+
+
+            nested = self.output.get(
+                "result"
+            )
+
+
+            if isinstance(
+                nested,
+                dict,
+            ):
+
+                return nested[key]
+
+
+        return self.to_dict()[key]
+
+
+
+    def get(
+        self,
+        key: str,
+        default=None,
+    ):
+        """
+        Dictionary-style get support.
+        """
+
+        try:
+            return self[key]
+
+        except KeyError:
+            return default
+
+
+
+    def __contains__(
+        self,
+        key: str,
+    ) -> bool:
+        """
+        Support:
+
+        key in result
+        """
+
+        try:
+
+            self[key]
+
+            return True
+
+        except KeyError:
+
+            return False
+
+
+
+    def __bool__(self):
+        """
+        Truth evaluation.
+        """
+
+        return self.success
