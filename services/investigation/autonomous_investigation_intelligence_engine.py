@@ -2,96 +2,81 @@ from datetime import datetime, timezone
 
 
 class AutonomousInvestigationIntelligenceEngine:
-    """
-    Autonomous investigation reasoning layer.
-
-    Responsibilities:
-    - Create investigations
-    - Correlate evidence
-    - Build investigation timelines
-    - Generate investigation conclusions
-    - Track investigation intelligence history
-    """
 
     def __init__(self):
         self.investigations = []
-        self.history = []
 
-    def create_investigation(self, case_id, alert_type, severity):
-        investigation = {
-            "case_id": case_id,
-            "alert_type": alert_type,
-            "severity": severity,
-            "status": "active",
-            "created_at": datetime.now(timezone.utc).isoformat()
-        }
 
-        self.investigations.append(investigation)
-        self.history.append({
-            "action": "create_investigation",
-            "case_id": case_id
-        })
+    def analyze(self, evidence):
 
-        return investigation
-
-    def analyze_evidence(self, investigation_id, evidence):
         analysis = {
-            "investigation_id": investigation_id,
-            "evidence_count": len(evidence),
-            "confidence": 0.85,
-            "finding": "Evidence correlation completed"
+            "type": "evidence_analysis",
+            "input": evidence,
+            "findings": [],
+            "severity": evidence.get(
+                "severity",
+                "unknown"
+            ),
+            "status": "completed",
+            "created_at": datetime.now(
+                timezone.utc
+            ).isoformat()
         }
 
-        self.history.append({
-            "action": "analyze_evidence",
-            "investigation_id": investigation_id
-        })
+        if evidence.get("event"):
+            analysis["findings"].append(
+                f"Detected event: {evidence['event']}"
+            )
+
+        self.investigations.append(
+            analysis
+        )
 
         return analysis
 
-    def correlate_threat_activity(self, indicators):
-        correlation = {
-            "matched_indicators": len(indicators),
-            "risk_level": "HIGH" if indicators else "LOW",
-            "correlation_status": "completed"
-        }
 
-        self.history.append({
-            "action": "threat_correlation"
-        })
+    def investigate(self, alert):
 
-        return correlation
-
-    def generate_investigation_summary(self, investigation_id):
-        summary = {
-            "investigation_id": investigation_id,
-            "summary": "Autonomous investigation completed",
-            "recommendation": "Continue monitoring and response validation"
-        }
-
-        self.history.append({
-            "action": "generate_summary",
-            "investigation_id": investigation_id
-        })
-
-        return summary
-
-    def generate_timeline(self, investigation_id):
-        timeline = {
-            "investigation_id": investigation_id,
-            "events": [
+        investigation = {
+            "type": "investigation",
+            "alert": alert,
+            "steps": [
                 "alert_received",
-                "evidence_collected",
-                "threat_analysis_completed"
-            ]
+                "indicator_analysis",
+                "threat_assessment"
+            ],
+            "status": "completed",
+            "created_at": datetime.now(
+                timezone.utc
+            ).isoformat()
         }
 
-        self.history.append({
-            "action": "timeline_generated",
-            "investigation_id": investigation_id
-        })
+        self.investigations.append(
+            investigation
+        )
+
+        return investigation
+
+
+    def build_timeline(self, events):
+
+        timeline = {
+            "type": "timeline",
+            "events": [],
+            "status": "completed",
+            "created_at": datetime.now(
+                timezone.utc
+            ).isoformat()
+        }
+
+
+        for index, event in enumerate(events):
+
+            timeline["events"].append(
+                {
+                    "order": index + 1,
+                    "event": event
+                }
+            )
 
         return timeline
-
-    def get_investigation_history(self):
-        return self.history
