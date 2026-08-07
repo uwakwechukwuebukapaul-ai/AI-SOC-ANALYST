@@ -1,13 +1,13 @@
 """
 Sentinel DNA Runtime Configuration Manager
 
-Enterprise runtime configuration layer.
+Enterprise configuration control layer.
 
 Responsibilities:
 
-- store runtime configuration
+- store runtime settings
 - manage feature flags
-- provide configuration lookup
+- provide configuration access
 """
 
 from __future__ import annotations
@@ -16,17 +16,14 @@ from dataclasses import dataclass, field
 from typing import Any
 
 
+
 @dataclass
 class RuntimeConfigurationManager:
     """
     Runtime configuration controller.
     """
 
-    settings: dict[str, Any] = field(
-        default_factory=dict
-    )
-
-    flags: dict[str, bool] = field(
+    configuration: dict[str, Any] = field(
         default_factory=dict
     )
 
@@ -38,10 +35,10 @@ class RuntimeConfigurationManager:
         value: Any,
     ) -> None:
         """
-        Store configuration value.
+        Set configuration value.
         """
 
-        self.settings[key] = value
+        self.configuration[key] = value
 
 
 
@@ -51,37 +48,37 @@ class RuntimeConfigurationManager:
         default: Any = None,
     ) -> Any:
         """
-        Retrieve configuration.
+        Retrieve configuration value.
         """
 
-        return self.settings.get(
+        return self.configuration.get(
             key,
             default,
         )
 
 
 
-    def enable(
+    def enable_feature(
         self,
         feature: str,
     ) -> None:
         """
-        Enable feature flag.
+        Enable runtime feature.
         """
 
-        self.flags[feature] = True
+        self.configuration[feature] = True
 
 
 
-    def disable(
+    def disable_feature(
         self,
         feature: str,
     ) -> None:
         """
-        Disable feature flag.
+        Disable runtime feature.
         """
 
-        self.flags[feature] = False
+        self.configuration[feature] = False
 
 
 
@@ -93,9 +90,37 @@ class RuntimeConfigurationManager:
         Check feature state.
         """
 
-        return self.flags.get(
-            feature,
-            False,
+        return bool(
+            self.configuration.get(
+                feature,
+                False,
+            )
+        )
+
+
+
+    def remove(
+        self,
+        key: str,
+    ) -> None:
+        """
+        Remove configuration.
+        """
+
+        self.configuration.pop(
+            key,
+            None,
+        )
+
+
+
+    def count(self) -> int:
+        """
+        Return configuration count.
+        """
+
+        return len(
+            self.configuration
         )
 
 
@@ -105,9 +130,7 @@ class RuntimeConfigurationManager:
         Reset configuration.
         """
 
-        self.settings.clear()
-
-        self.flags.clear()
+        self.configuration.clear()
 
 
 
@@ -117,9 +140,9 @@ class RuntimeConfigurationManager:
         """
 
         return {
-            "settings":
-                self.settings,
+            "configuration":
+                self.configuration,
 
-            "flags":
-                self.flags,
+            "count":
+                self.count(),
         }

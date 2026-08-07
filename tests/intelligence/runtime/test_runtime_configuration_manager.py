@@ -10,12 +10,10 @@ from services.intelligence.runtime.runtime_configuration_manager import (
 
 def test_init():
 
-    config = RuntimeConfigurationManager()
+    manager = RuntimeConfigurationManager()
 
     assert (
-        len(
-            config.settings
-        )
+        manager.count()
         ==
         0
     )
@@ -24,17 +22,17 @@ def test_init():
 
 def test_set_get():
 
-    config = RuntimeConfigurationManager()
+    manager = RuntimeConfigurationManager()
 
 
-    config.set(
+    manager.set(
         "environment",
         "production",
     )
 
 
     assert (
-        config.get(
+        manager.get(
             "environment"
         )
         ==
@@ -45,11 +43,11 @@ def test_set_get():
 
 def test_default():
 
-    config = RuntimeConfigurationManager()
+    manager = RuntimeConfigurationManager()
 
 
     assert (
-        config.get(
+        manager.get(
             "missing"
         )
         is None
@@ -59,16 +57,16 @@ def test_default():
 
 def test_enable_feature():
 
-    config = RuntimeConfigurationManager()
+    manager = RuntimeConfigurationManager()
 
 
-    config.enable(
+    manager.enable_feature(
         "ai_reasoning",
     )
 
 
     assert (
-        config.enabled(
+        manager.enabled(
             "ai_reasoning"
         )
         is True
@@ -78,20 +76,21 @@ def test_enable_feature():
 
 def test_disable_feature():
 
-    config = RuntimeConfigurationManager()
+    manager = RuntimeConfigurationManager()
 
 
-    config.enable(
+    manager.enable_feature(
         "automation",
     )
 
-    config.disable(
+
+    manager.disable_feature(
         "automation",
     )
 
 
     assert (
-        config.enabled(
+        manager.enabled(
             "automation"
         )
         is False
@@ -99,24 +98,47 @@ def test_disable_feature():
 
 
 
-def test_clear():
+def test_remove():
 
-    config = RuntimeConfigurationManager()
+    manager = RuntimeConfigurationManager()
 
 
-    config.set(
+    manager.set(
         "test",
         True,
     )
 
 
-    config.clear()
+    manager.remove(
+        "test",
+    )
 
 
     assert (
-        len(
-            config.settings
+        manager.get(
+            "test"
         )
+        is None
+    )
+
+
+
+def test_clear():
+
+    manager = RuntimeConfigurationManager()
+
+
+    manager.set(
+        "test",
+        True,
+    )
+
+
+    manager.clear()
+
+
+    assert (
+        manager.count()
         ==
         0
     )
@@ -125,12 +147,12 @@ def test_clear():
 
 def test_status():
 
-    config = RuntimeConfigurationManager()
+    manager = RuntimeConfigurationManager()
 
 
-    result = config.status()
+    result = manager.status()
 
 
-    assert "settings" in result
+    assert "configuration" in result
 
-    assert "flags" in result
+    assert "count" in result
