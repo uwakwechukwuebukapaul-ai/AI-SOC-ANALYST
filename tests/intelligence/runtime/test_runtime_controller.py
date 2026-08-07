@@ -2,14 +2,16 @@ from services.intelligence.runtime.runtime_controller import (
     RuntimeController,
 )
 
-from services.intelligence.runtime.task import Task
 
 
 def test_controller_init():
 
     controller = RuntimeController()
 
-    assert controller.running is False
+    assert (
+        controller.running
+        is False
+    )
 
 
 
@@ -19,7 +21,16 @@ def test_start():
 
     controller.start()
 
-    assert controller.running is True
+    assert (
+        controller.running
+        is True
+    )
+
+    assert (
+        controller.state.get_status()
+        ==
+        "running"
+    )
 
 
 
@@ -31,24 +42,43 @@ def test_stop():
 
     controller.stop()
 
-    assert controller.running is False
+    assert (
+        controller.running
+        is False
+    )
+
+    assert (
+        controller.state.get_status()
+        ==
+        "stopped"
+    )
 
 
 
-def test_submit():
+def test_restart():
 
     controller = RuntimeController()
 
-    task = Task(
-        capability="analysis",
-        payload={
-            "event": "test"
-        }
+    controller.start()
+
+    controller.restart()
+
+    assert (
+        controller.running
+        is True
     )
 
-    controller.submit(task)
 
-    assert controller.orchestrator.engine.queue.size() == 1
+
+def test_health():
+
+    controller = RuntimeController()
+
+    result = controller.health()
+
+    assert "running" in result
+
+    assert "state" in result
 
 
 
@@ -56,7 +86,8 @@ def test_status():
 
     controller = RuntimeController()
 
-    status = controller.status()
+    result = controller.status()
 
-    assert "running" in status
-    assert "orchestrator" in status
+    assert "engine" in result
+
+    assert "events" in result

@@ -1,13 +1,14 @@
 """
 Sentinel DNA Runtime Controller
 
-High-level control plane for the Intelligence Runtime.
+Control plane for Intelligence Runtime.
 
-Responsible for:
-- Runtime lifecycle
-- Task submission
+Responsibilities:
+
+- Runtime startup/shutdown
+- Component coordination
 - Runtime state management
-- Orchestrator coordination
+- Worker orchestration
 """
 
 from __future__ import annotations
@@ -15,8 +16,9 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
-from .orchestrator import RuntimeOrchestrator
-from .task import Task
+from .runtime_engine import RuntimeEngine
+from .runtime_state import RuntimeStateManager
+from .runtime_events import RuntimeEventBus
 
 
 @dataclass
@@ -25,8 +27,16 @@ class RuntimeController:
     Enterprise runtime control plane.
     """
 
-    orchestrator: RuntimeOrchestrator = field(
-        default_factory=RuntimeOrchestrator
+    engine: RuntimeEngine = field(
+        default_factory=RuntimeEngine
+    )
+
+    state: RuntimeStateManager = field(
+        default_factory=RuntimeStateManager
+    )
+
+    events: RuntimeEventBus = field(
+        default_factory=RuntimeEventBus
     )
 
     running: bool = False
@@ -39,7 +49,13 @@ class RuntimeController:
 
         self.running = True
 
-        self.orchestrator.start()
+        self.state.set_status(
+            "running"
+        )
+
+        self.events.publish(
+            "runtime.started"
+        )
 
 
     def stop(self) -> None:
@@ -49,26 +65,59 @@ class RuntimeController:
 
         self.running = False
 
-        self.orchestrator.stop()
+        self.state.set_status(
+            "stopped"
+        )
+
+        self.events.publish(
+            "runtime.stopped"
+        )
 
 
-    def submit(
-        self,
-        task: Task,
-    ) -> None:
+    def restart(self) -> None:
         """
-        Submit runtime task.
+        Restart runtime.
         """
 
-        self.orchestrator.submit(task)
+        self.stop()
+
+        self.start()
+
+
+
+    def health(self) -> dict[str, Any]:
+        """
+        Runtime health report.
+        """
+
+        return {
+            "running":
+                self.running,
+
+            "state":
+                self.state.get_status(),
+
+            "engine":
+                self.engine.status(),
+        }
+
 
 
     def status(self) -> dict[str, Any]:
         """
-        Runtime controller status.
+        Runtime status snapshot.
         """
 
         return {
-            "running": self.running,
-            "orchestrator": self.orchestrator.status(),
+            "running":
+                self.running,
+
+            "state":
+                self.state.snapshot(),
+
+            "events":
+                self.events.status(),
+
+            "engine":
+                self.engine.status(),
         }
