@@ -33,7 +33,6 @@ class RuntimeAgentOrchestrator:
 
     executions: int = 0
 
-
     @property
     def scheduler(self):
         """
@@ -45,7 +44,6 @@ class RuntimeAgentOrchestrator:
         """
 
         return self.manager
-
 
     def register_agent(
         self,
@@ -62,16 +60,12 @@ class RuntimeAgentOrchestrator:
         """
 
         if isinstance(agent, str):
-
             agent = SimpleRuntimeAgent(
                 name=agent,
                 capabilities=capabilities or [],
             )
 
-        self.manager.register(
-            agent
-        )
-
+        self.manager.register(agent)
 
     def execute(
         self,
@@ -86,7 +80,6 @@ class RuntimeAgentOrchestrator:
         )
 
         if not agents:
-
             return {
                 "success": False,
                 "error": (
@@ -95,20 +88,13 @@ class RuntimeAgentOrchestrator:
                 ),
             }
 
-
         agent = agents[0]
 
-
-        result = agent.execute(
-            task
-        )
-
+        result = agent.execute(task)
 
         self.executions += 1
 
-
         return result
-
 
     def submit(
         self,
@@ -118,30 +104,35 @@ class RuntimeAgentOrchestrator:
         """
         Submit capability request.
 
-        Routing layer only.
-
         Returns selected agent identity.
 
-        Execution is handled by execute().
+        Execution remains handled through execute().
         """
 
         agents = self.manager.find_capability(
             capability
         )
 
-
         if not agents:
-
             return None
-
 
         agent = agents[0]
 
+        return self._agent_identity(agent)
 
-        return self.manager._agent_name(
-            agent
+    def _agent_identity(
+        self,
+        agent: Any,
+    ) -> str | None:
+        """
+        Resolve agent identity safely.
+        """
+
+        return (
+            getattr(agent, "name", None)
+            or getattr(agent, "id", None)
+            or str(agent)
         )
-
 
     def has_capability(
         self,
@@ -157,7 +148,6 @@ class RuntimeAgentOrchestrator:
             )
         )
 
-
     def agent_count(
         self,
     ) -> int:
@@ -166,7 +156,6 @@ class RuntimeAgentOrchestrator:
         """
 
         return self.manager.count()
-
 
     def clear(
         self,
@@ -179,7 +168,6 @@ class RuntimeAgentOrchestrator:
 
         self.executions = 0
 
-
     def count(
         self,
     ) -> int:
@@ -188,7 +176,6 @@ class RuntimeAgentOrchestrator:
         """
 
         return self.executions
-
 
     def status(
         self,
@@ -199,18 +186,14 @@ class RuntimeAgentOrchestrator:
 
         manager_status = self.manager.status()
 
-
         return {
             "agents": manager_status.get(
                 "agents",
                 0,
             ),
-
             "executions": self.executions,
-
             "manager": manager_status,
         }
-
 
 
 @dataclass
@@ -225,7 +208,6 @@ class SimpleRuntimeAgent:
 
     capabilities: list[str]
 
-
     def execute(
         self,
         task: Any,
@@ -236,6 +218,7 @@ class SimpleRuntimeAgent:
 
         return {
             "success": True,
+            "agent": self.name,
             "capability": task.capability,
             "request": task.payload,
         }
