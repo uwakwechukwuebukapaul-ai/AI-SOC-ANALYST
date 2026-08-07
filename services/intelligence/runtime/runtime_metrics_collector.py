@@ -1,13 +1,5 @@
 """
 Sentinel DNA Runtime Metrics Collector
-
-Enterprise observability metrics layer.
-
-Responsibilities:
-
-- collect runtime metrics
-- track counters
-- expose operational statistics
 """
 
 from __future__ import annotations
@@ -16,108 +8,108 @@ from dataclasses import dataclass, field
 from typing import Any
 
 
-
 @dataclass
 class RuntimeMetricsCollector:
     """
-    Runtime metrics controller.
+    Collects runtime execution metrics.
     """
 
-    metrics: dict[str, float] = field(
-        default_factory=dict
-    )
+    metrics: dict[str, int] = field(default_factory=dict)
 
+    # --------------------------------------------------
+    # Enterprise Runtime API
+    # --------------------------------------------------
 
-
-    def increment(
+    def record_execution(
         self,
-        name: str,
-        value: float = 1,
+        capability: str,
     ) -> None:
-        """
-        Increment metric counter.
-        """
+        self.increment(capability)
 
-        self.metrics[name] = (
-            self.metrics.get(
-                name,
-                0,
-            )
-            +
+    def record_failure(
+        self,
+        capability: str,
+    ) -> None:
+        self.increment(f"{capability}:failed")
+
+    @property
+    def executions(self) -> int:
+        return sum(
             value
+            for key, value in self.metrics.items()
+            if not key.endswith(":failed")
         )
 
+    @property
+    def failures(self) -> int:
+        return sum(
+            value
+            for key, value in self.metrics.items()
+            if key.endswith(":failed")
+        )
 
+    # --------------------------------------------------
+    # Legacy Compatibility API
+    # --------------------------------------------------
 
     def set(
         self,
-        name: str,
-        value: float,
+        key: str,
+        value: int,
     ) -> None:
-        """
-        Set metric value.
-        """
+        self.metrics[key] = value
 
-        self.metrics[name] = value
-
-
-
-    def get(
+    def increment(
         self,
-        name: str,
-    ) -> float:
-        """
-        Retrieve metric.
-        """
-
-        return self.metrics.get(
-            name,
-            0,
+        key: str,
+        amount: int = 1,
+    ) -> None:
+        self.metrics[key] = (
+            self.metrics.get(key, 0)
+            + amount
         )
-
-
 
     def exists(
         self,
-        name: str,
+        key: str,
     ) -> bool:
-        """
-        Check metric existence.
-        """
+        return key in self.metrics
 
-        return name in self.metrics
-
-
-
-    def count(self) -> int:
-        """
-        Return metric count.
-        """
-
-        return len(
-            self.metrics
+    def get(
+        self,
+        key: str,
+        default: Any = None,
+    ) -> Any:
+        return self.metrics.get(
+            key,
+            default,
         )
 
+    def remove(
+        self,
+        key: str,
+    ) -> None:
+        self.metrics.pop(
+            key,
+            None,
+        )
 
-
-    def clear(self) -> None:
-        """
-        Reset metrics.
-        """
-
+    def clear(
+        self,
+    ) -> None:
         self.metrics.clear()
 
+    def count(
+        self,
+    ) -> int:
+        return len(self.metrics)
 
-
-    def status(self) -> dict[str, Any]:
-        """
-        Metrics status.
-        """
-
+    def status(
+        self,
+    ) -> dict[str, Any]:
         return {
-            "metrics":
-                self.metrics,
-
-            "count":
-                self.count(),
+            "count": self.count(),
+            "executions": self.executions,
+            "failures": self.failures,
+            "metrics": dict(self.metrics),
         }

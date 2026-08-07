@@ -1,13 +1,5 @@
 """
 Sentinel DNA Runtime Health Monitor
-
-Enterprise runtime health monitoring layer.
-
-Responsibilities:
-
-- monitor component health
-- detect degraded services
-- calculate runtime readiness
 """
 
 from __future__ import annotations
@@ -17,58 +9,96 @@ from typing import Any
 
 
 @dataclass
-class RuntimeHealthMonitor:
+class RuntimeState:
     """
-    Runtime health controller.
+    Runtime state tracker.
     """
 
-    components: dict[str, dict[str, Any]] = field(
-        default_factory=dict
-    )
+    running: bool = False
+
+    def start(self) -> None:
+        self.running = True
+
+    def stop(self) -> None:
+        self.running = False
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "running": self.running,
+        }
+
+
+@dataclass
+class RuntimeHealthMonitor:
+    """
+    Enterprise Runtime Health Monitor.
+    """
+
+    components: dict[str, bool] = field(default_factory=dict)
+
+    # Backward-compatible runtime state
+    runtime: RuntimeState = field(default_factory=RuntimeState)
 
     def register(
         self,
         component: str,
     ) -> None:
         """
-        Register runtime component.
+        Register a component.
         """
 
-        self.components[component] = {
-            "status": "healthy"
-        }
+        self.components[component] = True
 
-    def update(
+    def unregister(
         self,
         component: str,
-        status: str,
+    ) -> None:
+        """
+        Remove a component.
+        """
+
+        self.components.pop(component, None)
+
+    def set_health(
+        self,
+        component: str,
+        healthy: bool,
     ) -> None:
         """
         Update component health.
         """
 
-        if component in self.components:
-            self.components[component]["status"] = status
+        self.components[component] = healthy
 
-    def get(
+    def is_healthy(
         self,
         component: str,
-    ) -> dict[str, Any] | None:
+    ) -> bool:
         """
-        Retrieve component status.
-        """
-
-        return self.components.get(component)
-
-    def healthy(self) -> bool:
-        """
-        Overall runtime health.
+        Check component health.
         """
 
-        return all(
-            component["status"] == "healthy"
-            for component in self.components.values()
-        )
+        return self.components.get(component, False)
+
+    def check(self) -> dict[str, Any]:
+        """
+        Legacy compatibility API.
+        """
+
+        healthy = all(self.components.values()) if self.components else True
+
+        return {
+            "healthy": healthy,
+            "components": dict(self.components),
+            "runtime": self.runtime.to_dict(),
+        }
+
+    def clear(self) -> None:
+        """
+        Clear all registered components.
+        """
+
+        self.components.clear()
 
     def count(self) -> int:
         """
@@ -77,20 +107,14 @@ class RuntimeHealthMonitor:
 
         return len(self.components)
 
-    def clear(self) -> None:
-        """
-        Reset monitor.
-        """
-
-        self.components.clear()
-
     def status(self) -> dict[str, Any]:
         """
-        Runtime health summary.
+        Enterprise runtime status.
         """
 
         return {
-            "healthy": self.healthy(),
-            "components": self.components,
             "count": self.count(),
+            "healthy": all(self.components.values()) if self.components else True,
+            "components": dict(self.components),
+            "runtime": self.runtime.to_dict(),
         }
