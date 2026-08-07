@@ -1,0 +1,97 @@
+"""
+Sentinel DNA Runtime Scheduler
+
+Priority based task scheduler for
+the Intelligence Runtime Framework.
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+
+from .task import Task, TaskStatus
+
+
+@dataclass
+class Scheduler:
+    """
+    Controls task scheduling lifecycle.
+    """
+
+    tasks: list[Task] = field(default_factory=list)
+
+    def schedule(self, task: Task) -> None:
+        """
+        Add task into scheduler.
+        """
+
+        task.queue()
+
+        self.tasks.append(task)
+
+        self.tasks.sort(
+            key=lambda item: item.priority.value,
+            reverse=True,
+        )
+
+
+    def next_task(self) -> Task | None:
+        """
+        Return highest priority task.
+        """
+
+        if not self.tasks:
+            return None
+
+        return self.tasks.pop(0)
+
+
+    def remove(self, task_id: str) -> bool:
+        """
+        Remove task by id.
+        """
+
+        for task in self.tasks:
+
+            if task.task_id == task_id:
+
+                self.tasks.remove(task)
+
+                return True
+
+        return False
+
+
+    def clear(self) -> None:
+        """
+        Remove all scheduled tasks.
+        """
+
+        self.tasks.clear()
+
+
+    def size(self) -> int:
+        """
+        Return queued task count.
+        """
+
+        return len(self.tasks)
+
+
+    def contains(self, task_id: str) -> bool:
+        """
+        Check task existence.
+        """
+
+        return any(
+            task.task_id == task_id
+            for task in self.tasks
+        )
+
+
+    def pending_tasks(self) -> list[Task]:
+        """
+        Return current tasks.
+        """
+
+        return list(self.tasks)
