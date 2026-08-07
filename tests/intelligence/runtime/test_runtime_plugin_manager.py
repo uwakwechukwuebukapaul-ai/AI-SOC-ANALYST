@@ -8,12 +8,12 @@ from services.intelligence.runtime.runtime_plugin_manager import (
 
 
 
-def test_manager_init():
+def test_init():
 
     manager = RuntimePluginManager()
 
     assert (
-        len(manager.plugins)
+        manager.count()
         ==
         0
     )
@@ -25,20 +25,45 @@ def test_register():
     manager = RuntimePluginManager()
 
 
-    plugin = object()
-
-
     manager.register(
-        "threat_plugin",
-        plugin,
+        "virustotal",
+        {
+            "type":
+                "threat_intel"
+        },
     )
 
 
     assert (
-        manager.get(
-            "threat_plugin"
+        manager.active(
+            "virustotal"
         )
-        == plugin
+        is True
+    )
+
+
+
+def test_disable():
+
+    manager = RuntimePluginManager()
+
+
+    manager.register(
+        "connector",
+        {},
+    )
+
+
+    manager.disable(
+        "connector"
+    )
+
+
+    assert (
+        manager.active(
+            "connector"
+        )
+        is False
     )
 
 
@@ -49,45 +74,25 @@ def test_enable():
 
 
     manager.register(
-        "ai_plugin",
-        object(),
-    )
-
-
-    result = manager.enable(
-        "ai_plugin"
-    )
-
-
-    assert result is True
-
-
-
-def test_disable():
-
-    manager = RuntimePluginManager()
-
-
-    manager.register(
-        "agent_plugin",
-        object(),
-    )
-
-
-    manager.enable(
-        "agent_plugin"
+        "connector",
+        {},
     )
 
 
     manager.disable(
-        "agent_plugin"
+        "connector"
+    )
+
+    manager.enable(
+        "connector"
     )
 
 
     assert (
-        "agent_plugin"
-        not in
-        manager.enabled
+        manager.active(
+            "connector"
+        )
+        is True
     )
 
 
@@ -98,21 +103,43 @@ def test_remove():
 
 
     manager.register(
-        "plugin",
-        object(),
+        "test",
+        {},
     )
 
 
     manager.remove(
-        "plugin"
+        "test"
     )
 
 
     assert (
-        manager.get(
-            "plugin"
+        manager.active(
+            "test"
         )
-        is None
+        is False
+    )
+
+
+
+def test_clear():
+
+    manager = RuntimePluginManager()
+
+
+    manager.register(
+        "test",
+        {},
+    )
+
+
+    manager.clear()
+
+
+    assert (
+        manager.count()
+        ==
+        0
     )
 
 
@@ -126,7 +153,5 @@ def test_status():
 
 
     assert "plugins" in result
-
-    assert "enabled" in result
 
     assert "count" in result

@@ -1,15 +1,13 @@
 """
 Sentinel DNA Runtime Plugin Manager
 
-Enterprise plugin lifecycle manager.
+Enterprise extension management layer.
 
 Responsibilities:
 
-- plugin registration
-- plugin activation
-- plugin disabling
-- plugin discovery
-- plugin status reporting
+- register runtime plugins
+- manage plugin lifecycle
+- expose plugin capabilities
 """
 
 from __future__ import annotations
@@ -18,50 +16,48 @@ from dataclasses import dataclass, field
 from typing import Any
 
 
+
 @dataclass
 class RuntimePluginManager:
     """
-    Runtime extension manager.
+    Runtime plugin registry.
     """
 
-    plugins: dict[str, Any] = field(
+    plugins: dict[str, dict[str, Any]] = field(
         default_factory=dict
     )
 
-    enabled: set[str] = field(
-        default_factory=set
-    )
 
 
     def register(
         self,
         name: str,
-        plugin: Any,
+        plugin: dict[str, Any],
     ) -> None:
         """
         Register plugin.
         """
 
-        self.plugins[name] = plugin
+        self.plugins[name] = {
+            "enabled":
+                True,
+
+            "plugin":
+                plugin,
+        }
 
 
 
     def enable(
         self,
         name: str,
-    ) -> bool:
+    ) -> None:
         """
         Enable plugin.
         """
 
-        if name not in self.plugins:
-            return False
-
-        self.enabled.add(
-            name
-        )
-
-        return True
+        if name in self.plugins:
+            self.plugins[name]["enabled"] = True
 
 
 
@@ -73,9 +69,29 @@ class RuntimePluginManager:
         Disable plugin.
         """
 
-        self.enabled.discard(
+        if name in self.plugins:
+            self.plugins[name]["enabled"] = False
+
+
+
+    def active(
+        self,
+        name: str,
+    ) -> bool:
+        """
+        Check plugin state.
+        """
+
+        plugin = self.plugins.get(
             name
         )
+
+
+        if plugin is None:
+            return False
+
+
+        return plugin["enabled"]
 
 
 
@@ -92,34 +108,25 @@ class RuntimePluginManager:
             None,
         )
 
-        self.enabled.discard(
-            name
-        )
 
 
-
-    def get(
-        self,
-        name: str,
-    ):
+    def count(self) -> int:
         """
-        Retrieve plugin.
+        Return plugin count.
         """
 
-        return self.plugins.get(
-            name
+        return len(
+            self.plugins
         )
 
 
 
     def clear(self) -> None:
         """
-        Clear plugins.
+        Reset plugins.
         """
 
         self.plugins.clear()
-
-        self.enabled.clear()
 
 
 
@@ -130,17 +137,8 @@ class RuntimePluginManager:
 
         return {
             "plugins":
-                list(
-                    self.plugins.keys()
-                ),
-
-            "enabled":
-                list(
-                    self.enabled
-                ),
+                self.plugins,
 
             "count":
-                len(
-                    self.plugins
-                ),
+                self.count(),
         }
