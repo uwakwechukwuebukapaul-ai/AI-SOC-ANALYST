@@ -1,127 +1,72 @@
 """
-Sentinel DNA Runtime Bootstrap Service
+Sentinel DNA Runtime Bootstrap
 
-Initializes the complete Intelligence Runtime Framework.
+Application startup initializer.
 
-Startup order:
+Responsibilities:
 
-1. Configuration
-2. Dependencies
-3. State
-4. Runtime Engine
-5. Integration Controller
-6. Runtime activation
+- initialize intelligence runtime
+- register default capabilities
+- expose runtime instance
 """
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from typing import Any
+from typing import Callable
 
-from .runtime_config import RuntimeConfig
-from .dependency_manager import DependencyManager
-from .runtime_state import RuntimeState
-from .integration_controller import (
-    RuntimeIntegrationController,
+from .runtime_intelligence_runtime import (
+    RuntimeIntelligenceRuntime,
 )
 
 
+_runtime: RuntimeIntelligenceRuntime | None = None
 
-@dataclass
-class RuntimeBootstrap:
+
+
+def initialize_runtime() -> RuntimeIntelligenceRuntime:
     """
-    Enterprise runtime initialization service.
+    Initialize Sentinel DNA intelligence runtime.
     """
 
-    config: RuntimeConfig = field(
-        default_factory=RuntimeConfig
+    global _runtime
+
+
+    if _runtime is None:
+
+        _runtime = RuntimeIntelligenceRuntime()
+
+        _runtime.start()
+
+
+    return _runtime
+
+
+
+def get_runtime() -> RuntimeIntelligenceRuntime:
+    """
+    Get active runtime instance.
+    """
+
+    if _runtime is None:
+        return initialize_runtime()
+
+
+    return _runtime
+
+
+
+def register_capability(
+    capability: str,
+    handler: Callable,
+) -> None:
+    """
+    Register runtime capability.
+    """
+
+    runtime = get_runtime()
+
+
+    runtime.register(
+        capability,
+        handler,
     )
-
-    dependencies: DependencyManager = field(
-        default_factory=DependencyManager
-    )
-
-    state: RuntimeState = field(
-        default_factory=RuntimeState
-    )
-
-    controller: RuntimeIntegrationController = field(
-        default_factory=RuntimeIntegrationController
-    )
-
-    initialized: bool = False
-
-
-
-    def initialize(self) -> bool:
-        """
-        Initialize runtime stack.
-        """
-
-        dependency_status = (
-            self.dependencies.check_all()
-        )
-
-        if not dependency_status:
-            self.initialized = False
-            return False
-
-
-        self.state.start()
-
-        self.controller.start()
-
-        self.initialized = True
-
-        return True
-
-
-
-    def shutdown(self) -> None:
-        """
-        Shutdown runtime stack.
-        """
-
-        self.controller.stop()
-
-        self.state.stop()
-
-        self.initialized = False
-
-
-
-    def register_dependency(
-        self,
-        name: str,
-        checker=None,
-        required: bool = True,
-    ) -> None:
-        """
-        Register startup dependency.
-        """
-
-        self.dependencies.register(
-            name,
-            checker,
-            required,
-        )
-
-
-
-    def status(self) -> dict[str, Any]:
-        """
-        Runtime bootstrap status.
-        """
-
-        return {
-            "initialized": self.initialized,
-
-            "config":
-                self.config.to_dict(),
-
-            "state":
-                self.state.to_dict(),
-
-            "controller":
-                self.controller.status(),
-        }

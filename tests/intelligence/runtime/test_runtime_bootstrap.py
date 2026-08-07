@@ -1,64 +1,71 @@
+"""
+Runtime Bootstrap Tests
+"""
+
 from services.intelligence.runtime.runtime_bootstrap import (
-    RuntimeBootstrap
+    initialize_runtime,
+    get_runtime,
+    register_capability,
 )
-
-
-
-def test_bootstrap_init():
-
-    runtime = RuntimeBootstrap()
-
-    assert runtime.initialized is False
 
 
 
 def test_initialize():
 
-    runtime = RuntimeBootstrap()
+    runtime = initialize_runtime()
 
-    result = runtime.initialize()
-
-    assert result is True
-
-    assert runtime.initialized is True
-
-
-
-def test_shutdown():
-
-    runtime = RuntimeBootstrap()
-
-    runtime.initialize()
-
-    runtime.shutdown()
-
-    assert runtime.initialized is False
-
-
-
-def test_dependency_registration():
-
-    runtime = RuntimeBootstrap()
-
-    runtime.register_dependency(
-        "database"
-    )
 
     assert (
-        "database"
-        in runtime.dependencies.dependencies
+        runtime.running
+        is True
     )
 
 
 
-def test_status():
+def test_singleton():
 
-    runtime = RuntimeBootstrap()
+    first = get_runtime()
 
-    data = runtime.status()
+    second = get_runtime()
 
-    assert "initialized" in data
 
-    assert "config" in data
+    assert (
+        first
+        is
+        second
+    )
 
-    assert "state" in data
+
+
+def test_register():
+
+    register_capability(
+        "analysis",
+        lambda ctx: {
+            "ok":
+                True
+        },
+    )
+
+
+    runtime = get_runtime()
+
+
+    assert (
+        runtime.facade.controller.api.available(
+            "analysis"
+        )
+        is True
+    )
+
+
+
+def test_health():
+
+    runtime = get_runtime()
+
+
+    result = runtime.health()
+
+
+    assert "running" in result
