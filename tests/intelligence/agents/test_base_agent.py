@@ -2,91 +2,103 @@
 Tests for BaseAgent.
 """
 
-from services.intelligence.agents.base_agent import (
-    BaseAgent,
+from services.intelligence.agents.base_agent import BaseAgent
+from services.intelligence.agents.agent_metadata import AgentMetadata
+from services.intelligence.agents.agent_capability import AgentCapability
+from services.intelligence.agents.agent_context import AgentContext
+from services.intelligence.agents.agent_result import (
+    AgentResult,
+    AgentExecutionStatus,
 )
 
 
 class FakeAgent(BaseAgent):
 
     @property
-    def name(self):
-        return "Fake Agent"
+    def metadata(self) -> AgentMetadata:
+        return AgentMetadata(
+            name="Fake Agent",
+            version="1.0",
+            description="Testing agent",
+        )
 
     @property
-    def version(self):
-        return "1.0"
+    def capabilities(self) -> list[AgentCapability]:
+        return [
+            AgentCapability(
+                name="testing",
+                description="Testing capability",
+                category="testing",
+            )
+        ]
 
-    @property
-    def description(self):
-        return "Testing"
-
-    @property
-    def capabilities(self):
-        return ["testing"]
-
-    def validate(self, context):
-
+    def validate(
+        self,
+        context: AgentContext,
+    ) -> bool:
         return True
 
-    def execute(self, context):
+    def execute(
+        self,
+        context: AgentContext,
+    ) -> AgentResult:
 
-        return context
+        return AgentResult(
+            agent_name=self.metadata.name,
+            status=AgentExecutionStatus.SUCCESS,
+            confidence=100.0,
+        )
 
-    def summarize(self, result):
-
+    def summarize(
+        self,
+        result: AgentResult,
+    ) -> str:
         return "success"
 
-    def cleanup(self):
+    def cleanup(self) -> None:
+        pass
 
-        return None
+
+def build_context():
+
+    return AgentContext(
+        investigation_id="INV-001",
+        case_id="CASE-001",
+    )
 
 
 def test_metadata():
 
     agent = FakeAgent()
 
-    metadata = agent.metadata()
+    assert agent.metadata.name == "Fake Agent"
 
-    assert metadata["name"] == "Fake Agent"
-
-    assert metadata["version"] == "1.0"
-
-    assert metadata["capabilities"] == [
-        "testing"
-    ]
+    assert agent.metadata.version == "1.0"
 
 
 def test_execute():
 
     agent = FakeAgent()
 
-    assert (
-        agent.execute("hello")
-        ==
-        "hello"
-    )
+    result = agent.execute(build_context())
+
+    assert result.successful()
 
 
 def test_summary():
 
     agent = FakeAgent()
 
-    assert (
-        agent.summarize(None)
-        ==
-        "success"
-    )
+    result = agent.execute(build_context())
+
+    assert agent.summarize(result) == "success"
 
 
 def test_validation():
 
     agent = FakeAgent()
 
-    assert (
-        agent.validate({})
-        is True
-    )
+    assert agent.validate(build_context()) is True
 
 
 def test_repr():

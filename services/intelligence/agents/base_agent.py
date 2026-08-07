@@ -1,55 +1,43 @@
 """
 Sentinel DNA Enterprise AI Agent Base
-
-Defines the abstract contract implemented by every AI
-agent in the platform.
-
-Author:
-    Sentinel DNA
-
-License:
-    Internal
 """
 
 from __future__ import annotations
 
 from abc import ABC
 from abc import abstractmethod
-from typing import Any
+
+from services.intelligence.agents.agent_capability import (
+    AgentCapability,
+)
+from services.intelligence.agents.agent_context import (
+    AgentContext,
+)
+from services.intelligence.agents.agent_metadata import (
+    AgentMetadata,
+)
+from services.intelligence.agents.agent_result import (
+    AgentResult,
+)
 
 
 class BaseAgent(ABC):
     """
-    Enterprise AI Agent Base.
-
-    Every AI agent inside Sentinel DNA inherits from
-    this class.
+    Base class for every Sentinel DNA AI agent.
     """
 
     @property
     @abstractmethod
-    def name(self) -> str:
+    def metadata(self) -> AgentMetadata:
         """
-        Human readable agent name.
-        """
-
-    @property
-    @abstractmethod
-    def version(self) -> str:
-        """
-        Agent version.
+        Agent metadata.
         """
 
     @property
     @abstractmethod
-    def description(self) -> str:
-        """
-        Agent description.
-        """
-
-    @property
-    @abstractmethod
-    def capabilities(self) -> list[str]:
+    def capabilities(
+        self,
+    ) -> list[AgentCapability]:
         """
         Supported capabilities.
         """
@@ -57,7 +45,7 @@ class BaseAgent(ABC):
     @abstractmethod
     def validate(
         self,
-        context: Any,
+        context: AgentContext,
     ) -> bool:
         """
         Validate execution context.
@@ -66,47 +54,31 @@ class BaseAgent(ABC):
     @abstractmethod
     def execute(
         self,
-        context: Any,
-    ) -> Any:
+        context: AgentContext,
+    ) -> AgentResult:
         """
-        Execute agent.
+        Execute the agent.
         """
 
     @abstractmethod
     def summarize(
         self,
-        result: Any,
+        result: AgentResult,
     ) -> str:
         """
-        Produce summary.
+        Produce a summary.
         """
 
     @abstractmethod
     def cleanup(self) -> None:
         """
-        Release resources.
+        Cleanup resources.
         """
-
-    def metadata(self) -> dict[str, Any]:
-        """
-        Standard metadata.
-
-        Returns
-        -------
-        dict
-        """
-
-        return {
-            "name": self.name,
-            "version": self.version,
-            "description": self.description,
-            "capabilities": self.capabilities,
-        }
 
     def __repr__(self) -> str:
 
         return (
             f"{self.__class__.__name__}"
-            f"(name={self.name!r}, "
-            f"version={self.version!r})"
+            f"(name={self.metadata.name!r}, "
+            f"version={self.metadata.version!r})"
         )
