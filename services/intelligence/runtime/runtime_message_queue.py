@@ -1,14 +1,13 @@
 """
 Sentinel DNA Runtime Message Queue
 
-Enterprise runtime message buffering layer.
+Enterprise asynchronous messaging layer.
 
 Responsibilities:
 
-- enqueue messages
-- dequeue messages
-- queue inspection
-- message lifecycle handling
+- enqueue runtime messages
+- consume messages
+- track queue operations
 """
 
 from __future__ import annotations
@@ -17,66 +16,67 @@ from dataclasses import dataclass, field
 from typing import Any
 
 
+
 @dataclass
 class RuntimeMessageQueue:
     """
-    Runtime message queue.
+    Runtime message broker.
     """
 
     queue: list[dict[str, Any]] = field(
         default_factory=list
     )
 
+    processed: int = 0
 
-    def enqueue(
+
+
+    def publish(
         self,
-        message: dict[str, Any],
+        topic: str,
+        payload: dict[str, Any],
     ) -> None:
         """
         Add message to queue.
         """
 
         self.queue.append(
-            message
+            {
+                "topic":
+                    topic,
+
+                "payload":
+                    payload,
+            }
         )
 
 
 
-    def dequeue(
+    def consume(
         self,
     ) -> dict[str, Any] | None:
         """
-        Remove oldest message.
+        Consume next message.
         """
 
         if not self.queue:
             return None
 
-        return self.queue.pop(
+
+        message = self.queue.pop(
             0
         )
 
+        self.processed += 1
 
 
-    def peek(
-        self,
-    ) -> dict[str, Any] | None:
+        return message
+
+
+
+    def size(self) -> int:
         """
-        View next message.
-        """
-
-        if not self.queue:
-            return None
-
-        return self.queue[0]
-
-
-
-    def size(
-        self,
-    ) -> int:
-        """
-        Queue size.
+        Return queue size.
         """
 
         return len(
@@ -85,20 +85,27 @@ class RuntimeMessageQueue:
 
 
 
-    def clear(
-        self,
-    ) -> None:
+    def count(self) -> int:
         """
-        Clear queue.
+        Return processed messages.
+        """
+
+        return self.processed
+
+
+
+    def clear(self) -> None:
+        """
+        Reset queue.
         """
 
         self.queue.clear()
 
+        self.processed = 0
 
 
-    def status(
-        self,
-    ) -> dict[str, Any]:
+
+    def status(self) -> dict[str, Any]:
         """
         Queue status.
         """
@@ -107,6 +114,6 @@ class RuntimeMessageQueue:
             "queue_size":
                 self.size(),
 
-            "empty":
-                self.size() == 0,
+            "processed":
+                self.processed,
         }

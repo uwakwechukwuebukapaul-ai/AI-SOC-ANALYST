@@ -8,7 +8,7 @@ from services.intelligence.runtime.runtime_message_queue import (
 
 
 
-def test_queue_init():
+def test_init():
 
     queue = RuntimeMessageQueue()
 
@@ -20,16 +20,17 @@ def test_queue_init():
 
 
 
-def test_enqueue():
+def test_publish():
 
     queue = RuntimeMessageQueue()
 
 
-    queue.enqueue(
+    queue.publish(
+        "incident",
         {
-            "event":
-                "alert"
-        }
+            "id":
+                "INC001"
+        },
     )
 
 
@@ -41,48 +42,58 @@ def test_enqueue():
 
 
 
-def test_dequeue():
+def test_consume():
 
     queue = RuntimeMessageQueue()
 
 
-    message = {
-        "id": 1
-    }
-
-
-    queue.enqueue(
-        message
+    queue.publish(
+        "alert",
+        {},
     )
 
 
-    result = queue.dequeue()
-
-
-    assert result == message
-
-
-
-def test_peek():
-
-    queue = RuntimeMessageQueue()
-
-
-    queue.enqueue(
-        {
-            "task":
-                "analysis"
-        }
-    )
-
-
-    result = queue.peek()
+    result = queue.consume()
 
 
     assert (
-        result["task"]
+        result["topic"]
         ==
-        "analysis"
+        "alert"
+    )
+
+
+
+def test_empty_consume():
+
+    queue = RuntimeMessageQueue()
+
+
+    result = queue.consume()
+
+
+    assert result is None
+
+
+
+def test_processed_count():
+
+    queue = RuntimeMessageQueue()
+
+
+    queue.publish(
+        "event",
+        {},
+    )
+
+
+    queue.consume()
+
+
+    assert (
+        queue.count()
+        ==
+        1
     )
 
 
@@ -92,8 +103,9 @@ def test_clear():
     queue = RuntimeMessageQueue()
 
 
-    queue.enqueue(
-        {}
+    queue.publish(
+        "test",
+        {},
     )
 
 
@@ -118,4 +130,4 @@ def test_status():
 
     assert "queue_size" in result
 
-    assert "empty" in result
+    assert "processed" in result
