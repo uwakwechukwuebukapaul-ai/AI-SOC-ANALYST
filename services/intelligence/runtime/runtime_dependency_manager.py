@@ -1,14 +1,13 @@
 """
 Sentinel DNA Runtime Dependency Manager
 
-Manages runtime component dependencies.
+Enterprise dependency validation layer.
 
 Responsibilities:
 
-- dependency registration
-- dependency resolution
-- dependency removal
-- runtime dependency reporting
+- register dependencies
+- validate runtime requirements
+- track dependency state
 """
 
 from __future__ import annotations
@@ -20,10 +19,10 @@ from typing import Any
 @dataclass
 class RuntimeDependencyManager:
     """
-    Enterprise dependency manager.
+    Runtime dependency manager.
     """
 
-    dependencies: dict[str, Any] = field(
+    dependencies: dict[str, dict[str, Any]] = field(
         default_factory=dict
     )
 
@@ -31,74 +30,87 @@ class RuntimeDependencyManager:
     def register(
         self,
         name: str,
-        component: Any,
+        required: bool = True,
     ) -> None:
         """
-        Register runtime dependency.
+        Register dependency.
         """
 
-        self.dependencies[name] = component
+        self.dependencies[name] = {
+            "required": required,
+            "available": False,
+        }
 
 
 
-    def resolve(
+    def mark_available(
         self,
         name: str,
-    ) -> Any | None:
+    ) -> None:
         """
-        Resolve dependency.
+        Mark dependency available.
         """
 
-        return self.dependencies.get(
-            name
-        )
+        if name in self.dependencies:
+            self.dependencies[name]["available"] = True
 
 
 
-    def exists(
+    def available(
         self,
         name: str,
     ) -> bool:
         """
-        Check dependency existence.
+        Check dependency state.
         """
 
-        return name in self.dependencies
+        dependency = self.dependencies.get(
+            name
+        )
+
+        if dependency is None:
+            return False
+
+
+        return dependency["available"]
 
 
 
-    def remove(
-        self,
-        name: str,
-    ) -> None:
+    def validate(self) -> bool:
         """
-        Remove dependency.
+        Validate required dependencies.
         """
 
-        self.dependencies.pop(
-            name,
-            None,
+        for dependency in self.dependencies.values():
+
+            if (
+                dependency["required"]
+                and not dependency["available"]
+            ):
+                return False
+
+
+        return True
+
+
+
+    def count(self) -> int:
+        """
+        Return dependency count.
+        """
+
+        return len(
+            self.dependencies
         )
 
 
 
     def clear(self) -> None:
         """
-        Clear dependencies.
+        Reset dependencies.
         """
 
         self.dependencies.clear()
-
-
-
-    def size(self) -> int:
-        """
-        Dependency count.
-        """
-
-        return len(
-            self.dependencies
-        )
 
 
 
@@ -108,11 +120,9 @@ class RuntimeDependencyManager:
         """
 
         return {
-            "count":
-                self.size(),
-
             "dependencies":
-                list(
-                    self.dependencies.keys()
-                ),
+                self.dependencies,
+
+            "valid":
+                self.validate(),
         }

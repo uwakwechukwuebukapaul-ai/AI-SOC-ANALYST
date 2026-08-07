@@ -8,12 +8,12 @@ from services.intelligence.runtime.runtime_dependency_manager import (
 
 
 
-def test_manager_init():
+def test_init():
 
     manager = RuntimeDependencyManager()
 
     assert (
-        manager.size()
+        manager.count()
         ==
         0
     )
@@ -24,17 +24,37 @@ def test_register():
 
     manager = RuntimeDependencyManager()
 
-    component = object()
-
 
     manager.register(
-        "database",
-        component,
+        "database"
     )
 
 
     assert (
-        manager.exists(
+        manager.count()
+        ==
+        1
+    )
+
+
+
+def test_available():
+
+    manager = RuntimeDependencyManager()
+
+
+    manager.register(
+        "database"
+    )
+
+
+    manager.mark_available(
+        "database"
+    )
+
+
+    assert (
+        manager.available(
             "database"
         )
         is True
@@ -42,49 +62,41 @@ def test_register():
 
 
 
-def test_resolve():
-
-    manager = RuntimeDependencyManager()
-
-    component = object()
-
-
-    manager.register(
-        "engine",
-        component,
-    )
-
-
-    result = manager.resolve(
-        "engine"
-    )
-
-
-    assert result == component
-
-
-
-def test_remove():
+def test_validation_fail():
 
     manager = RuntimeDependencyManager()
 
 
     manager.register(
-        "cache",
-        object(),
-    )
-
-
-    manager.remove(
-        "cache"
+        "database"
     )
 
 
     assert (
-        manager.exists(
-            "cache"
-        )
+        manager.validate()
         is False
+    )
+
+
+
+def test_validation_success():
+
+    manager = RuntimeDependencyManager()
+
+
+    manager.register(
+        "database"
+    )
+
+
+    manager.mark_available(
+        "database"
+    )
+
+
+    assert (
+        manager.validate()
+        is True
     )
 
 
@@ -95,8 +107,7 @@ def test_clear():
 
 
     manager.register(
-        "service",
-        object(),
+        "service"
     )
 
 
@@ -104,7 +115,7 @@ def test_clear():
 
 
     assert (
-        manager.size()
+        manager.count()
         ==
         0
     )
@@ -119,6 +130,6 @@ def test_status():
     result = manager.status()
 
 
-    assert "count" in result
-
     assert "dependencies" in result
+
+    assert "valid" in result
