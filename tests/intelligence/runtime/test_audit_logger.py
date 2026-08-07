@@ -1,16 +1,11 @@
-"""
-Tests for Runtime Audit Logger
-"""
-
 from services.intelligence.runtime.audit_logger import (
-    AuditLogger,
+    RuntimeAuditLogger
 )
-
 
 
 def test_logger_init():
 
-    logger = AuditLogger()
+    logger = RuntimeAuditLogger()
 
     assert logger.count() == 0
 
@@ -18,54 +13,65 @@ def test_logger_init():
 
 def test_log_event():
 
-    logger = AuditLogger()
+    logger = RuntimeAuditLogger()
 
-    event = logger.log(
-        "task_started",
-        {
-            "task_id": "123"
-        }
+    logger.log(
+        "task_started"
     )
-
-    assert event["action"] == "task_started"
 
     assert logger.count() == 1
 
 
 
-def test_get_events():
+def test_log_details():
 
-    logger = AuditLogger()
-
-    logger.log(
-        "runtime_start"
-    )
-
-    events = logger.get_events()
-
-    assert len(events) == 1
-
-
-
-def test_latest():
-
-    logger = AuditLogger()
+    logger = RuntimeAuditLogger()
 
     logger.log(
-        "first"
+        "execution",
+        actor="worker",
+        details={
+            "task": "analysis"
+        }
+    )
+
+    entry = logger.latest()
+
+    assert entry.actor == "worker"
+
+
+
+def test_latest_empty():
+
+    logger = RuntimeAuditLogger()
+
+    assert logger.latest() is None
+
+
+
+def test_search():
+
+    logger = RuntimeAuditLogger()
+
+    logger.log(
+        "success"
     )
 
     logger.log(
-        "second"
+        "failure"
     )
 
-    assert logger.latest()["action"] == "second"
+    result = logger.search(
+        "success"
+    )
+
+    assert len(result) == 1
 
 
 
 def test_clear():
 
-    logger = AuditLogger()
+    logger = RuntimeAuditLogger()
 
     logger.log(
         "event"
@@ -79,12 +85,12 @@ def test_clear():
 
 def test_to_dict():
 
-    logger = AuditLogger()
+    logger = RuntimeAuditLogger()
 
     logger.log(
-        "audit_test"
+        "runtime"
     )
 
     data = logger.to_dict()
 
-    assert data["total_events"] == 1
+    assert data[0]["event"] == "runtime"

@@ -1,7 +1,14 @@
 """
 Sentinel DNA Runtime Audit Logger
 
-Enterprise audit tracking layer for runtime events.
+Enterprise runtime audit tracking.
+
+Responsibilities:
+
+- Record runtime events
+- Track execution history
+- Provide audit search
+- Export audit snapshots
 """
 
 from __future__ import annotations
@@ -12,84 +19,119 @@ from typing import Any
 
 
 @dataclass
-class AuditLogger:
+class AuditEntry:
     """
-    Runtime event audit store.
+    Runtime audit event.
     """
 
-    events: list[dict[str, Any]] = field(
-        default_factory=list
+    event: str
+
+    actor: str = "system"
+
+    details: dict[str, Any] = field(
+        default_factory=dict
     )
+
+    timestamp: datetime = field(
+        default_factory=lambda:
+        datetime.now(timezone.utc)
+    )
+
+
+
+class RuntimeAuditLogger:
+    """
+    Runtime audit management service.
+    """
+
+    def __init__(self):
+
+        self.entries: list[AuditEntry] = []
+
 
 
     def log(
         self,
-        action: str,
+        event: str,
+        actor: str = "system",
         details: dict[str, Any] | None = None,
-    ) -> dict[str, Any]:
+    ) -> None:
         """
-        Record runtime event.
-        """
-
-        event = {
-            "action": action,
-            "details": details or {},
-            "timestamp": datetime.now(
-                timezone.utc
-            ).isoformat(),
-        }
-
-        self.events.append(event)
-
-        return event
-
-
-
-    def get_events(self) -> list[dict[str, Any]]:
-        """
-        Retrieve audit events.
+        Record audit event.
         """
 
-        return self.events
-
-
-
-    def latest(self) -> dict[str, Any] | None:
-        """
-        Return latest event.
-        """
-
-        if not self.events:
-            return None
-
-        return self.events[-1]
+        self.entries.append(
+            AuditEntry(
+                event=event,
+                actor=actor,
+                details=details or {},
+            )
+        )
 
 
 
     def count(self) -> int:
         """
-        Return event count.
+        Return audit count.
         """
 
-        return len(self.events)
+        return len(
+            self.entries
+        )
+
+
+
+    def latest(
+        self,
+    ) -> AuditEntry | None:
+        """
+        Return latest event.
+        """
+
+        if not self.entries:
+            return None
+
+        return self.entries[-1]
+
+
+
+    def search(
+        self,
+        event: str,
+    ) -> list[AuditEntry]:
+        """
+        Search audit events.
+        """
+
+        return [
+            entry
+            for entry in self.entries
+            if entry.event == event
+        ]
 
 
 
     def clear(self) -> None:
         """
-        Clear audit history.
+        Remove audit history.
         """
 
-        self.events.clear()
+        self.entries.clear()
 
 
 
-    def to_dict(self) -> dict[str, Any]:
+    def to_dict(self) -> list[dict[str, Any]]:
         """
-        Export audit state.
+        Export audit history.
         """
 
-        return {
-            "total_events": self.count(),
-            "events": self.events,
-        }
+        return [
+            {
+                "event": entry.event,
+                "actor": entry.actor,
+                "details": entry.details,
+                "timestamp":
+                    entry.timestamp.isoformat(),
+            }
+            for entry in self.entries
+        ]
