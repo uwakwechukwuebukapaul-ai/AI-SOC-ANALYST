@@ -8,14 +8,12 @@ from services.intelligence.runtime.runtime_session_manager import (
 
 
 
-def test_manager_init():
+def test_init():
 
     manager = RuntimeSessionManager()
 
     assert (
-        len(
-            manager.sessions
-        )
+        manager.count()
         ==
         0
     )
@@ -27,15 +25,17 @@ def test_create():
     manager = RuntimeSessionManager()
 
 
-    session_id = manager.create(
-        "analyst"
+    manager.create(
+        "session01",
+        "analyst01",
     )
 
 
     assert (
-        session_id
-        in
-        manager.sessions
+        manager.active(
+            "session01"
+        )
+        is True
     )
 
 
@@ -45,91 +45,86 @@ def test_get():
     manager = RuntimeSessionManager()
 
 
-    session_id = manager.create(
-        "ai_agent"
+    manager.create(
+        "session01",
+        "agent",
+        {
+            "case":
+                "INC001"
+        },
     )
 
 
-    session = manager.get(
-        session_id
+    result = manager.get(
+        "session01"
     )
 
 
     assert (
-        session["owner"]
+        result["owner"]
         ==
-        "ai_agent"
-    )
-
-
-
-def test_close():
-
-    manager = RuntimeSessionManager()
-
-
-    session_id = manager.create(
-        "analyst"
-    )
-
-
-    manager.close(
-        session_id
-    )
-
-
-    session = manager.get(
-        session_id
-    )
-
-
-    assert (
-        session["active"]
-        is False
-    )
-
-
-
-def test_remove():
-
-    manager = RuntimeSessionManager()
-
-
-    session_id = manager.create(
         "agent"
     )
 
 
-    manager.remove(
-        session_id
-    )
 
-
-    assert (
-        manager.get(
-            session_id
-        )
-        is None
-    )
-
-
-
-def test_active_sessions():
+def test_terminate():
 
     manager = RuntimeSessionManager()
 
 
     manager.create(
-        "analyst"
+        "session01",
+        "analyst",
+    )
+
+
+    manager.terminate(
+        "session01"
     )
 
 
     assert (
-        len(
-            manager.active_sessions()
+        manager.active(
+            "session01"
         )
+        is False
+    )
+
+
+
+def test_missing_session():
+
+    manager = RuntimeSessionManager()
+
+
+    assert (
+        manager.active(
+            "missing"
+        )
+        is False
+    )
+
+
+
+def test_clear():
+
+    manager = RuntimeSessionManager()
+
+
+    manager.create(
+        "test",
+        "user",
+    )
+
+
+    manager.clear()
+
+
+    assert (
+        manager.count()
         ==
-        1
+        0
     )
 
 
@@ -142,6 +137,6 @@ def test_status():
     result = manager.status()
 
 
-    assert "total" in result
+    assert "sessions" in result
 
-    assert "active" in result
+    assert "count" in result

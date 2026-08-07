@@ -1,15 +1,13 @@
 """
 Sentinel DNA Runtime Session Manager
 
-Enterprise runtime session lifecycle.
+Enterprise session lifecycle layer.
 
 Responsibilities:
 
-- create sessions
+- create runtime sessions
 - track active sessions
-- close sessions
-- retrieve session data
-- session reporting
+- terminate sessions
 """
 
 from __future__ import annotations
@@ -17,13 +15,13 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any
-import uuid
+
 
 
 @dataclass
 class RuntimeSessionManager:
     """
-    Runtime session management service.
+    Runtime session controller.
     """
 
     sessions: dict[str, dict[str, Any]] = field(
@@ -31,39 +29,32 @@ class RuntimeSessionManager:
     )
 
 
+
     def create(
         self,
+        session_id: str,
         owner: str,
-        metadata: dict[str, Any] | None = None,
-    ) -> str:
+        context: dict[str, Any] | None = None,
+    ) -> None:
         """
-        Create runtime session.
+        Create session.
         """
-
-        session_id = str(
-            uuid.uuid4()
-        )
 
         self.sessions[session_id] = {
-            "session_id":
-                session_id,
-
             "owner":
                 owner,
 
-            "metadata":
-                metadata or {},
-
-            "created_at":
-                datetime.now(
-                    timezone.utc
-                ).isoformat(),
+            "context":
+                context or {},
 
             "active":
                 True,
-        }
 
-        return session_id
+            "created":
+                datetime.now(
+                    timezone.utc
+                ).isoformat(),
+        }
 
 
 
@@ -81,17 +72,39 @@ class RuntimeSessionManager:
 
 
 
-    def close(
+    def active(
         self,
         session_id: str,
-    ) -> None:
+    ) -> bool:
         """
-        Close session.
+        Check session activity.
         """
 
         session = self.sessions.get(
             session_id
         )
+
+
+        if session is None:
+            return False
+
+
+        return session["active"]
+
+
+
+    def terminate(
+        self,
+        session_id: str,
+    ) -> None:
+        """
+        Terminate session.
+        """
+
+        session = self.sessions.get(
+            session_id
+        )
+
 
         if session:
             session["active"] = False
@@ -113,22 +126,20 @@ class RuntimeSessionManager:
 
 
 
-    def active_sessions(self) -> list[dict[str, Any]]:
+    def count(self) -> int:
         """
-        Return active sessions.
+        Return session count.
         """
 
-        return [
-            session
-            for session in self.sessions.values()
-            if session["active"]
-        ]
+        return len(
+            self.sessions
+        )
 
 
 
     def clear(self) -> None:
         """
-        Clear sessions.
+        Reset sessions.
         """
 
         self.sessions.clear()
@@ -141,18 +152,9 @@ class RuntimeSessionManager:
         """
 
         return {
-            "total":
-                len(
-                    self.sessions
-                ),
-
-            "active":
-                len(
-                    self.active_sessions()
-                ),
-
             "sessions":
-                list(
-                    self.sessions.keys()
-                ),
+                self.sessions,
+
+            "count":
+                self.count(),
         }
