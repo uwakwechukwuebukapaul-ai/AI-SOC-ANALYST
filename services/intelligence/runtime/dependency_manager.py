@@ -1,52 +1,134 @@
 """
 Sentinel DNA Runtime Dependency Manager
 
-Manages runtime service dependencies and component resolution.
+Manages runtime component dependencies.
+
+Responsibilities:
+
+- Register dependencies
+- Validate availability
+- Track dependency status
+- Provide dependency snapshots
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, Callable
 
 
 @dataclass
-class DependencyManager:
+class Dependency:
     """
-    Runtime dependency registry.
+    Runtime dependency definition.
     """
 
-    dependencies: dict[str, Any] = field(
+    name: str
+
+    checker: Callable[[], bool] | None = None
+
+    required: bool = True
+
+    status: str = "unknown"
+
+    metadata: dict[str, Any] = field(
         default_factory=dict
     )
+
+
+class DependencyManager:
+    """
+    Enterprise dependency registry.
+    """
+
+    def __init__(self):
+
+        self.dependencies: dict[str, Dependency] = {}
+
 
 
     def register(
         self,
         name: str,
-        component: Any,
+        checker: Callable[[], bool] | None = None,
+        required: bool = True,
+        metadata: dict[str, Any] | None = None,
     ) -> None:
         """
         Register runtime dependency.
         """
 
-        self.dependencies[name] = component
+        self.dependencies[name] = Dependency(
+            name=name,
+            checker=checker,
+            required=required,
+            metadata=metadata or {},
+        )
 
 
 
-    def resolve(
+    def check(
         self,
         name: str,
-        default=None,
-    ) -> Any:
+    ) -> bool:
         """
-        Resolve dependency.
+        Validate dependency.
         """
 
-        return self.dependencies.get(
-            name,
-            default,
+        dependency = self.dependencies.get(
+            name
         )
+
+        if dependency is None:
+            return False
+
+
+        if dependency.checker is None:
+
+            dependency.status = "available"
+
+            return True
+
+
+        try:
+
+            result = dependency.checker()
+
+            dependency.status = (
+                "available"
+                if result
+                else "unavailable"
+            )
+
+            return result
+
+
+        except Exception:
+
+            dependency.status = "error"
+
+            return False
+
+
+
+    def check_all(self) -> bool:
+        """
+        Validate all dependencies.
+        """
+
+        result = True
+
+        for name in self.dependencies:
+
+            valid = self.check(name)
+
+            dependency = self.dependencies[name]
+
+            if dependency.required and not valid:
+                result = False
+
+
+        return result
 
 
 
@@ -65,46 +147,31 @@ class DependencyManager:
 
 
 
-    def exists(
-        self,
-        name: str,
-    ) -> bool:
-        """
-        Check dependency existence.
-        """
-
-        return name in self.dependencies
-
-
-
     def clear(self) -> None:
         """
-        Clear dependencies.
+        Clear registry.
         """
 
         self.dependencies.clear()
 
 
 
-    def size(self) -> int:
+    def status(self) -> dict[str, Any]:
         """
-        Dependency count.
-        """
-
-        return len(
-            self.dependencies
-        )
-
-
-
-    def to_dict(self) -> dict:
-        """
-        Export dependency state.
+        Dependency snapshot.
         """
 
         return {
-            "count": self.size(),
-            "dependencies": list(
-                self.dependencies.keys()
-            ),
+            name: {
+                "status": dependency.status,
+                "required": dependency.required,
+                "metadata": dependency.metadata,
+            }
+            for name, dependency
+            in self.dependencies.items()
         }
+
+
+
+    def to_dict(self) -> dict[str, Any]:
+        return self.status()

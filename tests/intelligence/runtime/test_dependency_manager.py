@@ -1,18 +1,13 @@
-"""
-Tests for Dependency Manager
-"""
-
 from services.intelligence.runtime.dependency_manager import (
-    DependencyManager,
+    DependencyManager
 )
 
 
-
-def test_dependency_init():
+def test_manager_init():
 
     manager = DependencyManager()
 
-    assert manager.size() == 0
+    assert manager.dependencies == {}
 
 
 
@@ -21,24 +16,54 @@ def test_register():
     manager = DependencyManager()
 
     manager.register(
-        "engine",
-        "runtime_engine",
+        "database"
     )
 
-    assert manager.exists("engine")
+    assert "database" in manager.dependencies
 
 
 
-def test_resolve():
+def test_check_without_checker():
 
     manager = DependencyManager()
 
     manager.register(
-        "database",
-        "sqlite",
+        "cache"
     )
 
-    assert manager.resolve("database") == "sqlite"
+    assert manager.check(
+        "cache"
+    ) is True
+
+
+
+def test_check_with_checker():
+
+    manager = DependencyManager()
+
+    manager.register(
+        "api",
+        checker=lambda: True
+    )
+
+    assert manager.check(
+        "api"
+    ) is True
+
+
+
+def test_check_failure():
+
+    manager = DependencyManager()
+
+    manager.register(
+        "service",
+        checker=lambda: False
+    )
+
+    assert manager.check(
+        "service"
+    ) is False
 
 
 
@@ -47,13 +72,14 @@ def test_remove():
     manager = DependencyManager()
 
     manager.register(
-        "cache",
-        "redis",
+        "queue"
     )
 
-    manager.remove("cache")
+    manager.remove(
+        "queue"
+    )
 
-    assert manager.exists("cache") is False
+    assert "queue" not in manager.dependencies
 
 
 
@@ -62,27 +88,23 @@ def test_clear():
     manager = DependencyManager()
 
     manager.register(
-        "service",
-        "test",
+        "worker"
     )
 
     manager.clear()
 
-    assert manager.size() == 0
+    assert manager.dependencies == {}
 
 
 
-def test_to_dict():
+def test_status():
 
     manager = DependencyManager()
 
     manager.register(
-        "worker",
-        "runtime_worker",
+        "engine"
     )
 
     data = manager.to_dict()
 
-    assert data["count"] == 1
-
-    assert "worker" in data["dependencies"]
+    assert "engine" in data
