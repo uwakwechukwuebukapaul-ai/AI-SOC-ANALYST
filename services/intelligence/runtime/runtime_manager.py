@@ -27,14 +27,12 @@ class RuntimeManager:
 
     running: bool = False
 
-
     def start(self) -> None:
         """
         Start runtime.
         """
 
         self.running = True
-
 
     def stop(self) -> None:
         """
@@ -43,6 +41,16 @@ class RuntimeManager:
 
         self.running = False
 
+    def restart(self) -> None:
+        """
+        Restart the runtime.
+
+        Restarting explicitly transitions the runtime
+        through a stopped state before starting it again.
+        """
+
+        self.stop()
+        self.start()
 
     def submit(
         self,
@@ -58,7 +66,6 @@ class RuntimeManager:
             )
 
         self.engine.submit(task)
-
 
     def execute(
         self,
@@ -79,10 +86,24 @@ class RuntimeManager:
             handler,
         )
 
-
     def status(self) -> dict[str, Any]:
         """
         Runtime status.
+        """
+
+        return {
+            "running": self.running,
+            "engine": self.engine.status(),
+        }
+
+    def health(self) -> dict[str, Any]:
+        """
+        Return runtime health information.
+
+        The health contract intentionally mirrors the
+        runtime status contract at this layer. More detailed
+        health indicators can be added later without changing
+        the lifecycle API.
         """
 
         return {
