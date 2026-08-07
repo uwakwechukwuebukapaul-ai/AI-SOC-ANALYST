@@ -1,13 +1,13 @@
 """
 Sentinel DNA Runtime Audit Logger
 
-Enterprise audit trail layer.
+Enterprise audit tracking layer.
 
 Responsibilities:
 
 - record runtime actions
-- store audit events
-- provide audit history
+- maintain audit history
+- provide compliance visibility
 """
 
 from __future__ import annotations
@@ -17,34 +17,36 @@ from datetime import datetime, timezone
 from typing import Any
 
 
+
 @dataclass
 class RuntimeAuditLogger:
     """
-    Runtime audit event logger.
+    Runtime audit recorder.
     """
 
-    events: list[dict[str, Any]] = field(
+    records: list[dict[str, Any]] = field(
         default_factory=list
     )
 
 
-    def log(
+
+    def record(
         self,
-        action: str,
         actor: str,
+        action: str,
         details: dict[str, Any] | None = None,
     ) -> None:
         """
-        Record audit event.
+        Record runtime action.
         """
 
-        self.events.append(
+        self.records.append(
             {
-                "action":
-                    action,
-
                 "actor":
                     actor,
+
+                "action":
+                    action,
 
                 "details":
                     details or {},
@@ -58,35 +60,38 @@ class RuntimeAuditLogger:
 
 
 
+    def latest(
+        self,
+    ) -> dict[str, Any] | None:
+        """
+        Return latest audit record.
+        """
+
+        if not self.records:
+            return None
+
+
+        return self.records[-1]
+
+
+
     def count(self) -> int:
         """
-        Return audit event count.
+        Return audit count.
         """
 
         return len(
-            self.events
+            self.records
         )
-
-
-
-    def latest(self) -> dict[str, Any] | None:
-        """
-        Return latest audit event.
-        """
-
-        if not self.events:
-            return None
-
-        return self.events[-1]
 
 
 
     def clear(self) -> None:
         """
-        Clear audit history.
+        Reset audit history.
         """
 
-        self.events.clear()
+        self.records.clear()
 
 
 
@@ -96,6 +101,6 @@ class RuntimeAuditLogger:
         """
 
         return {
-            "events":
+            "records":
                 self.count(),
         }

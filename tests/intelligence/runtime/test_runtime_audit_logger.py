@@ -20,14 +20,14 @@ def test_init():
 
 
 
-def test_log():
+def test_record():
 
     logger = RuntimeAuditLogger()
 
 
-    logger.log(
-        "runtime_start",
-        "system",
+    logger.record(
+        "ai_agent",
+        "investigate_case",
     )
 
 
@@ -44,12 +44,12 @@ def test_latest():
     logger = RuntimeAuditLogger()
 
 
-    logger.log(
-        "task_execute",
-        "agent",
+    logger.record(
+        "analyst",
+        "approve",
         {
-            "task":
-                "analysis"
+            "case":
+                "INC001"
         },
     )
 
@@ -58,9 +58,9 @@ def test_latest():
 
 
     assert (
-        result["action"]
+        result["actor"]
         ==
-        "task_execute"
+        "analyst"
     )
 
 
@@ -70,12 +70,12 @@ def test_details():
     logger = RuntimeAuditLogger()
 
 
-    logger.log(
-        "config_update",
-        "admin",
+    logger.record(
+        "system",
+        "scan",
         {
-            "mode":
-                "production"
+            "target":
+                "email"
         },
     )
 
@@ -84,9 +84,21 @@ def test_details():
 
 
     assert (
-        result["details"]["mode"]
+        result["details"]["target"]
         ==
-        "production"
+        "email"
+    )
+
+
+
+def test_empty_latest():
+
+    logger = RuntimeAuditLogger()
+
+
+    assert (
+        logger.latest()
+        is None
     )
 
 
@@ -96,9 +108,9 @@ def test_clear():
     logger = RuntimeAuditLogger()
 
 
-    logger.log(
-        "event",
-        "system",
+    logger.record(
+        "test",
+        "action",
     )
 
 
@@ -121,4 +133,4 @@ def test_status():
     result = logger.status()
 
 
-    assert "events" in result
+    assert "records" in result
