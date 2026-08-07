@@ -7,122 +7,99 @@ from services.intelligence.runtime.runtime_scheduler import (
 )
 
 
-
-def test_init():
-
-    scheduler = RuntimeScheduler()
-
-    assert (
-        scheduler.pending()
-        ==
-        0
-    )
-
-
-
-def test_schedule():
+def test_register():
 
     scheduler = RuntimeScheduler()
 
-
-    scheduler.schedule(
-        "task01",
+    scheduler.register(
+        "job",
+        lambda: None,
     )
 
-
-    assert (
-        scheduler.pending()
-        ==
-        1
-    )
+    assert scheduler.count() == 1
 
 
-
-def test_priority_order():
+def test_execute():
 
     scheduler = RuntimeScheduler()
 
+    executed = []
 
-    scheduler.schedule(
-        "low",
-        priority=1,
+    def job():
+        executed.append(True)
+
+    scheduler.register(
+        "job",
+        job,
     )
 
+    assert scheduler.run("job") is True
 
-    scheduler.schedule(
-        "high",
-        priority=10,
-    )
+    assert executed == [True]
 
 
-    result = scheduler.next()
-
-
-    assert (
-        result["id"]
-        ==
-        "high"
-    )
-
-
-
-def test_next_empty():
+def test_disabled():
 
     scheduler = RuntimeScheduler()
 
-
-    assert (
-        scheduler.next()
-        is None
+    scheduler.register(
+        "job",
+        lambda: None,
+        enabled=False,
     )
 
+    assert scheduler.run("job") is False
 
 
-def test_complete():
+def test_enable():
 
     scheduler = RuntimeScheduler()
 
-
-    scheduler.complete()
-
-
-    assert (
-        scheduler.count()
-        ==
-        1
+    scheduler.register(
+        "job",
+        lambda: None,
+        enabled=False,
     )
 
+    scheduler.enable("job")
+
+    assert scheduler.run("job") is True
+
+
+def test_remove():
+
+    scheduler = RuntimeScheduler()
+
+    scheduler.register(
+        "job",
+        lambda: None,
+    )
+
+    scheduler.remove("job")
+
+    assert scheduler.exists("job") is False
 
 
 def test_clear():
 
     scheduler = RuntimeScheduler()
 
-
-    scheduler.schedule(
-        "test",
+    scheduler.register(
+        "job",
+        lambda: None,
     )
-
 
     scheduler.clear()
 
-
-    assert (
-        scheduler.pending()
-        ==
-        0
-    )
-
+    assert scheduler.count() == 0
 
 
 def test_status():
 
     scheduler = RuntimeScheduler()
 
-
     result = scheduler.status()
 
+    assert "count" in result
 
-    assert "pending" in result
-
-    assert "executed" in result
+    assert "tasks" in result

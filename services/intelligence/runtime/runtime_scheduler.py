@@ -1,19 +1,13 @@
 """
 Sentinel DNA Runtime Scheduler
 
-Enterprise task scheduling layer.
-
-Responsibilities:
-
-- register tasks
-- prioritize execution
-- dispatch queued tasks
+Enterprise runtime scheduling layer.
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, Callable
 
 
 @dataclass
@@ -22,114 +16,113 @@ class RuntimeScheduler:
     Runtime task scheduler.
     """
 
-    tasks: list[dict[str, Any]] = field(
-        default_factory=list
+    tasks: dict[str, dict[str, Any]] = field(
+        default_factory=dict
     )
 
-
-    executed: int = 0
-
-
-
-    def schedule(
+    def register(
         self,
-        task_id: str,
-        priority: int = 0,
-        payload: dict[str, Any] | None = None,
+        name: str,
+        task: Callable[[], None],
+        enabled: bool = True,
     ) -> None:
         """
-        Add task to scheduler.
+        Register a scheduled task.
         """
 
-        self.tasks.append(
-            {
-                "id":
-                    task_id,
+        self.tasks[name] = {
+            "task": task,
+            "enabled": enabled,
+        }
 
-                "priority":
-                    priority,
-
-                "payload":
-                    payload or {},
-            }
-        )
-
-
-        self.tasks.sort(
-            key=lambda item: item["priority"],
-            reverse=True,
-        )
-
-
-
-    def next(
+    def run(
         self,
-    ) -> dict[str, Any] | None:
+        name: str,
+    ) -> bool:
         """
-        Retrieve next task.
+        Execute a scheduled task.
         """
 
-        if not self.tasks:
-            return None
+        scheduled = self.tasks.get(name)
 
+        if scheduled is None:
+            return False
 
-        return self.tasks.pop(
-            0
-        )
+        if not scheduled["enabled"]:
+            return False
 
+        scheduled["task"]()
 
+        return True
 
-    def complete(
+    def enable(
         self,
+        name: str,
     ) -> None:
         """
-        Mark task completed.
+        Enable a task.
         """
 
-        self.executed += 1
+        if name in self.tasks:
+            self.tasks[name]["enabled"] = True
 
-
-
-    def pending(self) -> int:
+    def disable(
+        self,
+        name: str,
+    ) -> None:
         """
-        Return queued tasks.
-        """
-
-        return len(
-            self.tasks
-        )
-
-
-
-    def count(self) -> int:
-        """
-        Return executed tasks.
+        Disable a task.
         """
 
-        return self.executed
+        if name in self.tasks:
+            self.tasks[name]["enabled"] = False
 
+    def remove(
+        self,
+        name: str,
+    ) -> None:
+        """
+        Remove a task.
+        """
 
+        self.tasks.pop(name, None)
 
-    def clear(self) -> None:
+    def exists(
+        self,
+        name: str,
+    ) -> bool:
+        """
+        Check task existence.
+        """
+
+        return name in self.tasks
+
+    def count(
+        self,
+    ) -> int:
+        """
+        Return task count.
+        """
+
+        return len(self.tasks)
+
+    def clear(
+        self,
+    ) -> None:
         """
         Reset scheduler.
         """
 
         self.tasks.clear()
 
-        self.executed = 0
-
-
-
-    def status(self) -> dict[str, Any]:
+    def status(
+        self,
+    ) -> dict[str, Any]:
         """
         Scheduler status.
         """
 
         return {
-            "pending":
-                self.pending(),
-
-            "executed":
-                self.executed,
+            "count": self.count(),
+            "tasks": sorted(self.tasks.keys()),
         }
