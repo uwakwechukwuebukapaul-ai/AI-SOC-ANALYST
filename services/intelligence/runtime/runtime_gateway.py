@@ -1,30 +1,31 @@
 """
 Sentinel DNA Runtime Gateway
 
-Internal service gateway for Intelligence Runtime.
+External integration boundary
+for Intelligence Runtime Framework.
 
 Responsibilities:
 
-- Runtime access abstraction
-- Task submission
-- Lifecycle commands
-- Runtime queries
+- expose runtime operations
+- submit tasks
+- execute capabilities
+- provide runtime status
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Callable
+from typing import Any
 
-from .runtime_controller import RuntimeController
 from .task import Task
 from .execution_result import ExecutionResult
+from .runtime_controller import RuntimeController
 
 
 @dataclass
 class RuntimeGateway:
     """
-    Enterprise runtime access gateway.
+    Enterprise runtime gateway.
     """
 
     controller: RuntimeController = field(
@@ -34,32 +35,53 @@ class RuntimeGateway:
 
     def start(self) -> None:
         """
-        Start runtime.
+        Start runtime service.
         """
 
-        self.controller.start()
+        self.controller.initialize()
 
 
 
     def stop(self) -> None:
         """
-        Stop runtime.
+        Stop runtime service.
         """
 
-        self.controller.stop()
+        self.controller.shutdown()
 
 
 
     def submit(
         self,
         task: Task,
-    ) -> None:
+    ) -> dict[str, Any]:
         """
-        Submit task.
+        Submit task request.
         """
 
-        self.controller.engine.submit(
+        self.controller.submit(
             task
+        )
+
+        return {
+            "submitted": True,
+            "task_id": task.task_id,
+        }
+
+
+
+    def register_handler(
+        self,
+        capability: str,
+        handler,
+    ) -> None:
+        """
+        Register execution handler.
+        """
+
+        self.controller.register(
+            capability,
+            handler,
         )
 
 
@@ -67,31 +89,20 @@ class RuntimeGateway:
     def execute(
         self,
         task: Task,
-        handler: Callable,
     ) -> ExecutionResult:
         """
         Execute runtime task.
         """
 
-        return self.controller.engine.execute(
-            task,
-            handler,
+        return self.controller.execute(
+            task
         )
-
-
-
-    def health(self) -> dict[str, Any]:
-        """
-        Runtime health.
-        """
-
-        return self.controller.health()
 
 
 
     def status(self) -> dict[str, Any]:
         """
-        Runtime status.
+        Runtime service status.
         """
 
         return self.controller.status()

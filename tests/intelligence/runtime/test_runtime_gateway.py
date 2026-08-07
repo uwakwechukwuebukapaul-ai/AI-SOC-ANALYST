@@ -1,16 +1,31 @@
+"""
+Runtime Gateway Tests
+"""
+
 from services.intelligence.runtime.runtime_gateway import (
     RuntimeGateway,
 )
+
+from services.intelligence.runtime.task import Task
+
+
+
+def create_task():
+
+    return Task(
+        capability="analysis",
+        payload={
+            "source": "test"
+        }
+    )
+
 
 
 def test_gateway_init():
 
     gateway = RuntimeGateway()
 
-    assert (
-        gateway.controller
-        is not None
-    )
+    assert gateway.controller is not None
 
 
 
@@ -21,7 +36,7 @@ def test_start():
     gateway.start()
 
     assert (
-        gateway.controller.running
+        gateway.controller.initialized
         is True
     )
 
@@ -36,21 +51,47 @@ def test_stop():
     gateway.stop()
 
     assert (
-        gateway.controller.running
+        gateway.controller.initialized
         is False
     )
 
 
 
-def test_health():
+def test_submit():
 
     gateway = RuntimeGateway()
 
-    result = gateway.health()
+    result = gateway.submit(
+        create_task()
+    )
 
-    assert "running" in result
+    assert (
+        result["submitted"]
+        is True
+    )
 
-    assert "state" in result
+
+
+def test_execute():
+
+    gateway = RuntimeGateway()
+
+
+    gateway.register_handler(
+        "analysis",
+        lambda task: "completed"
+    )
+
+
+    result = gateway.execute(
+        create_task()
+    )
+
+
+    assert (
+        result.success
+        is True
+    )
 
 
 
@@ -60,6 +101,7 @@ def test_status():
 
     result = gateway.status()
 
-    assert "engine" in result
-
-    assert "events" in result
+    assert (
+        "initialized"
+        in result
+    )
