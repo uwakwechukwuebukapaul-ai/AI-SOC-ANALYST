@@ -1,13 +1,13 @@
 """
 Sentinel DNA Runtime Metrics Collector
 
-Enterprise runtime metrics layer.
+Enterprise observability metrics layer.
 
 Responsibilities:
 
-- collect execution metrics
-- track runtime events
-- expose analytics data
+- collect runtime metrics
+- track counters
+- expose operational statistics
 """
 
 from __future__ import annotations
@@ -16,76 +16,86 @@ from dataclasses import dataclass, field
 from typing import Any
 
 
+
 @dataclass
 class RuntimeMetricsCollector:
     """
-    Runtime metrics collector.
+    Runtime metrics controller.
     """
 
-    executions: int = 0
-
-    failures: int = 0
-
-    events: list[dict[str, Any]] = field(
-        default_factory=list
+    metrics: dict[str, float] = field(
+        default_factory=dict
     )
 
 
-    def record_execution(
+
+    def increment(
         self,
-        capability: str,
+        name: str,
+        value: float = 1,
     ) -> None:
         """
-        Record successful execution.
+        Increment metric counter.
         """
 
-        self.executions += 1
-
-        self.events.append(
-            {
-                "type":
-                    "execution",
-
-                "capability":
-                    capability,
-            }
+        self.metrics[name] = (
+            self.metrics.get(
+                name,
+                0,
+            )
+            +
+            value
         )
 
 
 
-    def record_failure(
+    def set(
         self,
-        capability: str,
-        error: str,
+        name: str,
+        value: float,
     ) -> None:
         """
-        Record failed execution.
+        Set metric value.
         """
 
-        self.failures += 1
+        self.metrics[name] = value
 
-        self.events.append(
-            {
-                "type":
-                    "failure",
 
-                "capability":
-                    capability,
 
-                "error":
-                    error,
-            }
+    def get(
+        self,
+        name: str,
+    ) -> float:
+        """
+        Retrieve metric.
+        """
+
+        return self.metrics.get(
+            name,
+            0,
         )
 
 
 
-    def total_events(self) -> int:
+    def exists(
+        self,
+        name: str,
+    ) -> bool:
         """
-        Return event count.
+        Check metric existence.
+        """
+
+        return name in self.metrics
+
+
+
+    def count(self) -> int:
+        """
+        Return metric count.
         """
 
         return len(
-            self.events
+            self.metrics
         )
 
 
@@ -95,26 +105,19 @@ class RuntimeMetricsCollector:
         Reset metrics.
         """
 
-        self.executions = 0
-
-        self.failures = 0
-
-        self.events.clear()
+        self.metrics.clear()
 
 
 
     def status(self) -> dict[str, Any]:
         """
-        Metrics snapshot.
+        Metrics status.
         """
 
         return {
-            "executions":
-                self.executions,
+            "metrics":
+                self.metrics,
 
-            "failures":
-                self.failures,
-
-            "events":
-                self.total_events(),
+            "count":
+                self.count(),
         }

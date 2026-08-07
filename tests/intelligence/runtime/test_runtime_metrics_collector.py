@@ -10,86 +10,113 @@ from services.intelligence.runtime.runtime_metrics_collector import (
 
 def test_init():
 
-    metrics = RuntimeMetricsCollector()
+    collector = RuntimeMetricsCollector()
 
     assert (
-        metrics.executions
+        collector.count()
         ==
         0
     )
 
 
 
-def test_record_execution():
+def test_increment():
 
-    metrics = RuntimeMetricsCollector()
+    collector = RuntimeMetricsCollector()
 
 
-    metrics.record_execution(
-        "ioc_analysis"
+    collector.increment(
+        "executions",
     )
 
 
     assert (
-        metrics.executions
+        collector.get(
+            "executions"
+        )
         ==
         1
     )
 
 
 
-def test_record_failure():
+def test_multiple_increment():
 
-    metrics = RuntimeMetricsCollector()
+    collector = RuntimeMetricsCollector()
 
 
-    metrics.record_failure(
-        "analysis",
-        "timeout",
+    collector.increment(
+        "alerts",
+        5,
     )
 
 
     assert (
-        metrics.failures
+        collector.get(
+            "alerts"
+        )
         ==
-        1
+        5
     )
 
 
 
-def test_events():
+def test_set():
 
-    metrics = RuntimeMetricsCollector()
+    collector = RuntimeMetricsCollector()
 
 
-    metrics.record_execution(
-        "investigation"
+    collector.set(
+        "latency",
+        120,
     )
 
 
     assert (
-        metrics.total_events()
+        collector.get(
+            "latency"
+        )
         ==
-        1
+        120
+    )
+
+
+
+def test_exists():
+
+    collector = RuntimeMetricsCollector()
+
+
+    collector.set(
+        "memory",
+        50,
+    )
+
+
+    assert (
+        collector.exists(
+            "memory"
+        )
+        is True
     )
 
 
 
 def test_clear():
 
-    metrics = RuntimeMetricsCollector()
+    collector = RuntimeMetricsCollector()
 
 
-    metrics.record_execution(
-        "test"
+    collector.increment(
+        "test",
     )
 
 
-    metrics.clear()
+    collector.clear()
 
 
     assert (
-        metrics.executions
+        collector.count()
         ==
         0
     )
@@ -98,14 +125,12 @@ def test_clear():
 
 def test_status():
 
-    metrics = RuntimeMetricsCollector()
+    collector = RuntimeMetricsCollector()
 
 
-    result = metrics.status()
+    result = collector.status()
 
 
-    assert "executions" in result
+    assert "metrics" in result
 
-    assert "failures" in result
-
-    assert "events" in result
+    assert "count" in result
