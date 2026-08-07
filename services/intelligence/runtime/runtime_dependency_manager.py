@@ -1,13 +1,13 @@
 """
 Sentinel DNA Runtime Dependency Manager
 
-Enterprise dependency validation layer.
+Enterprise runtime service management layer.
 
 Responsibilities:
 
 - register dependencies
-- validate runtime requirements
-- track dependency state
+- track service state
+- validate availability
 """
 
 from __future__ import annotations
@@ -16,10 +16,11 @@ from dataclasses import dataclass, field
 from typing import Any
 
 
+
 @dataclass
 class RuntimeDependencyManager:
     """
-    Runtime dependency manager.
+    Runtime dependency registry.
     """
 
     dependencies: dict[str, dict[str, Any]] = field(
@@ -27,32 +28,38 @@ class RuntimeDependencyManager:
     )
 
 
+
     def register(
         self,
         name: str,
-        required: bool = True,
+        metadata: dict[str, Any] | None = None,
     ) -> None:
         """
-        Register dependency.
+        Register runtime dependency.
         """
 
         self.dependencies[name] = {
-            "required": required,
-            "available": False,
+            "available":
+                True,
+
+            "metadata":
+                metadata or {},
         }
 
 
 
-    def mark_available(
+    def remove(
         self,
         name: str,
     ) -> None:
         """
-        Mark dependency available.
+        Remove dependency.
         """
 
-        if name in self.dependencies:
-            self.dependencies[name]["available"] = True
+        self.dependencies.pop(
+            name,
+            None,
+        )
 
 
 
@@ -61,12 +68,13 @@ class RuntimeDependencyManager:
         name: str,
     ) -> bool:
         """
-        Check dependency state.
+        Check dependency availability.
         """
 
         dependency = self.dependencies.get(
             name
         )
+
 
         if dependency is None:
             return False
@@ -76,21 +84,29 @@ class RuntimeDependencyManager:
 
 
 
-    def validate(self) -> bool:
+    def disable(
+        self,
+        name: str,
+    ) -> None:
         """
-        Validate required dependencies.
+        Disable dependency.
         """
 
-        for dependency in self.dependencies.values():
-
-            if (
-                dependency["required"]
-                and not dependency["available"]
-            ):
-                return False
+        if name in self.dependencies:
+            self.dependencies[name]["available"] = False
 
 
-        return True
+
+    def enable(
+        self,
+        name: str,
+    ) -> None:
+        """
+        Enable dependency.
+        """
+
+        if name in self.dependencies:
+            self.dependencies[name]["available"] = True
 
 
 
@@ -123,6 +139,6 @@ class RuntimeDependencyManager:
             "dependencies":
                 self.dependencies,
 
-            "valid":
-                self.validate(),
+            "count":
+                self.count(),
         }

@@ -26,29 +26,80 @@ def test_register():
 
 
     manager.register(
-        "database"
+        "threat_intelligence",
     )
 
 
     assert (
-        manager.count()
-        ==
-        1
+        manager.available(
+            "threat_intelligence"
+        )
+        is True
     )
 
 
 
-def test_available():
+def test_metadata():
 
     manager = RuntimeDependencyManager()
 
 
     manager.register(
+        "engine",
+        {
+            "version":
+                "1.0"
+        },
+    )
+
+
+    assert (
+        manager.dependencies["engine"]["metadata"]["version"]
+        ==
+        "1.0"
+    )
+
+
+
+def test_disable():
+
+    manager = RuntimeDependencyManager()
+
+
+    manager.register(
+        "database",
+    )
+
+
+    manager.disable(
         "database"
     )
 
 
-    manager.mark_available(
+    assert (
+        manager.available(
+            "database"
+        )
+        is False
+    )
+
+
+
+def test_enable():
+
+    manager = RuntimeDependencyManager()
+
+
+    manager.register(
+        "database",
+    )
+
+
+    manager.disable(
+        "database"
+    )
+
+    manager.enable(
         "database"
     )
 
@@ -62,41 +113,26 @@ def test_available():
 
 
 
-def test_validation_fail():
+def test_remove():
 
     manager = RuntimeDependencyManager()
 
 
     manager.register(
-        "database"
+        "test",
+    )
+
+
+    manager.remove(
+        "test"
     )
 
 
     assert (
-        manager.validate()
+        manager.available(
+            "test"
+        )
         is False
-    )
-
-
-
-def test_validation_success():
-
-    manager = RuntimeDependencyManager()
-
-
-    manager.register(
-        "database"
-    )
-
-
-    manager.mark_available(
-        "database"
-    )
-
-
-    assert (
-        manager.validate()
-        is True
     )
 
 
@@ -107,7 +143,7 @@ def test_clear():
 
 
     manager.register(
-        "service"
+        "test",
     )
 
 
@@ -132,4 +168,4 @@ def test_status():
 
     assert "dependencies" in result
 
-    assert "valid" in result
+    assert "count" in result
