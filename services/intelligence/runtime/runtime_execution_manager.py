@@ -3,11 +3,12 @@ Sentinel DNA Runtime Execution Manager
 
 Enterprise execution control layer.
 
-Responsible for:
-- execution lifecycle
-- pipeline coordination
-- task tracking
-- runtime reporting
+Responsibilities:
+
+- manage runtime execution
+- submit jobs
+- execute pipeline
+- track execution metrics
 """
 
 from __future__ import annotations
@@ -15,66 +16,29 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
-from .task import Task
-from .execution_result import ExecutionResult
 from .runtime_pipeline import RuntimePipeline
 
 
 @dataclass
 class RuntimeExecutionManager:
     """
-    Controls runtime task execution.
+    Runtime execution coordinator.
     """
 
     pipeline: RuntimePipeline = field(
         default_factory=RuntimePipeline
     )
 
-    running: bool = False
-
-    executed_tasks: int = 0
+    executions: int = 0
 
 
-
-    def start(self) -> None:
-        """
-        Start execution manager.
-        """
-
-        self.running = True
-
-
-
-    def stop(self) -> None:
-        """
-        Stop execution manager.
-        """
-
-        self.running = False
-
-
-
-    def submit(
-        self,
-        task: Task,
-    ) -> None:
-        """
-        Submit task into pipeline.
-        """
-
-        self.pipeline.submit(
-            task
-        )
-
-
-
-    def register_handler(
+    def register(
         self,
         capability: str,
         handler,
     ) -> None:
         """
-        Register capability executor.
+        Register execution capability.
         """
 
         self.pipeline.register_handler(
@@ -84,30 +48,57 @@ class RuntimeExecutionManager:
 
 
 
-    def execute(
+    def submit(
         self,
-        task: Task,
-    ) -> ExecutionResult:
+        capability: str,
+        payload: dict[str, Any],
+    ) -> None:
         """
-        Execute task.
+        Submit execution request.
         """
 
-        result = self.pipeline.execute(
-            task
+        self.pipeline.submit(
+            capability,
+            payload,
         )
 
-        self.executed_tasks += 1
+
+
+    def execute(self) -> Any:
+        """
+        Execute next runtime job.
+        """
+
+        result = self.pipeline.process()
+
+
+        if result is not None:
+            self.executions += 1
+
 
         return result
 
 
 
+    def pending(
+        self,
+    ) -> int:
+        """
+        Pending execution count.
+        """
+
+        return self.pipeline.size()
+
+
+
     def clear(self) -> None:
         """
-        Clear execution state.
+        Reset execution manager.
         """
 
         self.pipeline.clear()
+
+        self.executions = 0
 
 
 
@@ -117,11 +108,11 @@ class RuntimeExecutionManager:
         """
 
         return {
-            "running":
-                self.running,
+            "executions":
+                self.executions,
 
-            "executed_tasks":
-                self.executed_tasks,
+            "pending":
+                self.pending(),
 
             "pipeline":
                 self.pipeline.status(),
