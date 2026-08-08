@@ -1,129 +1,56 @@
 """
 Sentinel DNA Runtime Task Executor
 
-Executes registered runtime capabilities.
+Executes investigation tasks through registered capability handlers.
 """
 
-from __future__ import annotations
+from typing import Any
 
-from dataclasses import dataclass, field
-from typing import Any, Callable
+from .task import (
+    Task,
+    TaskStatus,
+)
 
-from .task import TaskStatus
 
-
-@dataclass
 class RuntimeTaskExecutor:
     """
-    Runtime capability executor.
+    Runtime execution engine for investigation tasks.
+
+    Responsibilities:
+    - Register capability handlers
+    - Execute tasks
+    - Track lifecycle state
+    - Record runtime metrics
+    - Fail safely
     """
 
-    handlers: dict[str, Callable] = field(
-        default_factory=dict
-    )
+    def __init__(self):
 
-    executed: int = 0
+        self.handlers: dict[str, Any] = {}
 
-    failed: int = 0
+        self.executed = 0
+        self.failed = 0
+        self.completed = 0
 
 
     def register(
         self,
         capability: str,
-        handler: Callable,
+        handler: Any,
     ) -> None:
-        """
-        Register execution handler.
-        """
 
         self.handlers[capability] = handler
 
 
-    def available(
+    def unregister(
         self,
         capability: str,
-    ) -> bool:
-        return capability in self.handlers
+    ) -> None:
 
-
-    def execute(
-        self,
-        task,
-        payload: dict[str, Any] | None = None,
-    ) -> Any:
-        """
-        Execute runtime task.
-        """
-
-        if hasattr(task, "capability"):
-
-            capability = task.capability
-
-            task_payload = task.payload
-
-        else:
-
-            capability = task
-
-            task_payload = payload or {}
-
-
-        handler = self.handlers.get(
-            capability
+        self.handlers.pop(
+            capability,
+            None,
         )
-
-
-        if handler is None:
-
-            self.failed += 1
-
-            return None
-
-
-        try:
-
-            if hasattr(task, "status"):
-
-                task.status = TaskStatus.RUNNING
-
-
-            result = handler(
-                task_payload
-            )
-
-
-            if hasattr(task, "status"):
-
-                task.status = TaskStatus.COMPLETED
-
-
-            self.executed += 1
-
-
-            return result
-
-
-        except Exception as error:
-
-            print(
-                f"[RuntimeTaskExecutor ERROR] "
-                f"{capability}: {error}"
-            )
-
-
-            if hasattr(task, "status"):
-
-                task.status = TaskStatus.FAILED
-
-
-            self.failed += 1
-
-            raise
-
-
-    def clear(self) -> None:
-
-        self.handlers.clear()
 
 
     def status(self) -> dict[str, Any]:
@@ -133,5 +60,75 @@ class RuntimeTaskExecutor:
                 self.handlers.keys()
             ),
             "executed": self.executed,
+            "completed": self.completed,
             "failed": self.failed,
         }
+
+
+    def execute(
+        self,
+        task: Task,
+    ):
+
+        self.executed += 1
+
+        handler = self.handlers.get(
+            task.capability
+        )
+
+
+        if handler is None:
+
+            task.status = TaskStatus.FAILED
+
+            task.error = (
+                f"Agent not found: {task.capability}"
+            )
+
+            self.failed += 1
+
+            return None
+
+
+        try:
+
+            task.status = TaskStatus.RUNNING
+
+
+            result = handler(
+                task.payload
+            )
+
+
+            if result is None:
+
+                task.status = TaskStatus.FAILED
+
+                task.error = (
+                    f"Agent execution returned no result: "
+                    f"{task.capability}"
+                )
+
+                self.failed += 1
+
+                return None
+
+
+            task.status = TaskStatus.COMPLETED
+
+            task.result = result
+
+            self.completed += 1
+
+            return result
+
+
+        except Exception as exc:
+
+            task.status = TaskStatus.FAILED
+
+            task.error = str(exc)
+
+            self.failed += 1
+
+            return None
