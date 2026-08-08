@@ -1,62 +1,67 @@
 """
 Sentinel DNA Investigation Coordinator
 
-Coordinates complete intelligence investigations.
+Enterprise investigation orchestration boundary.
 
-Responsibilities:
+Coordinates:
 
-- create investigation context
-- select investigation plan
-- invoke AgentPipeline
-- synchronize orchestration results into investigation context
-- return OrchestrationResult
-
-Runtime remains the execution boundary.
+Execution Plan
+|
+Agent Pipeline
+|
+Runtime
+|
+Persistence
 """
 
 from __future__ import annotations
 
 from typing import Any
 
+
 from services.intelligence.orchestration.agent_pipeline import (
     AgentPipeline,
-)
-
-from services.intelligence.orchestration.investigation_plans import (
-    InvestigationPlans,
-)
-
-from services.intelligence.orchestration.orchestration_context import (
-    OrchestrationContext,
 )
 
 from services.intelligence.orchestration.orchestration_result import (
     OrchestrationResult,
 )
 
+from services.intelligence.storage.investigation_repository import (
+    InvestigationRepository,
+)
+
 
 class InvestigationCoordinator:
     """
-    Coordinates Sentinel DNA investigations.
+    Coordinates autonomous investigations.
     """
 
     def __init__(
         self,
         registry: Any,
-        runtime: Any | None = None,
+        runtime: Any,
+        pipeline: AgentPipeline | None = None,
+        repository: InvestigationRepository | None = None,
     ) -> None:
 
-        self.registry = registry
-        self.runtime = runtime
-
-        self.pipeline = AgentPipeline(
-            registry=registry,
-            runtime=runtime,
+        self.pipeline = (
+            pipeline
+            or AgentPipeline(
+                registry=registry,
+                runtime=runtime,
+            )
         )
 
-    # --------------------------------------------------------------
-    # Investigation
-    # --------------------------------------------------------------
+        self.repository = (
+            repository
+            or InvestigationRepository()
+        )
+
+
+    # ----------------------------------------------------------
+    # Investigation execution
+    # ----------------------------------------------------------
 
     def investigate(
         self,
@@ -64,68 +69,80 @@ class InvestigationCoordinator:
         alert: dict[str, Any],
     ) -> OrchestrationResult:
         """
-        Execute investigation workflow.
+        Execute investigation lifecycle.
         """
 
-        context = self._create_context(
+        self.repository.create(
             case_id=case_id,
             alert=alert,
         )
 
-        plan = InvestigationPlans.standard_investigation()
+
+        context = self._create_context(
+            case_id,
+            alert,
+        )
+
+
+        plan = self._create_plan()
+
 
         result = self.pipeline.execute(
             plan=plan,
             context=context,
         )
 
-        self._synchronize_results(
-            context,
-            result,
-        )
+
+        if result.success:
+
+            self.repository.update_status(
+                case_id,
+                "completed",
+            )
+
+        else:
+
+            self.repository.update_status(
+                case_id,
+                "failed",
+            )
+
 
         return result
 
 
-    # --------------------------------------------------------------
-    # Context
-    # --------------------------------------------------------------
 
-    @staticmethod
+    # ----------------------------------------------------------
+    # Context
+    # ----------------------------------------------------------
+
     def _create_context(
+        self,
         case_id: str,
         alert: dict[str, Any],
-    ) -> OrchestrationContext:
+    ):
 
-        if not case_id:
-            raise ValueError(
-                "Case ID required."
-            )
-
-        if not isinstance(alert, dict):
-            raise TypeError(
-                "Alert must be dictionary."
-            )
-
-        return OrchestrationContext(
-            case_id=case_id,
-            alert=dict(alert),
+        from services.intelligence.orchestration.orchestration_context import (
+            OrchestrationContext,
         )
 
 
-    # --------------------------------------------------------------
-    # Synchronization
-    # --------------------------------------------------------------
+        return OrchestrationContext(
+            case_id=case_id,
+            alert=alert,
+        )
 
-    @staticmethod
-    def _synchronize_results(
-        context: OrchestrationContext,
-        result: OrchestrationResult,
-    ) -> None:
 
-        for agent_name, agent_result in result.results.items():
 
-            context.add_result(
-                agent_name=agent_name,
-                result=agent_result,
-            )
+    # ----------------------------------------------------------
+    # Plan
+    # ----------------------------------------------------------
+
+    def _create_plan(self):
+
+        from services.intelligence.orchestration.investigation_plans import (
+            InvestigationPlans,
+        )
+
+
+        return InvestigationPlans.standard_investigation()

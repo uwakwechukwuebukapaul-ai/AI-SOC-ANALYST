@@ -21,6 +21,9 @@ AI Agents
 |
 v
 Report Service
+|
+v
+Report Storage
 """
 
 from __future__ import annotations
@@ -56,6 +59,10 @@ from services.intelligence.reporting.report_service import (
     ReportService,
 )
 
+from services.intelligence.reporting.report_storage import (
+    ReportStorage,
+)
+
 
 # ============================================================
 # Blueprint
@@ -68,8 +75,9 @@ investigation_bp = Blueprint(
 )
 
 
+
 # ============================================================
-# Sentinel DNA Intelligence Runtime
+# Runtime Initialization
 # ============================================================
 
 agent_registry = AgentRegistry()
@@ -95,6 +103,66 @@ investigation_coordinator = InvestigationCoordinator(
 
 report_service = ReportService()
 
+report_storage = ReportStorage()
+
+
+
+# ============================================================
+# Serialization Helper
+# ============================================================
+
+def _serialize(value):
+
+    if value is None:
+        return None
+
+
+    if isinstance(
+        value,
+        (str, int, float, bool),
+    ):
+        return value
+
+
+    if isinstance(
+        value,
+        list,
+    ):
+        return [
+            _serialize(item)
+            for item in value
+        ]
+
+
+    if isinstance(
+        value,
+        dict,
+    ):
+        return {
+            key: _serialize(item)
+            for key, item in value.items()
+        }
+
+
+    if hasattr(
+        value,
+        "value",
+    ):
+        return value.value
+
+
+    if hasattr(
+        value,
+        "__dict__",
+    ):
+        return _serialize(
+            value.__dict__
+        )
+
+
+    return str(value)
+
+
 
 # ============================================================
 # Generate Investigation Report
@@ -117,6 +185,7 @@ def generate_investigation_report():
     case_id = payload.get(
         "case_id"
     )
+
 
     alert = payload.get(
         "alert"
@@ -161,10 +230,19 @@ def generate_investigation_report():
         report = (
             report_service.build_response(
                 case_id=case_id,
-                orchestration_result=(
-                    orchestration_result
-                ),
+                orchestration_result=orchestration_result,
             )
+        )
+
+
+        report = _serialize(
+            report
+        )
+
+
+        report_storage.save_report(
+            case_id=case_id,
+            report=report,
         )
 
 
@@ -178,6 +256,10 @@ def generate_investigation_report():
 
 
     except Exception as error:
+
+        import traceback
+
+        traceback.print_exc()
 
         return jsonify(
             {
@@ -203,7 +285,7 @@ def get_investigation_report(
     try:
 
         report = (
-            report_service.get_report(
+            report_storage.get_report(
                 case_id
             )
         )
@@ -215,23 +297,15 @@ def get_investigation_report(
                 {
                     "success": False,
                     "error": "Report not found",
-                    "case_id": case_id,
                 }
             ), 404
 
 
 
-        serialized_report = (
-            report_service.serialize_report(
-                report
-            )
-        )
-
-
         return jsonify(
             {
                 "success": True,
-                "report": serialized_report,
+                "report": _serialize(report),
             }
         ), 200
 
