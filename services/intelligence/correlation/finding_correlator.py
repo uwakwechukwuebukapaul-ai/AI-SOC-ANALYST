@@ -2,7 +2,7 @@
 Sentinel DNA Finding Correlator
 
 Correlates investigation findings
-from multiple intelligence sources.
+and removes duplicates safely.
 """
 
 from __future__ import annotations
@@ -12,48 +12,96 @@ from typing import Any
 
 class FindingCorrelator:
     """
-    Combines findings from agents.
+    Finding correlation engine.
 
-    Future expansion:
+    Responsibilities:
 
-    - ML similarity matching
-    - ATT&CK mapping
-    - graph correlation
+    - normalize findings
+    - remove duplicates
+    - preserve investigation evidence
     """
-
 
     def correlate(
         self,
-        findings: list[dict[str, Any]],
-    ) -> list[dict[str, Any]]:
+        findings: list[Any],
+    ) -> list[Any]:
         """
-        Remove duplicates and merge
-        related findings.
+        Correlate findings.
+
+        Handles:
+        - strings
+        - dictionaries
+        - objects
         """
 
         correlated = []
 
         seen = set()
 
-
         for finding in findings:
 
-            key = (
-                finding.get("type"),
-                finding.get("value"),
+            key = self._build_key(
+                finding
             )
-
 
             if key in seen:
                 continue
 
-
             seen.add(key)
-
 
             correlated.append(
                 finding
             )
 
-
         return correlated
+
+
+    def _build_key(
+        self,
+        finding: Any,
+    ):
+        """
+        Build hashable identity key.
+        """
+
+        if isinstance(
+            finding,
+            dict,
+        ):
+            return tuple(
+                sorted(
+                    (
+                        key,
+                        str(value),
+                    )
+                    for key, value in finding.items()
+                )
+            )
+
+
+        if isinstance(
+            finding,
+            list,
+        ):
+            return tuple(
+                self._build_key(item)
+                for item in finding
+            )
+
+
+        if hasattr(
+            finding,
+            "__dict__",
+        ):
+            return tuple(
+                sorted(
+                    (
+                        key,
+                        str(value),
+                    )
+                    for key, value in finding.__dict__.items()
+                )
+            )
+
+
+        return str(finding)
