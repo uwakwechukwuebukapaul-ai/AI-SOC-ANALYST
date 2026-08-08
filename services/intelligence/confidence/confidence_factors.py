@@ -1,7 +1,8 @@
 """
-Confidence Factor Evaluation
+Sentinel DNA Confidence Factors
 
-Measures investigation reliability.
+Evaluates reliability signals
+used by the confidence engine.
 """
 
 from __future__ import annotations
@@ -11,7 +12,7 @@ from typing import Any
 
 class ConfidenceFactorEvaluator:
     """
-    Calculates confidence factors.
+    Calculates confidence contributors.
     """
 
 
@@ -25,33 +26,42 @@ class ConfidenceFactorEvaluator:
         return {
 
             "evidence_strength":
-                self._score_length(
+                self._calculate_factor(
                     evidence
                 ),
 
+
             "finding_quality":
-                self._score_length(
+                self._calculate_factor(
                     findings
                 ),
 
-            "correlation_quality":
-                self._score_length(
+
+            "correlation_strength":
+                self._calculate_factor(
                     correlations
                 ),
 
         }
 
 
-    def _score_length(
+
+    def _calculate_factor(
         self,
-        items: list[Any],
+        values: list[Any],
     ) -> float:
 
-        if not items:
+        if not values:
+
             return 0.0
 
 
-        score = len(items) * 25
+        score = (
+            len(values)
+            *
+            25
+        )
+
 
         return min(
             score,

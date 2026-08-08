@@ -3,17 +3,36 @@ from services.intelligence.confidence.confidence_factors import (
 )
 
 
-def test_confidence_factors():
 
-    evaluator = ConfidenceFactorEvaluator()
+def test_confidence_factor_evaluator():
 
-
-    result = evaluator.evaluate(
-        evidence=["ioc"],
-        findings=["malware"],
-        correlations=["match"],
+    evaluator = (
+        ConfidenceFactorEvaluator()
     )
 
 
-    assert result["evidence_strength"] > 0
-    assert result["finding_quality"] > 0
+    result = evaluator.evaluate(
+        evidence=[
+            "IOC",
+        ],
+
+        findings=[
+            "phishing",
+        ],
+
+        correlations=[
+            "domain match",
+        ],
+    )
+
+
+    assert (
+        result["evidence_strength"]
+        > 0
+    )
+
+
+    assert (
+        result["finding_quality"]
+        > 0
+    )

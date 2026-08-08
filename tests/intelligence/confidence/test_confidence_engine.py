@@ -3,29 +3,52 @@ from services.intelligence.confidence.confidence_engine import (
 )
 
 
+
 def test_confidence_engine():
+
 
     engine = ConfidenceEngine()
 
 
     result = engine.evaluate(
+
         evidence=[
-            "email",
-            "ioc",
+            {
+                "type": "ioc",
+            },
+
+            {
+                "type": "email",
+            },
         ],
+
+
         findings=[
-            "phishing",
+
+            {
+                "type": "malicious",
+            }
+
         ],
+
+
         correlations=[
-            "domain-match",
+
+            {
+                "match": True,
+            }
+
         ],
     )
 
 
+    assert result.score > 0
+
+
     assert result.level in [
+
         "LOW",
         "MEDIUM",
         "HIGH",
-    ]
 
-    assert result.score > 0
+    ]

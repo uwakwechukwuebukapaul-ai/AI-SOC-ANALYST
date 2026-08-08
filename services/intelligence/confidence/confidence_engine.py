@@ -2,19 +2,30 @@
 Sentinel DNA Confidence Engine
 
 Combines investigation signals
-into final AI confidence score.
+into explainable AI confidence.
 """
 
 from __future__ import annotations
 
 from typing import Any
 
-from .confidence_score import ConfidenceScore
-from .confidence_factors import ConfidenceFactorEvaluator
+
+from services.intelligence.confidence.confidence_score import (
+    ConfidenceScore,
+)
+
+
+from services.intelligence.confidence.confidence_factors import (
+    ConfidenceFactorEvaluator,
+)
 
 
 
 class ConfidenceEngine:
+    """
+    Enterprise confidence calculation engine.
+    """
+
 
     def __init__(self):
 
@@ -23,12 +34,16 @@ class ConfidenceEngine:
         )
 
 
+
     def evaluate(
         self,
         evidence: list[Any],
         findings: list[Any],
         correlations: list[Any],
     ) -> ConfidenceScore:
+        """
+        Generate confidence score.
+        """
 
 
         factors = (
@@ -40,13 +55,22 @@ class ConfidenceEngine:
         )
 
 
-        confidence = sum(
-            factors.values()
-        ) / len(
-            factors
+        if not factors:
+
+            return ConfidenceScore.from_score(
+                0
+            )
+
+
+        confidence = (
+            sum(
+                factors.values()
+            )
+            /
+            len(factors)
         )
 
 
-        return ConfidenceScore.calculate(
+        return ConfidenceScore.from_score(
             confidence
         )

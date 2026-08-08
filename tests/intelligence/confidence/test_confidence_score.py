@@ -3,12 +3,16 @@ from services.intelligence.confidence.confidence_score import (
 )
 
 
+
 def test_confidence_score():
 
-    result = ConfidenceScore.calculate(
+    result = ConfidenceScore.from_score(
         90
     )
+
 
     assert result.score == 90
 
     assert result.level == "HIGH"
+
+    assert "90" in result.explanation

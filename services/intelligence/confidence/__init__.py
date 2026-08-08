@@ -1,13 +1,14 @@
 """
 Sentinel DNA Confidence Intelligence Layer
 
-Provides confidence scoring and explainability
-for AI investigation decisions.
+Provides explainable confidence scoring
+for AI investigations.
 """
 
 from .confidence_score import ConfidenceScore
 from .confidence_factors import ConfidenceFactorEvaluator
 from .confidence_engine import ConfidenceEngine
+
 
 __all__ = [
     "ConfidenceScore",

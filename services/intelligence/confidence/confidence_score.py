@@ -1,5 +1,5 @@
 """
-Confidence Score Model
+Sentinel DNA Confidence Score
 
 Represents AI investigation confidence.
 """
@@ -12,7 +12,7 @@ from dataclasses import dataclass
 @dataclass
 class ConfidenceScore:
     """
-    Investigation confidence result.
+    Final confidence evaluation result.
     """
 
     score: float
@@ -23,34 +23,42 @@ class ConfidenceScore:
 
 
     @classmethod
-    def calculate(
+    def from_score(
         cls,
-        value: float,
+        score: float,
     ) -> "ConfidenceScore":
 
-        value = max(
-            0,
+        score = max(
+            0.0,
             min(
-                100,
-                value,
+                100.0,
+                score,
             ),
         )
 
-        if value >= 80:
+
+        if score >= 80:
+
             level = "HIGH"
 
-        elif value >= 50:
+
+        elif score >= 50:
+
             level = "MEDIUM"
 
+
         else:
+
             level = "LOW"
 
 
+
         return cls(
-            score=value,
+            score=score,
             level=level,
             explanation=(
-                f"Confidence calculated at {value}%"
+                f"AI confidence calculated at "
+                f"{score:.2f}%"
             ),
         )
 
