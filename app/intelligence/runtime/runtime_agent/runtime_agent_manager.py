@@ -1,43 +1,19 @@
 """
 Sentinel DNA Runtime Agent Manager
 
-Enterprise runtime registry and capability router for AI agents.
-
-Responsibilities:
-
-- Register runtime agents
-- Retrieve agents by name
-- Unregister runtime agents
-- Discover agents by capability
-- Route runtime tasks
-- Delegate execution to runtime agents
-- Maintain runtime agent state
-
-Architecture:
-    RuntimeAgentManager
-            |
-            +-- Agent Registry
-            |
-            +-- Capability Discovery
-            |
-            +-- Task Routing
-            |
-            +-- Execution Delegation
+Canonical registry and execution manager for runtime agents.
 """
 
 from __future__ import annotations
 
 from typing import Any
 
+from ..task import Task
+
 
 class RuntimeAgentManager:
     """
-    Manages AI agents registered inside the Sentinel DNA runtime.
-
-    The manager owns registration, discovery, routing, and delegation.
-
-    Individual agents remain responsible for their own execution
-    infrastructure.
+    Manage registered runtime agents and execute tasks against them.
     """
 
     def __init__(self) -> None:
@@ -49,18 +25,21 @@ class RuntimeAgentManager:
 
     def register(self, agent: Any) -> Any:
         """
-        Register a runtime agent.
+        Register an agent.
 
-        Supported identity sources:
+        Agent identity is resolved from:
 
-        - agent.name
-        - agent.metadata.name
+        1. agent.name
+        2. agent.metadata.name
+        3. class name
         """
 
         name = self._agent_name(agent)
 
-        if not name:
-            raise ValueError("Agent must have a name")
+        if name in self.agents:
+            raise ValueError(
+                f"Runtime agent '{name}' is already registered."
+            )
 
         self.agents[name] = agent
 
@@ -68,150 +47,110 @@ class RuntimeAgentManager:
 
     def unregister(self, name: str) -> Any | None:
         """
-        Remove and return an agent from the registry.
+        Remove an agent by name.
         """
 
         return self.agents.pop(name, None)
 
     def clear(self) -> None:
-        """
-        Remove all registered agents.
-        """
+        """Remove all registered agents."""
 
         self.agents.clear()
 
     # ------------------------------------------------------------------
-    # Lookup
+    # Queries
     # ------------------------------------------------------------------
 
-    def get(self, name: str) -> Any | None:
-        """
-        Retrieve an agent by name.
-        """
-
-        return self.agents.get(name)
-
-    def list_agents(self) -> list[str]:
-        """
-        Return registered agent names.
-        """
-
-        return list(self.agents.keys())
-
     def count(self) -> int:
-        """
-        Return the number of registered agents.
-        """
+        """Return registered agent count."""
 
         return len(self.agents)
 
-    # ------------------------------------------------------------------
-    # Capability Discovery
-    # ------------------------------------------------------------------
+    def list_agents(self) -> list[str]:
+        """Return registered agent names."""
+
+        return list(self.agents.keys())
 
     def find_capability(
         self,
         capability: str,
     ) -> list[Any]:
         """
-        Return all registered agents supporting a capability.
+        Return agents supporting a capability.
         """
 
-        matches: list[Any] = []
+        if not capability:
+            return []
 
-        for agent in self.agents.values():
-
-            capabilities = self._capabilities(agent)
-
-            if capability in capabilities:
-                matches.append(agent)
-
-        return matches
+        return [
+            agent
+            for agent in self.agents.values()
+            if capability in self._capabilities(agent)
+        ]
 
     def has_capability(
         self,
         capability: str,
     ) -> bool:
-        """
-        Determine whether any registered agent supports a capability.
-        """
+        """Return whether a capability is available."""
 
         return bool(
             self.find_capability(capability)
         )
 
     # ------------------------------------------------------------------
-    # Task Execution
+    # Execution
     # ------------------------------------------------------------------
 
     def execute(
         self,
-        task: Any,
+        task: Task,
     ) -> Any:
         """
-        Route and execute a runtime task.
-
-        The task must expose:
-
-            task.capability
-
-        and may expose:
-
-            task.payload
+        Execute a task using the first capable runtime agent.
         """
 
-        capability = getattr(
-            task,
-            "capability",
-            None,
-        )
-
-        if not capability:
-            raise ValueError(
-                "Task must define a capability"
+        if not isinstance(task, Task):
+            raise TypeError(
+                "RuntimeAgentManager.execute() requires a Task."
             )
 
         agents = self.find_capability(
-            capability
+            task.capability
         )
 
         if not agents:
             raise LookupError(
-                "No runtime agent available for "
-                f"capability '{capability}'"
+                "No runtime agent supports capability "
+                f"'{task.capability}'."
             )
 
         agent = agents[0]
 
-        return self._execute_agent(
-            agent,
-            task,
-            capability,
-        )
+        task.queue()
+        task.start()
 
-    # ------------------------------------------------------------------
-    # Agent Execution Resolution
-    # ------------------------------------------------------------------
+        try:
+            result = self._execute_agent(
+                agent,
+                task,
+            )
+
+            task.complete()
+
+            return result
+
+        except Exception:
+            task.fail()
+            raise
 
     def _execute_agent(
         self,
         agent: Any,
-        task: Any,
-        capability: str,
+        task: Task,
     ) -> Any:
         """
-        Resolve the execution interface exposed by an agent.
-
-        Preferred interface:
-
-            agent.execute(task)
-
-        Gateway fallback:
-
-            agent.gateway.execution.workers.executor.execute(
-                capability,
-                payload,
-            )
+        Resolve a supported agent execution interface.
         """
 
         execute = getattr(
@@ -223,20 +162,8 @@ class RuntimeAgentManager:
         if callable(execute):
             return execute(task)
 
-        gateway = getattr(
-            agent,
-            "gateway",
-            None,
-        )
-
-        if gateway is None:
-            raise AttributeError(
-                f"Runtime agent '{self._agent_name(agent)}' "
-                "does not expose an execution interface"
-            )
-
         execution = getattr(
-            gateway,
+            agent,
             "execution",
             None,
         )
@@ -244,7 +171,7 @@ class RuntimeAgentManager:
         if execution is None:
             raise AttributeError(
                 f"Runtime agent '{self._agent_name(agent)}' "
-                "does not expose gateway execution"
+                "does not expose execution workers"
             )
 
         workers = getattr(
@@ -278,15 +205,9 @@ class RuntimeAgentManager:
         )
 
         if callable(execute_method):
-            payload = getattr(
-                task,
-                "payload",
-                task,
-            )
-
             return execute_method(
-                capability,
-                payload,
+                task.capability,
+                task.payload,
             )
 
         raise AttributeError(
@@ -299,9 +220,7 @@ class RuntimeAgentManager:
     # ------------------------------------------------------------------
 
     def status(self) -> dict[str, Any]:
-        """
-        Return runtime manager status.
-        """
+        """Return manager status."""
 
         return {
             "agents": self.list_agents(),
@@ -309,16 +228,14 @@ class RuntimeAgentManager:
         }
 
     # ------------------------------------------------------------------
-    # Internal Helpers
+    # Helpers
     # ------------------------------------------------------------------
 
     @staticmethod
     def _agent_name(
         agent: Any,
     ) -> str:
-        """
-        Resolve an agent identity.
-        """
+        """Resolve agent identity."""
 
         name = getattr(
             agent,
@@ -351,12 +268,14 @@ class RuntimeAgentManager:
         agent: Any,
     ) -> list[str]:
         """
-        Resolve agent capabilities.
+        Resolve capabilities.
 
-        Supported sources:
+        Supports:
 
-        - agent.capabilities
-        - agent.metadata.capabilities
+        agent.capabilities
+        agent.metadata.capabilities
+
+        Capability objects with a `.name` attribute are also supported.
         """
 
         capabilities = getattr(
@@ -365,22 +284,36 @@ class RuntimeAgentManager:
             None,
         )
 
-        if capabilities is not None:
-            return list(capabilities)
+        if capabilities is None:
+            metadata = getattr(
+                agent,
+                "metadata",
+                None,
+            )
 
-        metadata = getattr(
-            agent,
-            "metadata",
-            None,
-        )
+            capabilities = getattr(
+                metadata,
+                "capabilities",
+                None,
+            )
 
-        capabilities = getattr(
-            metadata,
-            "capabilities",
-            None,
-        )
+        if capabilities is None:
+            return []
 
-        if capabilities is not None:
-            return list(capabilities)
+        resolved: list[str] = []
 
-        return []
+        for capability in capabilities:
+            if isinstance(capability, str):
+                resolved.append(capability)
+                continue
+
+            name = getattr(
+                capability,
+                "name",
+                None,
+            )
+
+            if name:
+                resolved.append(str(name))
+
+        return resolved

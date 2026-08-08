@@ -1,16 +1,7 @@
 """
 Sentinel DNA Runtime Agent Orchestrator
 
-Enterprise runtime agent execution coordinator.
-
-Responsibilities:
-
-- Register runtime agents
-- Route runtime tasks
-- Track execution count
-- Expose runtime status
-- Coordinate runtime lifecycle
-- Preserve compatibility with legacy scheduler access
+Canonical runtime agent execution coordinator.
 """
 
 from __future__ import annotations
@@ -33,25 +24,13 @@ class RuntimeAgentOrchestrator:
 
     executions: int = 0
 
-    # ------------------------------------------------------------------
-    # Compatibility
-    # ------------------------------------------------------------------
-
     @property
     def scheduler(self) -> RuntimeAgentManager:
         """
         Backward-compatible scheduler interface.
-
-        Older runtime components may expect:
-
-            orchestrator.scheduler.agents
         """
 
         return self.manager
-
-    # ------------------------------------------------------------------
-    # Agent Lifecycle
-    # ------------------------------------------------------------------
 
     def register_agent(
         self,
@@ -59,12 +38,10 @@ class RuntimeAgentOrchestrator:
         capabilities: list[str] | None = None,
     ) -> Any:
         """
-        Register a runtime agent.
+        Register runtime agent.
 
-        Supports normal runtime agents.
-
-        A string may also be supplied as a lightweight compatibility
-        registration and will be converted into SimpleRuntimeAgent.
+        String registrations are converted into
+        SimpleRuntimeAgent instances.
         """
 
         if isinstance(agent, str):
@@ -79,67 +56,41 @@ class RuntimeAgentOrchestrator:
         self,
         name: str,
     ) -> Any | None:
-        """
-        Unregister a runtime agent.
-        """
+        """Unregister an agent."""
 
         return self.manager.unregister(name)
 
     def agent_count(self) -> int:
-        """
-        Return registered agent count.
-        """
+        """Return registered agent count."""
 
         return self.manager.count()
 
     def count_agents(self) -> int:
-        """
-        Backward-compatible alias for agent_count().
-        """
+        """Backward-compatible agent count alias."""
 
         return self.agent_count()
-
-    # ------------------------------------------------------------------
-    # Capability
-    # ------------------------------------------------------------------
 
     def has_capability(
         self,
         capability: str,
     ) -> bool:
-        """
-        Determine whether runtime can handle a capability.
-        """
+        """Determine capability availability."""
 
         return self.manager.has_capability(
             capability
         )
 
-    # ------------------------------------------------------------------
-    # Execution
-    # ------------------------------------------------------------------
-
     def execute(
         self,
         task: Any,
     ) -> Any:
-        """
-        Execute a runtime task.
+        """Execute a runtime task."""
 
-        Execution is delegated to RuntimeAgentManager.
-        """
-
-        result = self.manager.execute(
-            task
-        )
+        result = self.manager.execute(task)
 
         self.executions += 1
 
         return result
-
-    # ------------------------------------------------------------------
-    # Submission
-    # ------------------------------------------------------------------
 
     def submit(
         self,
@@ -149,7 +100,7 @@ class RuntimeAgentOrchestrator:
         """
         Select an agent capable of handling a request.
 
-        Execution itself remains handled through execute().
+        This method intentionally performs selection only.
         """
 
         agents = self.manager.find_capability(
@@ -167,9 +118,7 @@ class RuntimeAgentOrchestrator:
     def _agent_identity(
         agent: Any,
     ) -> str | None:
-        """
-        Resolve agent identity safely.
-        """
+        """Resolve agent identity."""
 
         name = getattr(
             agent,
@@ -191,38 +140,19 @@ class RuntimeAgentOrchestrator:
 
         return str(agent)
 
-    # ------------------------------------------------------------------
-    # Lifecycle
-    # ------------------------------------------------------------------
-
     def clear(self) -> None:
-        """
-        Clear runtime state.
-        """
+        """Clear runtime state."""
 
         self.manager.clear()
-
         self.executions = 0
 
-    # ------------------------------------------------------------------
-    # Metrics
-    # ------------------------------------------------------------------
-
     def count(self) -> int:
-        """
-        Return execution count.
-        """
+        """Return execution count."""
 
         return self.executions
 
-    # ------------------------------------------------------------------
-    # Status
-    # ------------------------------------------------------------------
-
     def status(self) -> dict[str, Any]:
-        """
-        Return runtime orchestrator status.
-        """
+        """Return runtime status."""
 
         manager_status = self.manager.status()
 
@@ -236,9 +166,7 @@ class RuntimeAgentOrchestrator:
 @dataclass
 class SimpleRuntimeAgent:
     """
-    Lightweight runtime compatibility agent.
-
-    Used when legacy code registers an agent by name and capability list.
+    Lightweight compatibility runtime agent.
     """
 
     name: str
@@ -248,9 +176,7 @@ class SimpleRuntimeAgent:
         self,
         task: Any,
     ) -> dict[str, Any]:
-        """
-        Execute a lightweight runtime task.
-        """
+        """Execute a lightweight runtime task."""
 
         return {
             "success": True,
