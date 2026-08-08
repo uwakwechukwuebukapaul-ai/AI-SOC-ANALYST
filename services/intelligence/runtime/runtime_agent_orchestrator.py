@@ -1,18 +1,12 @@
 ﻿"""
-Sentinel DNA Runtime Agent Orchestrator Compatibility Layer
-
-The canonical implementation lives under:
-
-    app.intelligence.runtime.runtime_agent.runtime_agent_orchestrator
-
-This module exists to preserve compatibility with legacy services imports
-while Sentinel DNA transitions to the canonical application runtime layer.
+Sentinel DNA Legacy Runtime Agent Orchestrator Compatibility Layer
 """
 
-from app.intelligence.runtime.runtime_agent.runtime_agent_orchestrator import (
+from app.intelligence.runtime.runtime_agent import (
     RuntimeAgentOrchestrator,
     SimpleRuntimeAgent,
 )
+
 
 __all__ = [
     "RuntimeAgentOrchestrator",

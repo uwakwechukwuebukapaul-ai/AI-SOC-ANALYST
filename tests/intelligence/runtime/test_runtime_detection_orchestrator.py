@@ -1,125 +1,161 @@
 """
-Runtime Detection Orchestrator Tests
+Tests for the canonical runtime detection orchestrator.
 """
 
-from services.intelligence.runtime.runtime_detection_orchestrator import (
+from app.intelligence.runtime.runtime_detection_orchestrator import (
     RuntimeDetectionOrchestrator,
 )
 
 
+def test_detection_init():
+    detection = RuntimeDetectionOrchestrator()
 
-def test_init():
-
-    orchestrator = RuntimeDetectionOrchestrator()
-
-    assert (
-        orchestrator.count()
-        ==
-        0
-    )
-
+    assert detection.operations == 0
+    assert detection.detections == 0
+    assert detection.failures == 0
+    assert detection.rules == {}
 
 
 def test_register_rule():
+    detection = RuntimeDetectionOrchestrator()
 
-    orchestrator = RuntimeDetectionOrchestrator()
-
-
-    orchestrator.register_rule(
-        "malware_detection",
-        lambda event: {
-            "alert":
-                True
-        },
-    )
-
-
-    assert (
-        orchestrator.exists(
-            "malware_detection"
-        )
-        is True
-    )
-
-
-
-def test_evaluate_detection():
-
-    orchestrator = RuntimeDetectionOrchestrator()
-
-
-    orchestrator.register_rule(
+    detection.register_rule(
         "phishing",
         lambda event: {
-            "severity":
-                "high"
+            "detected": True,
+            "reason": "phishing activity",
         },
     )
 
+    assert detection.has_rule("phishing")
+    assert "phishing" in detection.status()["rules"]
 
-    result = orchestrator.evaluate(
+
+def test_evaluate_registered_rule():
+    detection = RuntimeDetectionOrchestrator()
+
+    detection.register_rule(
+        "phishing",
+        lambda event: {
+            "detected": True,
+            "reason": "suspicious sender",
+        },
+    )
+
+    result = detection.evaluate(
         "phishing",
         {
-            "email":
-                "test"
+            "sender": "attacker@example.com",
         },
     )
 
+    assert result["success"] is True
+    assert result["detected"] is True
+    assert result["event_type"] == "phishing"
+    assert result["rule"] == "phishing"
+    assert result["reason"] == "suspicious sender"
 
-    assert (
-        result["severity"]
-        ==
-        "high"
+    assert detection.operations == 1
+    assert detection.detections == 1
+
+
+def test_evaluate_without_rule():
+    detection = RuntimeDetectionOrchestrator()
+
+    result = detection.evaluate(
+        "phishing",
+        {
+            "sender": "attacker@example.com",
+        },
     )
 
+    assert result["success"] is True
+    assert result["detected"] is False
+    assert result["event_type"] == "phishing"
+    assert detection.operations == 1
 
 
-def test_missing_rule():
+def test_detection_rule_boolean_result():
+    detection = RuntimeDetectionOrchestrator()
 
-    orchestrator = RuntimeDetectionOrchestrator()
+    detection.register_rule(
+        "malware",
+        lambda event: True,
+    )
 
-
-    result = orchestrator.evaluate(
-        "missing",
+    result = detection.evaluate(
+        "malware",
         {},
     )
 
-
-    assert result is None
-
-
-
-def test_clear():
-
-    orchestrator = RuntimeDetectionOrchestrator()
+    assert result["success"] is True
+    assert result["detected"] is True
 
 
-    orchestrator.register_rule(
+def test_detection_rule_failure():
+    detection = RuntimeDetectionOrchestrator()
+
+    def failing_rule(event):
+        raise RuntimeError("rule failure")
+
+    detection.register_rule(
+        "broken",
+        failing_rule,
+    )
+
+    result = detection.evaluate(
+        "broken",
+        {},
+    )
+
+    assert result["success"] is False
+    assert result["detected"] is False
+    assert "rule failure" in result["error"]
+    assert detection.failures == 1
+
+
+def test_detection_clear():
+    detection = RuntimeDetectionOrchestrator()
+
+    detection.register_rule(
         "test",
-        lambda x: True,
+        lambda event: {
+            "detected": True,
+        },
     )
 
-
-    orchestrator.clear()
-
-
-    assert (
-        orchestrator.exists(
-            "test"
-        )
-        is False
+    detection.evaluate(
+        "test",
+        {},
     )
 
+    detection.clear()
+
+    assert detection.operations == 0
+    assert detection.detections == 0
+    assert detection.failures == 0
+    assert detection.rules == {}
 
 
-def test_status():
+def test_detection_status():
+    detection = RuntimeDetectionOrchestrator()
 
-    orchestrator = RuntimeDetectionOrchestrator()
+    detection.register_rule(
+        "test",
+        lambda event: {
+            "detected": True,
+        },
+    )
 
+    detection.evaluate(
+        "test",
+        {},
+    )
 
-    result = orchestrator.status()
+    status = detection.status()
 
-
-    assert "rules" in result
-
-    assert "detections" in result
+    assert status["operations"] == 1
+    assert status["detections"] == 1
+    assert status["failures"] == 0
+    assert status["count"] == 1
+    assert status["rules"] == ["test"]

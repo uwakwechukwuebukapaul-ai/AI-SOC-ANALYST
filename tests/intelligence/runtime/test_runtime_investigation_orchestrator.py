@@ -1,157 +1,51 @@
 """
-Runtime Investigation Orchestrator Tests
+Tests for RuntimeInvestigationOrchestrator.
 """
 
-from services.intelligence.runtime.runtime_investigation_orchestrator import (
+from app.intelligence.runtime import (
     RuntimeInvestigationOrchestrator,
-)
-
-from services.intelligence.runtime.runtime_agent_runtime import (
-    RuntimeAgentRuntime,
+    SimpleRuntimeAgent,
 )
 
 
-
-def create_agent():
-
-    agent = RuntimeAgentRuntime(
-        "investigation_agent"
-    )
-
-
-    agent.add_capability(
-        "investigation"
-    )
-
-
-    agent.gateway.access.grant(
-        "investigation_agent",
-        "execute",
-    )
-
-
-    agent.gateway.execution.start()
-
-
-    agent.gateway.execution.workers.executor.register(
-        "investigation",
-        lambda data: {
-            "result":
-                "complete"
-        },
-    )
-
-
-    return agent
-
-
-
-def test_init():
-
+def test_investigation():
     orchestrator = RuntimeInvestigationOrchestrator()
-
-    assert (
-        orchestrator.count()
-        ==
-        0
-    )
-
-
-
-def test_register_agent():
-
-    orchestrator = RuntimeInvestigationOrchestrator()
-
 
     orchestrator.register_agent(
-        create_agent()
-    )
-
-
-    assert (
-        orchestrator.router.available(
-            "investigation"
+        SimpleRuntimeAgent(
+            name="investigator",
+            capabilities=["investigate.alert"],
         )
-        is True
     )
-
-
-
-def test_investigate():
-
-    orchestrator = RuntimeInvestigationOrchestrator()
-
-
-    orchestrator.register_agent(
-        create_agent()
-    )
-
 
     result = orchestrator.investigate(
-        "investigation",
+        "investigate.alert",
         {
-            "ioc":
-                "malicious-domain.com"
+            "alert_id": "ALERT-001",
         },
     )
 
-
-    assert (
-        result["result"]
-        ==
-        "complete"
-    )
-
-
-
-def test_count():
-
-    orchestrator = RuntimeInvestigationOrchestrator()
-
-
-    orchestrator.register_agent(
-        create_agent()
-    )
-
-
-    orchestrator.investigate(
-        "investigation",
-        {},
-    )
-
-
-    assert (
-        orchestrator.count()
-        ==
-        1
-    )
-
+    assert result["success"] is True
+    assert result["agent"] == "investigator"
+    assert orchestrator.count() == 1
 
 
 def test_clear():
-
     orchestrator = RuntimeInvestigationOrchestrator()
 
+    orchestrator.register_agent(
+        SimpleRuntimeAgent(
+            name="investigator",
+            capabilities=["investigate.alert"],
+        )
+    )
+
+    orchestrator.investigate(
+        "investigate.alert",
+        {},
+    )
 
     orchestrator.clear()
 
-
-    assert (
-        orchestrator.count()
-        ==
-        0
-    )
-
-
-
-def test_status():
-
-    orchestrator = RuntimeInvestigationOrchestrator()
-
-
-    result = orchestrator.status()
-
-
-    assert "investigations" in result
-
-    assert "router" in result
+    assert orchestrator.count() == 0
+    assert orchestrator.router.orchestrator.agent_count() == 0

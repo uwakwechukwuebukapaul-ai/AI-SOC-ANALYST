@@ -1,152 +1,116 @@
 """
-Runtime Agent Manager Tests
+Tests for canonical RuntimeAgentManager.
 """
 
-from services.intelligence.runtime.runtime_agent_manager import (
+import pytest
+
+from app.intelligence.runtime.runtime_agent import (
     RuntimeAgentManager,
+    SimpleRuntimeAgent,
 )
 
-from services.intelligence.runtime.runtime_agent_runtime import (
-    RuntimeAgentRuntime,
-)
-
-from services.intelligence.runtime.task import (
+from app.intelligence.runtime.task import (
     Task,
+    TaskStatus,
 )
 
 
+def test_register_agent():
+    manager = RuntimeAgentManager()
 
-def create_agent():
-
-    agent = RuntimeAgentRuntime(
-        "analysis_agent"
+    agent = SimpleRuntimeAgent(
+        name="email-analyzer",
+        capabilities=["email.analysis"],
     )
 
-    agent.add_capability(
-        "analysis"
+    manager.register(agent)
+
+    assert manager.count() == 1
+    assert "email-analyzer" in manager.list_agents()
+
+
+def test_duplicate_agent_rejected():
+    manager = RuntimeAgentManager()
+
+    agent = SimpleRuntimeAgent(
+        name="email-analyzer",
+        capabilities=["email.analysis"],
     )
 
-    return agent
+    manager.register(agent)
+
+    with pytest.raises(ValueError):
+        manager.register(agent)
 
 
+def test_capability_lookup():
+    manager = RuntimeAgentManager()
 
-def create_task():
+    manager.register(
+        SimpleRuntimeAgent(
+            name="email-analyzer",
+            capabilities=["email.analysis"],
+        )
+    )
 
-    return Task(
-        capability="analysis",
+    assert manager.has_capability(
+        "email.analysis"
+    )
+
+    assert not manager.has_capability(
+        "ioc.enrichment"
+    )
+
+
+def test_execute_task():
+    manager = RuntimeAgentManager()
+
+    manager.register(
+        SimpleRuntimeAgent(
+            name="email-analyzer",
+            capabilities=["email.analysis"],
+        )
+    )
+
+    task = Task(
+        capability="email.analysis",
         payload={
-            "test":
-                True
+            "message": "suspicious email"
         },
     )
 
+    result = manager.execute(task)
+
+    assert result["success"] is True
+    assert result["agent"] == "email-analyzer"
+    assert result["capability"] == "email.analysis"
+    assert task.status == TaskStatus.COMPLETED
 
 
-def test_init():
-
+def test_missing_capability_fails():
     manager = RuntimeAgentManager()
 
-    assert (
-        manager.count()
-        ==
-        0
+    task = Task(
+        capability="missing.capability",
+        payload={},
     )
 
+    with pytest.raises(LookupError):
+        manager.execute(task)
+
+    assert task.status == TaskStatus.PENDING
 
 
-def test_register():
-
-    manager = RuntimeAgentManager()
-
-    manager.register(
-        create_agent()
-    )
-
-
-    assert (
-        manager.count()
-        ==
-        1
-    )
-
-
-
-def test_get():
-
-    manager = RuntimeAgentManager()
-
-    agent = create_agent()
-
-    manager.register(
-        agent
-    )
-
-
-    result = manager.get(
-        "analysis_agent"
-    )
-
-
-    assert (
-        result
-        ==
-        agent
-    )
-
-
-
-def test_find_capability():
-
+def test_clear():
     manager = RuntimeAgentManager()
 
     manager.register(
-        create_agent()
+        SimpleRuntimeAgent(
+            name="test-agent",
+            capabilities=["test"],
+        )
     )
 
+    manager.clear()
 
-    result = manager.find_capability(
-        "analysis"
-    )
-
-
-    assert (
-        len(result)
-        ==
-        1
-    )
-
-
-
-def test_unregister():
-
-    manager = RuntimeAgentManager()
-
-    manager.register(
-        create_agent()
-    )
-
-
-    manager.unregister(
-        "analysis_agent"
-    )
-
-
-    assert (
-        manager.count()
-        ==
-        0
-    )
-
-
-
-def test_status():
-
-    manager = RuntimeAgentManager()
-
-
-    result = manager.status()
-
-
-    assert "agents" in result
-
-    assert "count" in result
+    assert manager.count() == 0

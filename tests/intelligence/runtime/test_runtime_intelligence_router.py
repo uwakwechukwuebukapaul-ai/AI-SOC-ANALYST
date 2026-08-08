@@ -1,165 +1,98 @@
 """
-Runtime Intelligence Router Tests
+Tests for RuntimeIntelligenceRouter.
 """
 
-from services.intelligence.runtime.runtime_intelligence_router import (
+from app.intelligence.runtime import (
     RuntimeIntelligenceRouter,
-)
-
-from services.intelligence.runtime.runtime_agent_runtime import (
-    RuntimeAgentRuntime,
-)
-
-from services.intelligence.runtime.task import (
+    SimpleRuntimeAgent,
     Task,
 )
 
 
+def test_handler_route():
+    router = RuntimeIntelligenceRouter()
 
-def create_agent():
-
-    agent = RuntimeAgentRuntime(
-        "intel_agent"
-    )
-
-    agent.add_capability(
-        "threat_analysis"
-    )
-
-    agent.gateway.access.grant(
-        "intel_agent",
-        "execute",
-    )
-
-    agent.gateway.execution.start()
-
-
-    agent.gateway.execution.workers.executor.register(
-        "threat_analysis",
-        lambda data: {
-            "analysis":
-                "complete"
+    router.register(
+        "test.handler",
+        lambda payload: {
+            "success": True,
+            "payload": payload,
         },
     )
-
-
-    return agent
-
-
-
-def create_task():
-
-    return Task(
-        capability="threat_analysis",
-        payload={
-            "ioc":
-                "example.com"
-        },
-    )
-
-
-
-def test_init():
-
-    router = RuntimeIntelligenceRouter()
-
-    assert (
-        router.routes
-        ==
-        0
-    )
-
-
-
-def test_register_agent():
-
-    router = RuntimeIntelligenceRouter()
-
-
-    router.register_agent(
-        create_agent()
-    )
-
-
-    assert (
-        router.orchestrator.agent_count()
-        ==
-        1
-    )
-
-
-
-def test_available():
-
-    router = RuntimeIntelligenceRouter()
-
-
-    router.register_agent(
-        create_agent()
-    )
-
-
-    assert (
-        router.available(
-            "threat_analysis"
-        )
-        is True
-    )
-
-
-
-def test_route():
-
-    router = RuntimeIntelligenceRouter()
-
-
-    router.register_agent(
-        create_agent()
-    )
-
 
     result = router.route(
-        create_task()
+        "test.handler",
+        {"value": 1},
     )
 
+    assert result["success"] is True
+    assert result["payload"]["value"] == 1
 
-    assert (
-        result["analysis"]
-        ==
-        "complete"
+
+def test_agent_route():
+    router = RuntimeIntelligenceRouter()
+
+    router.register_agent(
+        SimpleRuntimeAgent(
+            name="test-agent",
+            capabilities=["test.agent"],
+        )
     )
 
+    result = router.route(
+        "test.agent",
+        {
+            "value": 2,
+        },
+    )
+
+    assert result["success"] is True
+    assert result["agent"] == "test-agent"
+
+
+def test_task_route():
+    router = RuntimeIntelligenceRouter()
+
+    router.register_agent(
+        SimpleRuntimeAgent(
+            name="test-agent",
+            capabilities=["test.task"],
+        )
+    )
+
+    task = Task(
+        capability="test.task",
+        payload={
+            "value": 3,
+        },
+    )
+
+    result = router.route(task)
+
+    assert result["success"] is True
+    assert result["capability"] == "test.task"
+
+
+def test_unavailable_route():
+    router = RuntimeIntelligenceRouter()
+
+    result = router.route(
+        "missing.capability",
+        {},
+    )
+
+    assert result is None
 
 
 def test_clear():
-
     router = RuntimeIntelligenceRouter()
 
-
-    router.register_agent(
-        create_agent()
+    router.register(
+        "test.handler",
+        lambda payload: payload,
     )
-
 
     router.clear()
 
-
-    assert (
-        router.routes
-        ==
-        0
-    )
-
-
-
-def test_status():
-
-    router = RuntimeIntelligenceRouter()
-
-
-    result = router.status()
-
-
-    assert "routes" in result
-
-    assert "agents" in result
+    assert router.handlers == {}
+    assert router.routes == 0

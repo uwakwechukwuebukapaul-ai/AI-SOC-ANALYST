@@ -1,140 +1,75 @@
 """
-Runtime SOC Orchestrator Tests
+Tests for the canonical SOC runtime orchestrator.
 """
 
-from services.intelligence.runtime.runtime_soc_orchestrator import (
+from app.intelligence.runtime.runtime_soc_orchestrator import (
     RuntimeSOCOrchestrator,
 )
 
 
+def test_soc_runtime_initializes():
+    soc = RuntimeSOCOrchestrator()
 
-def test_init():
+    assert soc.operations == 0
+    assert soc.detection is not None
+    assert soc.intelligence is not None
+    assert soc.investigation is not None
+    assert soc.response is not None
+    assert soc.autonomous is not None
 
-    orchestrator = RuntimeSOCOrchestrator()
 
-    assert (
-        orchestrator.operations
-        ==
-        0
+def test_soc_detection():
+    soc = RuntimeSOCOrchestrator()
+
+    result = soc.analyze_event(
+        "phishing",
+        {
+            "sender": "attacker@example.com",
+        },
     )
 
+    assert result["success"] is True
+    assert result["detected"] is False
+    assert result["event_type"] == "phishing"
+
+    assert soc.operations == 1
+    assert soc.status()["detection"]["operations"] == 1
 
 
-def test_detection_flow():
+def test_soc_registered_detection():
+    soc = RuntimeSOCOrchestrator()
 
-    orchestrator = RuntimeSOCOrchestrator()
-
-
-    orchestrator.detection.register_rule(
-        "malware",
+    soc.detection.register_rule(
+        "phishing",
         lambda event: {
-            "alert":
-                True
+            "detected": True,
+            "severity": "high",
         },
     )
 
-
-    result = orchestrator.analyze_event(
-        "malware",
-        {},
-    )
-
-
-    assert (
-        result["alert"]
-        is True
-    )
-
-
-
-def test_threat_intelligence_flow():
-
-    orchestrator = RuntimeSOCOrchestrator()
-
-
-    orchestrator.intelligence.register_engine(
-        "ioc",
-        lambda data: {
-            "risk":
-                "high"
+    result = soc.analyze_event(
+        "phishing",
+        {
+            "sender": "attacker@example.com",
         },
     )
 
+    assert result["success"] is True
+    assert result["detected"] is True
+    assert result["severity"] == "high"
 
-    result = orchestrator.enrich_threat(
-        "ioc",
+
+def test_soc_clear():
+    soc = RuntimeSOCOrchestrator()
+
+    soc.analyze_event(
+        "test",
         {},
     )
 
+    soc.clear()
 
-    assert (
-        result["risk"]
-        ==
-        "high"
-    )
-
-
-
-def test_response_flow():
-
-    orchestrator = RuntimeSOCOrchestrator()
-
-
-    orchestrator.response.register_action(
-        "block",
-        lambda ctx: {
-            "blocked":
-                True
-        },
-    )
-
-
-    result = orchestrator.respond(
-        "block",
-        {},
-    )
-
-
-    assert (
-        result["blocked"]
-        is True
-    )
-
-
-
-def test_clear():
-
-    orchestrator = RuntimeSOCOrchestrator()
-
-
-    orchestrator.operations = 5
-
-
-    orchestrator.clear()
-
-
-    assert (
-        orchestrator.operations
-        ==
-        0
-    )
-
-
-
-def test_status():
-
-    orchestrator = RuntimeSOCOrchestrator()
-
-
-    result = orchestrator.status()
-
-
-    assert "operations" in result
-
-    assert "detection" in result
-
-    assert "intelligence" in result
-
-    assert "investigation" in result
-
-    assert "response" in result
+    assert soc.status()["operations"] == 0
+    assert soc.status()["detection"]["operations"] == 0
+    assert soc.status()["detection"]["detections"] == 0
+    assert soc.status()["detection"]["failures"] == 0
