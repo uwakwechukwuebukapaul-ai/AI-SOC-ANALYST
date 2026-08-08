@@ -1,288 +1,405 @@
 """
-Investigation state model.
+Investigation runtime state model.
 
-Defines the lifecycle and runtime state of a Sentinel DNA
-investigation without coupling the domain model to a
-specific persistence technology.
+Tracks the lifecycle, execution results, errors, and
+timestamps associated with a Sentinel DNA investigation.
 """
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from copy import deepcopy
 from datetime import datetime, timezone
 from enum import Enum
 from typing import Any
 
 
 class InvestigationStatus(str, Enum):
-    """
-    Lifecycle states supported by an investigation.
-    """
+    """Supported investigation lifecycle states."""
 
     PENDING = "pending"
     RUNNING = "running"
     COMPLETED = "completed"
     FAILED = "failed"
-    CANCELLED = "cancelled"
 
 
-@dataclass
 class InvestigationState:
     """
-    Represents the current state of an investigation execution.
+    Mutable runtime state for a single investigation.
 
-    The model intentionally stores generic dictionaries for
-    investigation input, intelligence, findings, correlation,
-    confidence, and errors so individual intelligence providers
-    remain decoupled from the state layer.
+    The state model is intentionally independent from the
+    execution and persistence layers.
     """
 
-    investigation_id: str
-    investigation: dict[str, Any]
-
-    status: InvestigationStatus = (
-        InvestigationStatus.PENDING
-    )
-
-    intelligence: dict[str, Any] = field(
-        default_factory=dict
-    )
-
-    correlation: dict[str, Any] = field(
-        default_factory=dict
-    )
-
-    confidence: dict[str, Any] = field(
-        default_factory=dict
-    )
-
-    finding: dict[str, Any] = field(
-        default_factory=dict
-    )
-
-    errors: list[dict[str, Any]] = field(
-        default_factory=list
-    )
-
-    created_at: datetime = field(
-        default_factory=lambda: datetime.now(
-            timezone.utc
-        )
-    )
-
-    started_at: datetime | None = None
-
-    completed_at: datetime | None = None
-
-    updated_at: datetime = field(
-        default_factory=lambda: datetime.now(
-            timezone.utc
-        )
-    )
-
-    def __post_init__(self) -> None:
-        if not self.investigation_id:
-            raise ValueError(
-                "Investigation ID is required."
-            )
-
-        if not isinstance(
-            self.investigation,
-            dict,
-        ):
-            raise TypeError(
-                "Investigation must be a dictionary."
-            )
-
-        self.updated_at = datetime.now(
-            timezone.utc
-        )
-
-    def start(self) -> None:
-        """
-        Transition the investigation into running state.
-        """
-
-        if self.status != InvestigationStatus.PENDING:
-            raise ValueError(
-                "Only pending investigations can start."
-            )
-
-        now = datetime.now(timezone.utc)
-
-        self.status = InvestigationStatus.RUNNING
-        self.started_at = now
-        self.updated_at = now
-
-    def complete(
+    def __init__(
         self,
-        *,
+        investigation_id: str,
+        investigation: dict[str, Any] | None = None,
+        status: InvestigationStatus = InvestigationStatus.PENDING,
+        current_stage: str | None = None,
+        completed_stages: list[str] | None = None,
+        results: dict[str, Any] | None = None,
+        errors: list[dict[str, Any]] | None = None,
         intelligence: dict[str, Any] | None = None,
         correlation: dict[str, Any] | None = None,
         confidence: dict[str, Any] | None = None,
         finding: dict[str, Any] | None = None,
+        metadata: dict[str, Any] | None = None,
+        created_at: datetime | None = None,
+        started_at: datetime | None = None,
+        completed_at: datetime | None = None,
+        updated_at: datetime | None = None,
+    ) -> None:
+        if not investigation_id:
+            raise ValueError(
+                "Investigation ID is required."
+            )
+
+        if not isinstance(status, InvestigationStatus):
+            try:
+                status = InvestigationStatus(status)
+            except (TypeError, ValueError) as exc:
+                raise ValueError(
+                    f"Invalid investigation status: {status}"
+                ) from exc
+
+        self.investigation_id = investigation_id
+        self.investigation = deepcopy(
+            investigation or {}
+        )
+        self.status = status
+
+        self.current_stage = current_stage
+
+        self.completed_stages = list(
+            completed_stages or []
+        )
+
+        self.results = deepcopy(
+            results or {}
+        )
+
+        self.errors = deepcopy(
+            errors or []
+        )
+
+        self.intelligence = deepcopy(
+            intelligence or {}
+        )
+
+        self.correlation = deepcopy(
+            correlation or {}
+        )
+
+        self.confidence = deepcopy(
+            confidence or {}
+        )
+
+        self.finding = deepcopy(
+            finding or {}
+        )
+
+        self.metadata = deepcopy(
+            metadata or {}
+        )
+
+        now = self._now()
+
+        self.created_at = (
+            created_at or now
+        )
+
+        self.started_at = started_at
+        self.completed_at = completed_at
+
+        self.updated_at = (
+            updated_at or now
+        )
+
+    @staticmethod
+    def _now() -> datetime:
+        """Return the current timezone-aware UTC timestamp."""
+        return datetime.now(timezone.utc)
+
+    def _touch(self) -> None:
+        """Update the modification timestamp."""
+        self.updated_at = self._now()
+
+    def start(
+        self,
+        stage: str | None = None,
+    ) -> None:
+        """
+        Start or resume investigation execution.
+        """
+        self.status = InvestigationStatus.RUNNING
+        self.current_stage = stage
+        self.started_at = (
+            self.started_at or self._now()
+        )
+        self.completed_at = None
+
+        self._touch()
+
+    def set_stage(
+        self,
+        stage: str,
+    ) -> None:
+        """Set the currently executing investigation stage."""
+        if not stage:
+            raise ValueError(
+                "Stage is required."
+            )
+
+        self.current_stage = stage
+
+        if self.status == InvestigationStatus.PENDING:
+            self.status = InvestigationStatus.RUNNING
+
+        if self.started_at is None:
+            self.started_at = self._now()
+
+        self._touch()
+
+    def record_result(
+        self,
+        stage: str,
+        result: dict[str, Any],
+    ) -> None:
+        """
+        Record the result produced by an investigation stage.
+        """
+        if not stage:
+            raise ValueError(
+                "Stage is required."
+            )
+
+        if not isinstance(result, dict):
+            raise TypeError(
+                "Result must be a dictionary."
+            )
+
+        self.results[stage] = deepcopy(
+            result
+        )
+
+        self._touch()
+
+    def complete_stage(
+        self,
+        stage: str,
+        result: dict[str, Any],
+    ) -> None:
+        """
+        Record a successful stage and advance lifecycle state.
+        """
+        if not stage:
+            raise ValueError(
+                "Stage is required."
+            )
+
+        self.record_result(
+            stage,
+            result,
+        )
+
+        if stage not in self.completed_stages:
+            self.completed_stages.append(stage)
+
+        if self.current_stage == stage:
+            self.current_stage = None
+
+        self._touch()
+
+    def record_error(
+        self,
+        stage: str,
+        error: Exception,
+    ) -> None:
+        """
+        Record a stage-level execution error.
+        """
+        if not stage:
+            raise ValueError(
+                "Stage is required."
+            )
+
+        if not isinstance(error, Exception):
+            raise TypeError(
+                "Error must be an Exception."
+            )
+
+        self.errors.append(
+            {
+                "stage": stage,
+                "type": type(error).__name__,
+                "message": str(error),
+            }
+        )
+
+        self._touch()
+
+    def complete(
+        self,
+        intelligence: dict[str, Any] | None = None,
+        confidence: dict[str, Any] | None = None,
+        finding: dict[str, Any] | None = None,
+        correlation: dict[str, Any] | None = None,
     ) -> None:
         """
         Mark the investigation as successfully completed.
         """
-
-        if self.status != InvestigationStatus.RUNNING:
-            raise ValueError(
-                "Only running investigations can complete."
-            )
-
         if intelligence is not None:
-            if not isinstance(intelligence, dict):
+            if not isinstance(
+                intelligence,
+                dict,
+            ):
                 raise TypeError(
                     "Intelligence must be a dictionary."
                 )
 
-            self.intelligence = intelligence
+            self.intelligence = deepcopy(
+                intelligence
+            )
 
         if correlation is not None:
-            if not isinstance(correlation, dict):
+            if not isinstance(
+                correlation,
+                dict,
+            ):
                 raise TypeError(
                     "Correlation must be a dictionary."
                 )
 
-            self.correlation = correlation
+            self.correlation = deepcopy(
+                correlation
+            )
 
         if confidence is not None:
-            if not isinstance(confidence, dict):
+            if not isinstance(
+                confidence,
+                dict,
+            ):
                 raise TypeError(
                     "Confidence must be a dictionary."
                 )
 
-            self.confidence = confidence
+            self.confidence = deepcopy(
+                confidence
+            )
 
         if finding is not None:
-            if not isinstance(finding, dict):
+            if not isinstance(
+                finding,
+                dict,
+            ):
                 raise TypeError(
                     "Finding must be a dictionary."
                 )
 
-            self.finding = finding
+            self.finding = deepcopy(
+                finding
+            )
 
-        now = datetime.now(timezone.utc)
+        self.status = (
+            InvestigationStatus.COMPLETED
+        )
 
-        self.status = InvestigationStatus.COMPLETED
-        self.completed_at = now
-        self.updated_at = now
+        self.current_stage = None
+        self.completed_at = self._now()
+
+        self._touch()
 
     def fail(
         self,
-        error: str,
-        *,
+        error: str | None = None,
         service: str | None = None,
     ) -> None:
         """
-        Mark the investigation as failed and preserve
-        structured failure information.
+        Mark the investigation as failed.
+
+        A failure is represented by the FAILED lifecycle state.
+        If a concrete error has already been recorded through
+        record_error(), fail() does not create a duplicate
+        generic error entry.
         """
+        self.status = (
+            InvestigationStatus.FAILED
+        )
 
-        if self.status not in {
-            InvestigationStatus.PENDING,
-            InvestigationStatus.RUNNING,
-        }:
-            raise ValueError(
-                "Only pending or running investigations "
-                "can fail."
-            )
+        self.current_stage = None
+        self.completed_at = self._now()
 
-        if not error:
-            raise ValueError(
-                "Failure error is required."
-            )
-
-        failure = {
-            "error": error,
-            "service": service,
-            "timestamp": datetime.now(
-                timezone.utc
-            ).isoformat(),
-        }
-
-        self.errors.append(failure)
-
-        now = datetime.now(timezone.utc)
-
-        self.status = InvestigationStatus.FAILED
-        self.completed_at = now
-        self.updated_at = now
-
-    def cancel(self) -> None:
-        """
-        Cancel a pending or running investigation.
-        """
-
-        if self.status not in {
-            InvestigationStatus.PENDING,
-            InvestigationStatus.RUNNING,
-        }:
-            raise ValueError(
-                "Only pending or running investigations "
-                "can be cancelled."
-            )
-
-        now = datetime.now(timezone.utc)
-
-        self.status = InvestigationStatus.CANCELLED
-        self.completed_at = now
-        self.updated_at = now
-
-    def update(
-        self,
-        **values: Any,
-    ) -> None:
-        """
-        Update supported investigation state fields.
-
-        This method intentionally rejects unknown fields to
-        prevent accidental corruption of the state model.
-        """
-
-        allowed = {
-            "intelligence",
-            "correlation",
-            "confidence",
-            "finding",
-        }
-
-        unknown = set(values) - allowed
-
-        if unknown:
-            raise ValueError(
-                "Unsupported state fields: "
-                + ", ".join(sorted(unknown))
-            )
-
-        for key, value in values.items():
-            if not isinstance(value, dict):
+        if error is not None:
+            if not isinstance(error, str):
                 raise TypeError(
-                    f"{key} must be a dictionary."
+                    "Error must be a string."
                 )
 
-            setattr(self, key, value)
+            error_entry: dict[str, Any] = {
+                "error": error,
+            }
 
-        self.updated_at = datetime.now(
-            timezone.utc
+            if service:
+                error_entry["service"] = service
+
+            self.errors.append(
+                error_entry
+            )
+
+        self._touch()
+
+    def snapshot(self) -> dict[str, Any]:
+        """
+        Return a detached snapshot of the current state.
+        """
+        return deepcopy(
+            self.to_dict()
         )
 
     def to_dict(self) -> dict[str, Any]:
         """
-        Serialize the state into a JSON-compatible dictionary.
+        Serialize state into persistence-safe data.
         """
-
         return {
-            "investigation_id": self.investigation_id,
-            "investigation": self.investigation,
+            "investigation_id": (
+                self.investigation_id
+            ),
+            "investigation": deepcopy(
+                self.investigation
+            ),
             "status": self.status.value,
-            "intelligence": self.intelligence,
-            "correlation": self.correlation,
-            "confidence": self.confidence,
-            "finding": self.finding,
-            "errors": self.errors,
-            "created_at": self.created_at.isoformat(),
+            "current_stage": (
+                self.current_stage
+            ),
+            "completed_stages": list(
+                self.completed_stages
+            ),
+            "results": deepcopy(
+                self.results
+            ),
+            "errors": deepcopy(
+                self.errors
+            ),
+            "intelligence": deepcopy(
+                self.intelligence
+            ),
+            "correlation": deepcopy(
+                self.correlation
+            ),
+            "confidence": deepcopy(
+                self.confidence
+            ),
+            "finding": deepcopy(
+                self.finding
+            ),
+            "metadata": deepcopy(
+                self.metadata
+            ),
+            "created_at": (
+                self.created_at.isoformat()
+                if self.created_at
+                else None
+            ),
             "started_at": (
                 self.started_at.isoformat()
                 if self.started_at
@@ -293,5 +410,9 @@ class InvestigationState:
                 if self.completed_at
                 else None
             ),
-            "updated_at": self.updated_at.isoformat(),
+            "updated_at": (
+                self.updated_at.isoformat()
+                if self.updated_at
+                else None
+            ),
         }

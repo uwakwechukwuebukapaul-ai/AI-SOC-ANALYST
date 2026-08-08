@@ -1,14 +1,15 @@
 """
-Investigation runtime state management.
+Investigation Runtime state package.
 
-Provides the public state model and manager used to track
-investigation lifecycle independently from persistence.
+Provides investigation lifecycle state management
+for the Sentinel DNA execution runtime.
 """
 
 from .investigation_state import (
     InvestigationState,
     InvestigationStatus,
 )
+
 from .state_manager import (
     InvestigationStateManager,
 )

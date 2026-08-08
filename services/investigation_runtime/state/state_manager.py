@@ -1,12 +1,8 @@
 """
-Investigation state manager.
+Investigation state manager for Sentinel DNA.
 
-Provides lifecycle-oriented access to investigation state
-without coupling the runtime to a database implementation.
-
-A repository-backed implementation can replace the internal
-storage mechanism later without changing the public state
-model contract.
+Maintains runtime state objects for active investigations
+and provides controlled lifecycle operations.
 """
 
 from __future__ import annotations
@@ -20,11 +16,7 @@ from .investigation_state import (
 
 class InvestigationStateManager:
     """
-    Manages investigation state instances.
-
-    The current implementation uses in-memory storage.
-    Persistent repositories can be introduced behind the same
-    lifecycle-oriented API in a later milestone.
+    Central registry for InvestigationState objects.
     """
 
     def __init__(self) -> None:
@@ -36,23 +28,11 @@ class InvestigationStateManager:
     def create(
         self,
         investigation_id: str,
-        investigation: dict[str, Any],
+        metadata: dict[str, Any] | None = None,
     ) -> InvestigationState:
-        """
-        Create and register a new investigation state.
-        """
-
         if not investigation_id:
             raise ValueError(
                 "Investigation ID is required."
-            )
-
-        if not isinstance(
-            investigation,
-            dict,
-        ):
-            raise TypeError(
-                "Investigation must be a dictionary."
             )
 
         if investigation_id in self._states:
@@ -63,10 +43,12 @@ class InvestigationStateManager:
 
         state = InvestigationState(
             investigation_id=investigation_id,
-            investigation=investigation,
+            metadata=metadata,
         )
 
-        self._states[investigation_id] = state
+        self._states[
+            investigation_id
+        ] = state
 
         return state
 
@@ -74,166 +56,142 @@ class InvestigationStateManager:
         self,
         investigation_id: str,
     ) -> InvestigationState:
-        """
-        Retrieve an investigation state.
-        """
-
-        if investigation_id not in self._states:
+        try:
+            return self._states[
+                investigation_id
+            ]
+        except KeyError:
             raise KeyError(
-                f"Investigation '{investigation_id}' "
-                "was not found."
-            )
-
-        return self._states[investigation_id]
+                f"Investigation state "
+                f"'{investigation_id}' not found."
+            ) from None
 
     def exists(
         self,
         investigation_id: str,
     ) -> bool:
-        """
-        Determine whether an investigation exists.
-        """
-
         return investigation_id in self._states
+
+    def count(self) -> int:
+        return len(self._states)
+
+    def ids(self) -> list[str]:
+        return list(
+            self._states.keys()
+        )
 
     def start(
         self,
         investigation_id: str,
-    ) -> InvestigationState:
-        """
-        Start an existing investigation.
-        """
-
-        state = self.get(
+        stage: str,
+    ) -> None:
+        self.get(
             investigation_id
+        ).start(stage)
+
+    def set_stage(
+        self,
+        investigation_id: str,
+        stage: str,
+    ) -> None:
+        self.get(
+            investigation_id
+        ).set_stage(stage)
+
+    def record_result(
+        self,
+        investigation_id: str,
+        stage: str,
+        result: dict[str, Any],
+    ) -> None:
+        self.get(
+            investigation_id
+        ).record_result(
+            stage,
+            result,
         )
 
-        state.start()
+    def complete_stage(
+        self,
+        investigation_id: str,
+        stage: str,
+        result: dict[str, Any],
+    ) -> None:
+        self.get(
+            investigation_id
+        ).complete_stage(
+            stage,
+            result,
+        )
 
-        return state
+    def record_error(
+        self,
+        investigation_id: str,
+        stage: str,
+        error: str | Exception,
+    ) -> None:
+        """
+        Record an investigation-stage failure.
+
+        The manager accepts either a human-readable string
+        or an Exception. Strings are normalized into
+        RuntimeError instances before reaching the state
+        domain object.
+        """
+
+        if isinstance(error, Exception):
+            exception = error
+        elif isinstance(error, str):
+            exception = RuntimeError(error)
+        else:
+            raise TypeError(
+                "Error must be a string or Exception."
+            )
+
+        self.get(
+            investigation_id
+        ).record_error(
+            stage,
+            exception,
+        )
 
     def complete(
         self,
         investigation_id: str,
-        *,
-        intelligence: dict[str, Any] | None = None,
-        correlation: dict[str, Any] | None = None,
-        confidence: dict[str, Any] | None = None,
-        finding: dict[str, Any] | None = None,
-    ) -> InvestigationState:
-        """
-        Complete an existing investigation.
-        """
-
-        state = self.get(
+    ) -> None:
+        self.get(
             investigation_id
-        )
-
-        state.complete(
-            intelligence=intelligence,
-            correlation=correlation,
-            confidence=confidence,
-            finding=finding,
-        )
-
-        return state
+        ).complete()
 
     def fail(
         self,
         investigation_id: str,
-        error: str,
-        *,
-        service: str | None = None,
-    ) -> InvestigationState:
-        """
-        Fail an existing investigation while preserving
-        structured error information.
-        """
-
-        state = self.get(
+    ) -> None:
+        self.get(
             investigation_id
-        )
+        ).fail()
 
-        state.fail(
-            error,
-            service=service,
-        )
-
-        return state
-
-    def cancel(
+    def snapshot(
         self,
         investigation_id: str,
-    ) -> InvestigationState:
-        """
-        Cancel an existing investigation.
-        """
-
-        state = self.get(
+    ) -> dict[str, Any]:
+        return self.get(
             investigation_id
-        )
-
-        state.cancel()
-
-        return state
-
-    def update(
-        self,
-        investigation_id: str,
-        **values: Any,
-    ) -> InvestigationState:
-        """
-        Update investigation intelligence state.
-        """
-
-        state = self.get(
-            investigation_id
-        )
-
-        state.update(
-            **values
-        )
-
-        return state
-
-    def list(
-        self,
-    ) -> list[InvestigationState]:
-        """
-        Return all known investigation states.
-        """
-
-        return list(
-            self._states.values()
-        )
+        ).snapshot()
 
     def remove(
         self,
         investigation_id: str,
     ) -> InvestigationState:
-        """
-        Remove an investigation from the manager.
-
-        Persistent deletion will be handled by the repository
-        layer once storage is introduced.
-        """
-
-        if investigation_id not in self._states:
-            raise KeyError(
-                f"Investigation '{investigation_id}' "
-                "was not found."
+        try:
+            return self._states.pop(
+                investigation_id
             )
-
-        return self._states.pop(
-            investigation_id
-        )
+        except KeyError:
+            raise KeyError(
+                f"Investigation state "
+                f"'{investigation_id}' not found."
+            ) from None
 
     def clear(self) -> None:
-        """
-        Clear all in-memory investigation states.
-
-        Primarily useful for tests and isolated runtime
-        instances.
-        """
-
         self._states.clear()
