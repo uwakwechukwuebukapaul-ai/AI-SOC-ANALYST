@@ -43,10 +43,6 @@ class RuntimeTaskExecutor:
         self,
         capability: str,
     ) -> bool:
-        """
-        Check capability availability.
-        """
-
         return capability in self.handlers
 
 
@@ -57,10 +53,6 @@ class RuntimeTaskExecutor:
     ) -> Any:
         """
         Execute runtime task.
-
-        Supports:
-        - execute(Task)
-        - execute(capability, payload)
         """
 
         if hasattr(task, "capability"):
@@ -82,10 +74,6 @@ class RuntimeTaskExecutor:
 
 
         if handler is None:
-
-            if hasattr(task, "status"):
-
-                task.status = TaskStatus.FAILED
 
             self.failed += 1
 
@@ -115,7 +103,13 @@ class RuntimeTaskExecutor:
             return result
 
 
-        except Exception:
+        except Exception as error:
+
+            print(
+                f"[RuntimeTaskExecutor ERROR] "
+                f"{capability}: {error}"
+            )
+
 
             if hasattr(task, "status"):
 
@@ -124,22 +118,15 @@ class RuntimeTaskExecutor:
 
             self.failed += 1
 
-
-            return None
+            raise
 
 
     def clear(self) -> None:
-        """
-        Remove all handlers.
-        """
 
         self.handlers.clear()
 
 
     def status(self) -> dict[str, Any]:
-        """
-        Executor status.
-        """
 
         return {
             "handlers": list(

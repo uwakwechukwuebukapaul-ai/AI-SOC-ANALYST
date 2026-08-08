@@ -1,7 +1,8 @@
 """
 Sentinel DNA Investigation Agent
 
-Enterprise investigation planning agent.
+Enterprise autonomous investigation planning
+and execution agent.
 """
 
 from __future__ import annotations
@@ -15,11 +16,34 @@ from services.intelligence.agents.agent_result import (
     AgentResult,
 )
 
+from services.investigation_runtime.autonomous_investigation_intelligence_engine import (
+    AutonomousInvestigationIntelligenceEngine,
+)
+
 
 class InvestigationAgent(BaseAgent):
     """
-    Primary investigation planning agent.
+    Primary autonomous investigation agent.
+
+    Responsibilities:
+
+    - validate investigation context
+    - create investigation workflow
+    - execute autonomous investigation engine
+    - return normalized AgentResult
+
+    Non-responsibilities:
+
+    - scheduling
+    - runtime management
+    - orchestration
+    - retries
     """
+
+    def __init__(self) -> None:
+        self.engine = (
+            AutonomousInvestigationIntelligenceEngine()
+        )
 
     @property
     def metadata(self) -> AgentMetadata:
@@ -27,7 +51,9 @@ class InvestigationAgent(BaseAgent):
         return AgentMetadata(
             name="Investigation Agent",
             version="1.0",
-            description="Plans AI investigations.",
+            description=(
+                "Executes autonomous AI investigations."
+            ),
             investigation_types=[
                 "phishing",
                 "malware",
@@ -37,6 +63,7 @@ class InvestigationAgent(BaseAgent):
             tags=[
                 "investigation",
                 "planner",
+                "autonomous",
             ],
         )
 
@@ -45,9 +72,11 @@ class InvestigationAgent(BaseAgent):
 
         return [
             AgentCapability(
-                name="investigation_planning",
-                description="Creates investigation plans",
-                category="planning",
+                name="investigation_execution",
+                description=(
+                    "Executes autonomous security investigations"
+                ),
+                category="investigation",
             )
         ]
 
@@ -56,7 +85,9 @@ class InvestigationAgent(BaseAgent):
         context: AgentContext,
     ) -> bool:
 
-        return bool(context.case_id)
+        return bool(
+            context.case_id
+        )
 
     def execute(
         self,
@@ -67,32 +98,44 @@ class InvestigationAgent(BaseAgent):
 
             return AgentResult(
                 agent_name=self.metadata.name,
-                status=AgentExecutionStatus.FAILED,
+                status=(
+                    AgentExecutionStatus.FAILED
+                ),
                 confidence=0.0,
                 errors=[
                     "Invalid investigation context."
                 ],
             )
 
-        plan = [
-            "IOC Enrichment",
-            "Threat Intelligence",
-            "MITRE Mapping",
-            "Timeline Analysis",
-            "Risk Scoring",
-            "Recommendations",
-            "Final Report",
-        ]
+        investigation_id = context.case_id
+
+        self.engine.create_investigation(
+            investigation_id=investigation_id,
+            investigation_type="security_alert",
+            severity="high",
+        )
+
+        analysis = self.engine.investigate(
+            investigation_id
+        )
 
         result = AgentResult(
             agent_name=self.metadata.name,
-            status=AgentExecutionStatus.SUCCESS,
-            confidence=100.0,
+            status=(
+                AgentExecutionStatus.SUCCESS
+            ),
+            confidence=90.0,
         )
 
-        result.artifacts["investigation_plan"] = plan
+        result.artifacts[
+            "investigation_analysis"
+        ] = analysis
 
-        result.metrics["steps"] = len(plan)
+        result.metrics[
+            "engine"
+        ] = (
+            "AutonomousInvestigationIntelligenceEngine"
+        )
 
         return result
 
@@ -102,11 +145,16 @@ class InvestigationAgent(BaseAgent):
     ) -> str:
 
         return (
-            f"Investigation plan created with "
-            f"{result.metrics['steps']} steps."
+            "Autonomous investigation completed "
+            f"with confidence "
+            f"{result.confidence}%."
         )
 
     def cleanup(
         self,
     ) -> None:
+        """
+        Cleanup hook required by BaseAgent.
+        """
+
         pass
