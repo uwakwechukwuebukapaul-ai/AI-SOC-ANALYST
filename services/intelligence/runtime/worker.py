@@ -9,11 +9,11 @@ through the Intelligence Runtime Engine.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Callable, Any
+from typing import Any, Callable
 
-from .task import Task
-from .runtime_engine import RuntimeEngine
 from .execution_result import ExecutionResult
+from .runtime_engine import RuntimeEngine
+from .task import Task
 
 
 @dataclass
@@ -21,11 +21,19 @@ class RuntimeWorker:
     """
     Runtime task execution worker.
 
-    Responsible for:
+    Responsibilities:
+
     - worker lifecycle
     - pulling scheduled tasks
     - executing handlers
     - tracking worker state
+    - supporting dependency injection of RuntimeEngine
+
+    The engine may be injected by RuntimeAPI so the API and
+    worker operate against the same runtime state.
+
+    When no engine is supplied, a standalone RuntimeEngine
+    is created automatically.
     """
 
     engine: RuntimeEngine = field(
@@ -38,6 +46,9 @@ class RuntimeWorker:
 
     failed_tasks: int = 0
 
+    # ------------------------------------------------------------------
+    # Lifecycle
+    # ------------------------------------------------------------------
 
     def start(self) -> None:
         """
@@ -46,7 +57,6 @@ class RuntimeWorker:
 
         self.running = True
 
-
     def stop(self) -> None:
         """
         Stop worker lifecycle.
@@ -54,18 +64,34 @@ class RuntimeWorker:
 
         self.running = False
 
+    # ------------------------------------------------------------------
+    # Execution
+    # ------------------------------------------------------------------
 
     def execute_task(
         self,
         task: Task,
         handler: Callable[
             [Task, Any],
-            Any
+            Any,
         ],
     ) -> ExecutionResult:
         """
-        Execute a single task.
+        Execute a single runtime task.
+
+        The worker delegates execution to its configured
+        RuntimeEngine.
         """
+
+        if not isinstance(task, Task):
+            raise TypeError(
+                "task must be a Task instance."
+            )
+
+        if not callable(handler):
+            raise TypeError(
+                "handler must be callable."
+            )
 
         result = self.engine.execute(
             task,
@@ -79,40 +105,50 @@ class RuntimeWorker:
 
         return result
 
-
     def run_once(
         self,
         handler: Callable[
             [Task, Any],
-            Any
+            Any,
         ],
     ) -> ExecutionResult | None:
         """
-        Execute next scheduled task.
+        Execute the next scheduled task.
 
-        Used for controlled execution/testing.
+        This method intentionally performs one controlled
+        execution cycle and is suitable for:
+
+        - testing
+        - synchronous execution
+        - development workers
+        - future scheduler integration
         """
 
         if not self.running:
             return None
 
+        if not callable(handler):
+            raise TypeError(
+                "handler must be callable."
+            )
 
         task = self.engine.next_task()
 
-
         if task is None:
             return None
-
 
         return self.execute_task(
             task,
             handler,
         )
 
+    # ------------------------------------------------------------------
+    # Status
+    # ------------------------------------------------------------------
 
-    def status(self) -> dict:
+    def status(self) -> dict[str, Any]:
         """
-        Return worker state.
+        Return worker runtime state.
         """
 
         return {
