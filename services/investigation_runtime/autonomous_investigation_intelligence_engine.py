@@ -1,13 +1,20 @@
 """
 Autonomous Investigation Intelligence Engine.
 
-Provides the compatibility-facing autonomous investigation API
-used by Sentinel DNA investigation workflows and tests.
+Canonical runtime implementation for Sentinel DNA autonomous
+investigation workflows.
 
-The engine maintains an in-memory investigation registry for the
-current runtime process. Persistent investigation storage belongs
-to the repository/database layer and can be integrated later
-without changing this public API.
+The engine provides:
+- investigation lifecycle management
+- evidence analysis
+- threat activity correlation
+- investigation summaries
+- investigation timelines
+- investigation history
+- backward-compatible analyze/investigate/build_timeline APIs
+
+The current registry is intentionally in-memory. Persistent
+investigation state belongs to the repository/database layer.
 """
 
 from __future__ import annotations
@@ -20,6 +27,8 @@ from typing import Any
 class AutonomousInvestigationIntelligenceEngine:
     """
     Autonomous investigation intelligence engine.
+
+    This class is the canonical runtime implementation.
 
     Responsibilities:
     - create and track investigations
@@ -46,24 +55,31 @@ class AutonomousInvestigationIntelligenceEngine:
     ) -> None:
         """Validate an investigation identifier."""
         if not isinstance(investigation_id, str):
-            raise TypeError("Investigation ID must be a string.")
+            raise TypeError(
+                "Investigation ID must be a string."
+            )
 
         if not investigation_id.strip():
-            raise ValueError("Investigation ID is required.")
+            raise ValueError(
+                "Investigation ID is required."
+            )
 
     @staticmethod
     def _validate_sequence(
         value: Any,
         field_name: str,
     ) -> None:
-        """Validate a list-like input used by the public API."""
+        """Validate a list-like public API input."""
         if isinstance(value, (str, bytes)):
             raise TypeError(
                 f"{field_name} must be a sequence of values, "
                 "not a string."
             )
 
-        if not isinstance(value, (list, tuple, set)):
+        if not isinstance(
+            value,
+            (list, tuple, set),
+        ):
             raise TypeError(
                 f"{field_name} must be a list, tuple, or set."
             )
@@ -74,7 +90,10 @@ class AutonomousInvestigationIntelligenceEngine:
     ) -> dict[str, Any] | None:
         """Return an internal investigation record if it exists."""
         for investigation in self.investigations:
-            if investigation.get("investigation_id") == investigation_id:
+            if (
+                investigation.get("investigation_id")
+                == investigation_id
+            ):
                 return investigation
 
         return None
@@ -87,15 +106,15 @@ class AutonomousInvestigationIntelligenceEngine:
     ) -> dict[str, Any]:
         """
         Create and register a new investigation.
-
-        The returned structure intentionally preserves the simple
-        compatibility contract expected by the existing investigation
-        test suite while retaining enough metadata for later runtime
-        integration.
         """
-        self._validate_investigation_id(investigation_id)
+        self._validate_investigation_id(
+            investigation_id
+        )
 
-        if not isinstance(investigation_type, str):
+        if not isinstance(
+            investigation_type,
+            str,
+        ):
             raise TypeError(
                 "Investigation type must be a string."
             )
@@ -105,7 +124,10 @@ class AutonomousInvestigationIntelligenceEngine:
                 "Investigation type is required."
             )
 
-        if not isinstance(severity, str):
+        if not isinstance(
+            severity,
+            str,
+        ):
             raise TypeError(
                 "Severity must be a string."
             )
@@ -121,7 +143,8 @@ class AutonomousInvestigationIntelligenceEngine:
 
         if existing is not None:
             raise ValueError(
-                f"Investigation '{investigation_id}' already exists."
+                f"Investigation "
+                f"'{investigation_id}' already exists."
             )
 
         timestamp = self._now()
@@ -141,7 +164,9 @@ class AutonomousInvestigationIntelligenceEngine:
             "updated_at": timestamp,
         }
 
-        self.investigations.append(investigation)
+        self.investigations.append(
+            investigation
+        )
 
         return deepcopy(investigation)
 
@@ -152,13 +177,15 @@ class AutonomousInvestigationIntelligenceEngine:
     ) -> dict[str, Any]:
         """
         Analyze and register evidence for an investigation.
-
-        This first-stage implementation performs structural evidence
-        analysis. More advanced evidence engines can be connected
-        behind this stable interface later.
         """
-        self._validate_investigation_id(investigation_id)
-        self._validate_sequence(evidence, "Evidence")
+        self._validate_investigation_id(
+            investigation_id
+        )
+
+        self._validate_sequence(
+            evidence,
+            "Evidence",
+        )
 
         investigation = self._find_investigation(
             investigation_id
@@ -166,7 +193,8 @@ class AutonomousInvestigationIntelligenceEngine:
 
         if investigation is None:
             raise KeyError(
-                f"Investigation '{investigation_id}' was not found."
+                f"Investigation "
+                f"'{investigation_id}' was not found."
             )
 
         normalized_evidence = list(evidence)
@@ -175,15 +203,21 @@ class AutonomousInvestigationIntelligenceEngine:
         investigation["evidence"] = deepcopy(
             normalized_evidence
         )
+
         investigation["evidence_count"] = len(
             normalized_evidence
         )
+
         investigation["updated_at"] = timestamp
 
         result = {
             "investigation_id": investigation_id,
-            "evidence": deepcopy(normalized_evidence),
-            "evidence_count": len(normalized_evidence),
+            "evidence": deepcopy(
+                normalized_evidence
+            ),
+            "evidence_count": len(
+                normalized_evidence
+            ),
             "status": "completed",
             "created_at": timestamp,
         }
@@ -197,13 +231,15 @@ class AutonomousInvestigationIntelligenceEngine:
         """
         Correlate supplied threat activity indicators.
 
-        The initial deterministic correlation model treats the
-        presence of indicators as high-risk activity. This provides
-        a stable contract for the runtime while allowing a future
-        threat-intelligence correlation engine to replace the scoring
-        implementation.
+        The deterministic baseline treats the presence of
+        indicators as high-risk activity. A future threat
+        intelligence correlation engine can replace this
+        implementation without changing the public contract.
         """
-        self._validate_sequence(indicators, "Indicators")
+        self._validate_sequence(
+            indicators,
+            "Indicators",
+        )
 
         normalized_indicators = list(indicators)
 
@@ -233,13 +269,10 @@ class AutonomousInvestigationIntelligenceEngine:
         self,
         investigation_id: str,
     ) -> dict[str, Any]:
-        """
-        Generate a summary for an investigation.
-
-        The summary is generated from the currently registered
-        investigation state rather than external AI inference.
-        """
-        self._validate_investigation_id(investigation_id)
+        """Generate a deterministic investigation summary."""
+        self._validate_investigation_id(
+            investigation_id
+        )
 
         investigation = self._find_investigation(
             investigation_id
@@ -247,7 +280,8 @@ class AutonomousInvestigationIntelligenceEngine:
 
         if investigation is None:
             raise KeyError(
-                f"Investigation '{investigation_id}' was not found."
+                f"Investigation "
+                f"'{investigation_id}' was not found."
             )
 
         evidence_count = investigation.get(
@@ -257,7 +291,8 @@ class AutonomousInvestigationIntelligenceEngine:
 
         summary = (
             f"Investigation {investigation_id} is "
-            f"an active {investigation.get('type', 'unknown')} "
+            f"an active "
+            f"{investigation.get('type', 'unknown')} "
             f"investigation with "
             f"{evidence_count} evidence item(s)."
         )
@@ -279,12 +314,11 @@ class AutonomousInvestigationIntelligenceEngine:
         investigation_id: str,
     ) -> dict[str, Any]:
         """
-        Generate the investigation lifecycle timeline.
-
-        The initial lifecycle consists of three deterministic events:
-        investigation creation, evidence analysis, and threat assessment.
+        Generate the baseline investigation lifecycle timeline.
         """
-        self._validate_investigation_id(investigation_id)
+        self._validate_investigation_id(
+            investigation_id
+        )
 
         investigation = self._find_investigation(
             investigation_id
@@ -292,7 +326,8 @@ class AutonomousInvestigationIntelligenceEngine:
 
         if investigation is None:
             raise KeyError(
-                f"Investigation '{investigation_id}' was not found."
+                f"Investigation "
+                f"'{investigation_id}' was not found."
             )
 
         timestamp = self._now()
@@ -312,7 +347,10 @@ class AutonomousInvestigationIntelligenceEngine:
             },
         ]
 
-        investigation["timeline"] = deepcopy(events)
+        investigation["timeline"] = deepcopy(
+            events
+        )
+
         investigation["updated_at"] = timestamp
 
         return {
@@ -326,12 +364,11 @@ class AutonomousInvestigationIntelligenceEngine:
         self,
     ) -> list[dict[str, Any]]:
         """
-        Return a detached copy of all investigations.
-
-        Returning deep copies prevents callers from mutating the
-        engine's internal registry accidentally.
+        Return detached copies of all investigations.
         """
-        return deepcopy(self.investigations)
+        return deepcopy(
+            self.investigations
+        )
 
     def analyze(
         self,
@@ -342,7 +379,10 @@ class AutonomousInvestigationIntelligenceEngine:
 
         Preserves the original public API.
         """
-        if not isinstance(evidence, dict):
+        if not isinstance(
+            evidence,
+            dict,
+        ):
             raise TypeError(
                 "Evidence must be a dictionary."
             )
@@ -361,7 +401,8 @@ class AutonomousInvestigationIntelligenceEngine:
 
         if evidence.get("event"):
             analysis["findings"].append(
-                f"Detected event: {evidence['event']}"
+                f"Detected event: "
+                f"{evidence['event']}"
             )
 
         self.investigations.append(
@@ -406,7 +447,10 @@ class AutonomousInvestigationIntelligenceEngine:
 
         Preserves the original public API.
         """
-        self._validate_sequence(events, "Events")
+        self._validate_sequence(
+            events,
+            "Events",
+        )
 
         timeline = {
             "type": "timeline",
