@@ -3,15 +3,16 @@ Sentinel DNA Investigation Coordinator
 
 Coordinates complete intelligence investigations.
 
-Responsibilities
-----------------
+## Responsibilities
+
 - create investigation context
 - select investigation plan
 - invoke AgentPipeline
+- synchronize orchestration results into investigation context
 - return OrchestrationResult
 
-Non-responsibilities
---------------------
+## Non-responsibilities
+
 - agent execution
 - scheduling
 - worker management
@@ -47,7 +48,8 @@ class InvestigationCoordinator:
     """
     Coordinates a complete Sentinel DNA investigation workflow.
 
-    The coordinator owns workflow selection and context creation.
+    The coordinator owns workflow selection, investigation context
+    creation, and aggregation of pipeline output.
 
     Agent execution is delegated to AgentPipeline.
 
@@ -98,13 +100,18 @@ class InvestigationCoordinator:
         """
         Execute the standard Sentinel DNA investigation workflow.
 
+        The coordinator creates the investigation context, selects
+        the canonical investigation plan, executes the plan through
+        AgentPipeline, and synchronizes successful agent results back
+        into the investigation context.
+
         Returns
         -------
         OrchestrationResult
             Aggregated result of the investigation plan.
         """
 
-        context = OrchestrationContext(
+        context = self._create_context(
             case_id=case_id,
             alert=alert,
         )
@@ -116,4 +123,65 @@ class InvestigationCoordinator:
             context=context,
         )
 
+        self._synchronize_results(
+            context=context,
+            result=result,
+        )
+
         return result
+
+    # ------------------------------------------------------------------
+    # Context creation
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def _create_context(
+        case_id: str,
+        alert: dict[str, Any],
+    ) -> OrchestrationContext:
+        """
+        Create the investigation-level orchestration context.
+        """
+
+        if not case_id or not case_id.strip():
+            raise ValueError(
+                "Case ID is required."
+            )
+
+        if not isinstance(alert, dict):
+            raise TypeError(
+                "Alert must be a dictionary."
+            )
+
+        return OrchestrationContext(
+            case_id=case_id,
+            alert=dict(alert),
+        )
+
+    # ------------------------------------------------------------------
+    # Result synchronization
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def _synchronize_results(
+        context: OrchestrationContext,
+        result: OrchestrationResult,
+    ) -> None:
+        """
+        Synchronize successful pipeline results into the
+        investigation context.
+
+        OrchestrationResult remains the execution outcome.
+
+        OrchestrationContext remains the investigation state.
+
+        This method deliberately does not copy orchestration errors
+        into context state because errors belong to the execution
+        result boundary.
+        """
+
+        for agent_name, agent_result in result.results.items():
+            context.add_result(
+                agent_name=agent_name,
+                result=agent_result,
+            )
