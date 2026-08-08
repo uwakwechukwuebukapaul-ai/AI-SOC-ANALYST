@@ -6,23 +6,26 @@ Enterprise investigation API boundary.
 Flow:
 
 API Request
-|
-v
+    |
+    v
 Investigation Coordinator
-|
-v
+    |
+    v
 Agent Pipeline
-|
-v
-Runtime Task Executor
-|
-v
+    |
+    v
+Runtime Executor
+    |
+    v
 AI Agents
-|
-v
-Report Service
-|
-v
+    |
+    v
+Intelligence Layer
+    |
+    v
+AI Report Generation
+    |
+    v
 Report Storage
 """
 
@@ -55,8 +58,8 @@ from services.intelligence.agents.runtime_adapter import (
     AgentRuntimeAdapter,
 )
 
-from services.intelligence.reporting.report_service import (
-    ReportService,
+from services.intelligence.reporting.intelligent_report_service import (
+    IntelligentReportService,
 )
 
 from services.intelligence.reporting.report_storage import (
@@ -73,7 +76,6 @@ investigation_bp = Blueprint(
     __name__,
     url_prefix="/api/investigations",
 )
-
 
 
 # ============================================================
@@ -101,14 +103,13 @@ investigation_coordinator = InvestigationCoordinator(
 )
 
 
-report_service = ReportService()
+report_service = IntelligentReportService()
 
 report_storage = ReportStorage()
 
 
-
 # ============================================================
-# Serialization Helper
+# Serialization
 # ============================================================
 
 def _serialize(value):
@@ -116,52 +117,33 @@ def _serialize(value):
     if value is None:
         return None
 
-
     if isinstance(
         value,
         (str, int, float, bool),
     ):
         return value
 
-
-    if isinstance(
-        value,
-        list,
-    ):
+    if isinstance(value, list):
         return [
             _serialize(item)
             for item in value
         ]
 
-
-    if isinstance(
-        value,
-        dict,
-    ):
+    if isinstance(value, dict):
         return {
             key: _serialize(item)
             for key, item in value.items()
         }
 
-
-    if hasattr(
-        value,
-        "value",
-    ):
+    if hasattr(value, "value"):
         return value.value
 
-
-    if hasattr(
-        value,
-        "__dict__",
-    ):
+    if hasattr(value, "__dict__"):
         return _serialize(
             value.__dict__
         )
 
-
     return str(value)
-
 
 
 # ============================================================
@@ -186,7 +168,6 @@ def generate_investigation_report():
         "case_id"
     )
 
-
     alert = payload.get(
         "alert"
     )
@@ -202,7 +183,6 @@ def generate_investigation_report():
         ), 400
 
 
-
     if not isinstance(
         alert,
         dict,
@@ -216,7 +196,6 @@ def generate_investigation_report():
         ), 400
 
 
-
     try:
 
         orchestration_result = (
@@ -227,10 +206,30 @@ def generate_investigation_report():
         )
 
 
+        artifacts = [
+
+            {
+                "type": "ioc",
+                "value": alert.get(
+                    "indicator"
+                ),
+            },
+
+            {
+                "type": "alert",
+                "value": alert,
+            },
+
+        ]
+
+
         report = (
-            report_service.build_response(
+            report_service.generate(
                 case_id=case_id,
-                orchestration_result=orchestration_result,
+                orchestration_result=(
+                    orchestration_result
+                ),
+                artifacts=artifacts,
             )
         )
 
@@ -252,7 +251,6 @@ def generate_investigation_report():
                 "report": report,
             }
         ), 200
-
 
 
     except Exception as error:
@@ -301,14 +299,14 @@ def get_investigation_report(
             ), 404
 
 
-
         return jsonify(
             {
                 "success": True,
-                "report": _serialize(report),
+                "report": _serialize(
+                    report
+                ),
             }
         ), 200
-
 
 
     except Exception as error:
